@@ -461,6 +461,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .filter-row::-webkit-scrollbar{display:none}
 .ftab{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:10px 14px;border:none;background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0}
 .ftab.on{color:var(--white);border-bottom-color:var(--gold)}
+.date-ftab.on{color:var(--white);border-color:var(--red)}
 
 /* sort + toolbar */
 .toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--b1);flex-shrink:0}
@@ -585,6 +586,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
           <option value="design">Design</option>
           <option value="ops">Ops</option>
           <option value="follow-up">Follow-up</option>
+          <option value="control">Control</option>
+          <option value="management">Management</option>
           <option value="personal">Personal</option>
         </select>
         <select class="pri-sel" id="add-pri">
@@ -609,9 +612,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button class="ftab" data-f="design" onclick="setFilter(this)">Design</button>
       <button class="ftab" data-f="ops" onclick="setFilter(this)">Ops</button>
       <button class="ftab" data-f="follow-up" onclick="setFilter(this)">Follow-up</button>
+      <button class="ftab" data-f="control" onclick="setFilter(this)">Control</button>
+      <button class="ftab" data-f="management" onclick="setFilter(this)">Management</button>
     </div>
 
-    <div class="toolbar">
+    <div class="toolbar" style="flex-wrap:wrap;gap:6px">
+      <button class="tb-btn date-ftab on" data-df="today" onclick="setDateFilter('today')">Today</button>
+      <button class="tb-btn date-ftab" data-df="week" onclick="setDateFilter('week')">7 Days</button>
+      <button class="tb-btn date-ftab" data-df="all" onclick="setDateFilter('all')">All</button>
+      <span class="tb-sep"></span>
       <select class="sort-sel" id="sort-sel" onchange="render()">
         <option value="time">By Time</option>
         <option value="priority">By Priority</option>
@@ -619,7 +628,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
         <option value="created">By Created</option>
       </select>
       <button class="tb-btn" onclick="clearDone()">Clear Done</button>
-      <span class="tb-sep"></span>
       <div class="sync-dot ok" id="sync-dot"></div>
     </div>
 
@@ -793,7 +801,7 @@ const SB = (() => {
       id:         task.id,
       user_id:    u,
       title:      task.title,
-      tag:        task.tag || 'personal',
+      tag:        (['sales','revenue','client','kam','design','ops','follow-up','control','management','personal'].includes(task.tag)?task.tag:'personal'),
       priority:   task.priority || 'medium',
       stage:      task.stage || 'todo',
       done:       !!task.done,
@@ -863,14 +871,16 @@ const SB = (() => {
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const TAG = {
-  sales:      { label: 'Sales',     col: '#22c55e' },
-  revenue:    { label: 'Revenue',   col: '#3b82f6' },
-  client:     { label: 'Client',    col: '#c8a84b' },
-  kam:        { label: 'KAM',       col: '#ec4899' },
-  design:     { label: 'Design',    col: '#f59e0b' },
-  ops:        { label: 'Ops',       col: '#06b6d4' },
-  'follow-up':{ label: 'Follow-up', col: '#ff2d2d' },
-  personal:   { label: 'Personal',  col: '#888' },
+  sales:      { label: 'Sales',      col: '#22c55e' },
+  revenue:    { label: 'Revenue',    col: '#3b82f6' },
+  client:     { label: 'Client',     col: '#c8a84b' },
+  kam:        { label: 'KAM',        col: '#ec4899' },
+  design:     { label: 'Design',     col: '#f59e0b' },
+  ops:        { label: 'Ops',        col: '#06b6d4' },
+  'follow-up':{ label: 'Follow-up',  col: '#ff2d2d' },
+  control:    { label: 'Control',    col: '#a855f7' },
+  management: { label: 'Management', col: '#14b8a6' },
+  personal:   { label: 'Personal',   col: '#888' },
 };
 const PRI = {
   urgent: { col: '#ff2d2d', label: 'Urgent' },
@@ -884,6 +894,7 @@ const STG = {
   review:      { label: 'Review',     icon: '~', col: '#f59e0b' },
   done:        { label: 'Done',       icon: '+', col: '#22c55e' },
   blocked:     { label: 'Blocked',    icon: 'x', col: '#ff2d2d' },
+  closed:      { label: 'Closed',     icon: '-', col: '#555' },
 };
 const MAX_FILE  = 5 * 1024 * 1024;
 const WARN_FILE = 2 * 1024 * 1024;
@@ -894,6 +905,7 @@ let S = {
   showDone: false, openId: null,
   delConfirm: {}, reminded: new Set(),
   timerTick: null,
+  editingRemark: null,
 };
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
@@ -1056,16 +1068,39 @@ function showApp()   {
   document.getElementById('app').style.display = 'flex';
 }
 
+let S_dateFilter = 'today'; // 'today' | 'week' | 'all'
+
 async function loadTasks() {
   setSyncing(true);
   try {
-    const raw = await SB.getTasks(today());
+    let raw;
+    if (S_dateFilter === 'today') {
+      raw = await SB.getTasks(today());
+    } else if (S_dateFilter === 'week') {
+      const d7 = new Date(); d7.setDate(d7.getDate()-7);
+      raw = await SB.getTasksRange(d7.toISOString().slice(0,10), today());
+    } else {
+      // all: last 90 days
+      const d90 = new Date(); d90.setDate(d90.getDate()-90);
+      raw = await SB.getTasksRange(d90.toISOString().slice(0,10), today());
+    }
     S.tasks = (raw || []).map(norm);
+    // Sort by task_date desc, then created_at
+    S.tasks.sort((a,b) => {
+      const dd = (b.task_date||b.date||'').localeCompare(a.task_date||a.date||'');
+      return dd !== 0 ? dd : new Date(b.created_at)-new Date(a.created_at);
+    });
     setSyncing(false);
   } catch(e) {
     setSyncing(false, true);
     toast('Sync failed: ' + e.message, 'err');
   }
+}
+
+async function setDateFilter(f) {
+  S_dateFilter = f;
+  document.querySelectorAll('.date-ftab').forEach(t => t.classList.toggle('on', t.dataset.df===f));
+  await loadTasks(); render();
 }
 async function loadNotifs() {
   try {
@@ -1281,6 +1316,35 @@ async function commitEdit(id) {
   else render();
 }
 
+async function quickDone(id) {
+  const task = S.tasks.find(t=>t.id===id); if(!task) return;
+  if (timerRunning(task)) await stopTimer(id);
+  await patch(id, { stage:'done', done:true }, 'Marked done');
+  try { await SB.insertNotif({ task_id:id, title:'Task Complete', body:task.title, type:'done' }); await loadNotifs(); renderNotifBadge(); } catch {}
+  await refreshDrawer();
+  toast('Task marked done');
+}
+async function quickClose(id) {
+  const task = S.tasks.find(t=>t.id===id); if(!task) return;
+  if (timerRunning(task)) await stopTimer(id);
+  // Close = done + activity log entry "Closed"
+  await patch(id, { stage:'done', done:true }, 'Task closed');
+  await refreshDrawer();
+  toast('Task closed');
+}
+async function quickReopen(id) {
+  await patch(id, { stage:'todo', done:false }, 'Reopened');
+  await refreshDrawer();
+  toast('Task reopened');
+}
+async function markOverdueAction(id) {
+  const task = S.tasks.find(t=>t.id===id); if(!task) return;
+  await patch(id, {}, 'Marked as overdue action required');
+  try { await SB.insertNotif({ task_id:id, title:'Overdue Task', body:task.title+' was past due', type:'overdue' }); await loadNotifs(); renderNotifBadge(); } catch {}
+  await refreshDrawer();
+  toast('Marked as overdue');
+}
+
 async function clearDone() {
   const done = S.tasks.filter(t => t.stage === 'done');
   if (!done.length) { toast('No completed tasks'); return; }
@@ -1298,7 +1362,7 @@ function setFilter(el) {
 function toggleDoneList() { S.showDone = !S.showDone; render(); }
 
 function filteredActive() {
-  let tt = S.tasks.filter(t => t.stage !== 'done' && t.stage !== 'blocked');
+  let tt = S.tasks.filter(t => t.stage !== 'done' && t.stage !== 'blocked' && t.stage !== 'closed');
   if (activeFilter !== 'all') tt = tt.filter(t => t.tag === activeFilter);
   const po={urgent:0,high:1,medium:2,low:3}, so={todo:0,in_progress:1,review:2};
   const sort = document.getElementById('sort-sel')?.value || 'time';
@@ -1334,11 +1398,28 @@ function render() {
   const al = document.getElementById('active-list'); al.innerHTML='';
   const fa = filteredActive();
   if (!fa.length) al.innerHTML=`<div class="empty-state"><div class="empty-icon">[ ]</div><div class="empty-text">No active tasks${activeFilter!=='all'?' in this category':''}</div></div>`;
-  else fa.forEach(t => al.appendChild(buildCard(t)));
+  else {
+    if (S_dateFilter !== 'today') {
+      // Group by date
+      const groups = {};
+      fa.forEach(t => { const d=t.task_date||t.date||today(); if(!groups[d])groups[d]=[]; groups[d].push(t); });
+      Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(date => {
+        const isPast = date < today();
+        const lbl = date === today() ? 'Today' : date;
+        const grpHdr = document.createElement('div');
+        grpHdr.style.cssText='padding:8px 4px 4px;font-family:var(--font-mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:'+(isPast?'var(--red)':'var(--gold)');
+        grpHdr.textContent = lbl + (isPast?' - PAST':'');
+        al.appendChild(grpHdr);
+        groups[date].forEach(t => al.appendChild(buildCard(t)));
+      });
+    } else {
+      fa.forEach(t => al.appendChild(buildCard(t)));
+    }
+  }
 
   // Done
   const dl=document.getElementById('done-list'), dh=document.getElementById('done-hdr'), sdw=document.getElementById('show-done-wrap'), sdb=document.getElementById('show-done-btn');
-  const doneFilt = activeFilter==='all' ? done : done.filter(t=>t.tag===activeFilter);
+  const doneFilt = (activeFilter==='all' ? done : done.filter(t=>t.tag===activeFilter)).concat(S.tasks.filter(t=>t.stage==='closed'&&(activeFilter==='all'||t.tag===activeFilter)));
   dl.innerHTML='';
   if (!doneFilt.length) { dh.style.display='none'; sdw.style.display='none'; }
   else if (S.showDone) { dh.style.display='flex'; sdw.style.display='none'; doneFilt.forEach(t=>dl.appendChild(buildCard(t))); }
@@ -1373,9 +1454,11 @@ function buildCard(task) {
   const rc=(task.remarks||[]).length, ac=(task.attachments||[]).length;
   const running = timerRunning(task);
   const elapsed = timerElapsed(task);
+  const taskDate = task.task_date || task.date || '';
+  const isNotToday = taskDate && taskDate !== today();
 
   const card = document.createElement('div');
-  card.className='task-card'+(task.stage==='done'?' done-card':'')+(task.stage==='blocked'?' blocked-card':'')+(od?' overdue-card':'');
+  card.className='task-card'+(task.stage==='done'||task.stage==='closed'?' done-card':'')+(task.stage==='blocked'?' blocked-card':'')+(od?' overdue-card':'');
   card.style.setProperty('--accent-col', od ? '#ff2d2d' : tm.col);
   card.dataset.id = task.id;
 
@@ -1388,9 +1471,10 @@ function buildCard(task) {
         <div class="card-tags">
           <div class="pri-dot" style="background:${pm.col}" title="${pm.label}"></div>
           <span class="tag-chip" style="color:${tm.col};border-color:${tm.col}30;background:${tm.col}10">${tm.label}</span>
-          <span class="stage-chip" style="color:${sm.col};border-color:${sm.col}30;background:${sm.col}10" onclick="cycleStage(event,'${task.id}')">${sm.label}</span>
+          <span class="stage-chip" style="color:${sm.col};border-color:${sm.col}30;background:${sm.col}10" onclick="event.stopPropagation();cycleStage(event,'${task.id}')">${sm.label}</span>
           ${timeTxt?`<span class="${timeCls}">${timeTxt}</span>`:''}
           <div class="card-counts">
+            ${isNotToday?`<span class="ccount" style="color:var(--amber)">${taskDate}</span>`:''}
             ${rc?`<span class="ccount">${rc} note${rc>1?'s':''}</span>`:''}
             ${ac?`<span class="ccount">${ac} file${ac>1?'s':''}</span>`:''}
             ${elapsed>0?`<span class="ccount" id="timer-${task.id}" style="color:${running?'var(--red)':'var(--gold)'}">${fmtTimer(elapsed)}</span>`:''}
@@ -1418,6 +1502,7 @@ function buildCard(task) {
 // ── DRAWER ────────────────────────────────────────────────────────────────────
 function openDrawer(id) {
   S.openId = id;
+  S.editingRemark = null; // always reset editing state
   document.getElementById('backdrop').classList.add('open');
   document.getElementById('drawer').classList.add('open');
   refreshDrawer();
@@ -1441,14 +1526,33 @@ function renderDrawer(task, atts) {
   const steps = ['todo','in_progress','review','done'];
   const curIdx = steps.indexOf(task.stage);
   const isBlocked = task.stage === 'blocked';
+  const isPast = task.task_date && task.task_date < today();
   const running = timerRunning(task);
   const elapsed = timerElapsed(task);
+  const doneStage = task.stage === 'done';
+  const closedStage = task.stage === 'closed';
 
   document.getElementById('dr-body').innerHTML = `
+    <!-- STATUS BANNER -->
+    ${isPast && !doneStage && !closedStage ? `<div style="background:rgba(255,45,45,.08);border:1px solid rgba(255,45,45,.25);border-radius:8px;padding:10px 14px;font-family:var(--font-mono);font-size:10px;color:var(--red);letter-spacing:.06em">PAST TASK - ${task.task_date} - Mark as overdue or done</div>` : ''}
+    ${doneStage ? `<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:10px 14px;font-family:var(--font-mono);font-size:10px;color:var(--green);letter-spacing:.06em">COMPLETED ${task.activity?.filter(a=>a.text==='Marked done').length?'':'today'}</div>` : ''}
+    ${closedStage ? `<div style="background:rgba(100,100,100,.1);border:1px solid rgba(100,100,100,.2);border-radius:8px;padding:10px 14px;font-family:var(--font-mono);font-size:10px;color:var(--grey);letter-spacing:.06em">CLOSED TASK</div>` : ''}
+
+    <!-- TITLE -->
     <div>
       <div class="dr-label">Title</div>
       <input class="dr-inp" id="dr-title" value="${esc(task.title)}" maxlength="140" onchange="drPatch('title',this.value)">
     </div>
+
+    <!-- QUICK ACTIONS ROW -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${!doneStage && !closedStage ? `<button onclick="quickDone('${task.id}')" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:11px 10px;font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:.1em;cursor:pointer;text-transform:uppercase">Mark Done</button>` : ''}
+      ${!closedStage ? `<button onclick="quickClose('${task.id}')" style="flex:1;background:var(--s3);color:var(--grey);border:1px solid var(--b3);border-radius:8px;padding:11px 10px;font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.1em;cursor:pointer;text-transform:uppercase">Close Task</button>` : ''}
+      ${doneStage || closedStage ? `<button onclick="quickReopen('${task.id}')" style="flex:1;background:var(--s3);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:11px 10px;font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.1em;cursor:pointer;text-transform:uppercase">Reopen</button>` : ''}
+      ${isPast && !doneStage && !closedStage ? `<button onclick="markOverdueAction('${task.id}')" style="flex:1;background:rgba(255,45,45,.1);color:var(--red);border:1px solid rgba(255,45,45,.3);border-radius:8px;padding:11px 10px;font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:.08em;cursor:pointer;text-transform:uppercase">Mark Overdue</button>` : ''}
+    </div>
+
+    <!-- FIELDS -->
     <div class="dr-row">
       <div>
         <div class="dr-label">Category</div>
@@ -1470,61 +1574,84 @@ function renderDrawer(task, atts) {
       </div>
     </div>
 
+    <!-- STAGE PIPELINE -->
     <div>
-      <div class="dr-label">Stage</div>
+      <div class="dr-label">Stage Pipeline</div>
       <div class="stepper">${steps.map((s,i)=>{
         let cls='step-node';
         if(isBlocked&&i===0) cls+=' step-blocked';
         else if(i<curIdx) cls+=' step-past';
         else if(i===curIdx) cls+=' step-active'+(s==='done'?' step-done':'');
-        return `<div class="${cls}" onclick="drSetStage('${s}')">
-          <div class="step-circle">${i<curIdx?'+':STG[s].icon}</div>
-          <div class="step-name">${STG[s].label}</div>
-        </div>`;
+        return \`<div class="\${cls}" onclick="drSetStage('\${s}')">
+          <div class="step-circle">\${i<curIdx?'+':STG[s].icon}</div>
+          <div class="step-name">\${STG[s].label}</div>
+        </div>\`;
       }).join('')}${isBlocked?`<div class="step-node"><div class="step-circle" style="border-color:var(--red);background:rgba(255,45,45,.15);color:var(--red)">x</div><div class="step-name">Blocked</div></div>`:''}</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="toggleBlock(event,'${task.id}')" style="font-family:var(--font-mono);font-size:10px;padding:6px 12px;border-radius:5px;border:1px solid ${task.stage==='blocked'?'rgba(245,158,11,.4)':'rgba(255,45,45,.3)'};background:transparent;color:${task.stage==='blocked'?'var(--amber)':'var(--red)'};cursor:pointer;letter-spacing:.06em;text-transform:uppercase">
+          ${task.stage==='blocked'?'Unblock':'Block Task'}
+        </button>
+      </div>
     </div>
 
+    <!-- TIMER -->
     <div>
-      <div class="dr-label">Timer</div>
+      <div class="dr-label">Time Tracker</div>
       <div class="timer-card">
         <div class="timer-display">
           <div class="timer-hhmm${running?' running':''}" id="dr-timer-disp">${fmtTimer(elapsed)}</div>
-          <div class="timer-label">${running?'Running - tap to stop':'Total tracked time'}</div>
+          <div class="timer-label">${running?'Timer is running':'Total tracked time'}</div>
         </div>
         <div class="timer-actions">
           ${running
-            ? `<button class="timer-btn timer-stop" onclick="stopTimer('${task.id}')">Stop Timer</button>`
-            : `<button class="timer-btn timer-start" onclick="startTimer('${task.id}')">Start Timer</button>`
+            ? `<button class="timer-btn timer-stop" onclick="stopTimer('${task.id}')">Stop</button>`
+            : task.stage!=='done'&&task.stage!=='closed'?`<button class="timer-btn timer-start" onclick="startTimer('${task.id}')">Start</button>`:''
           }
         </div>
-        ${elapsed>0?`<div class="timer-total">Total: ${fmtTimer(elapsed)} (${(elapsed/3600).toFixed(2)}h)</div>`:''}
+        ${elapsed>0?`<div class="timer-total">${fmtTimer(elapsed)} total (${(elapsed/3600).toFixed(2)}h including all sessions)</div>`:'<div class="timer-total">No time tracked yet</div>'}
       </div>
     </div>
 
+    <!-- REMARKS - FULL EDIT -->
     <div>
-      <div class="dr-label">Remarks (${(task.remarks||[]).length})</div>
-      <div class="remark-list" id="remark-list">
-        ${(task.remarks||[]).map((r,i)=>`
-          <div class="remark-item">
-            <div class="remark-text">${esc(r.text)}</div>
-            <div class="remark-meta">
-              <span class="remark-ts">${fmtTs(r.ts)}</span>
-              <button class="remark-del" onclick="delRemark(${i})">x</button>
-            </div>
-          </div>`).join('') || '<div style="font-family:var(--font-mono);font-size:10px;color:var(--grey2);padding:4px 0">No remarks yet</div>'}
+      <div class="dr-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Remarks (${(task.remarks||[]).length})</span>
       </div>
-      <div class="remark-add">
-        <textarea class="remark-textarea" id="remark-inp" rows="2" placeholder="Add a note..." onkeydown="remarkKey(event)"></textarea>
+      <div id="remark-list">
+        ${(task.remarks||[]).length === 0 ? '<div style="font-family:var(--font-mono);font-size:10px;color:var(--grey2);padding:8px 0">No remarks yet. Add your first note below.</div>' : ''}
+        ${(task.remarks||[]).map((r,i)=>`
+          <div class="remark-item" id="remark-${i}">
+            ${S.editingRemark===i
+              ? `<textarea class="remark-textarea" id="remark-edit-inp" rows="2" style="margin-bottom:6px">${esc(r.text)}</textarea>
+                 <div style="display:flex;gap:6px">
+                   <button onclick="saveRemarkEdit(${i})" style="background:var(--red);color:#fff;border:none;border-radius:5px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;cursor:pointer">Save</button>
+                   <button onclick="cancelRemarkEdit()" style="background:var(--s3);color:var(--grey);border:1px solid var(--b3);border-radius:5px;padding:5px 12px;font-family:var(--font-mono);font-size:10px;cursor:pointer">Cancel</button>
+                 </div>`
+              : `<div class="remark-text">${esc(r.text)}</div>
+                 <div class="remark-meta">
+                   <span class="remark-ts">${fmtTs(r.ts)}</span>
+                   <div style="display:flex;gap:8px">
+                     <button onclick="editRemark(${i})" style="background:none;border:none;color:var(--grey2);font-family:var(--font-mono);font-size:9px;cursor:pointer;text-transform:uppercase;letter-spacing:.06em">Edit</button>
+                     <button class="remark-del" onclick="delRemark(${i})">x</button>
+                   </div>
+                 </div>`
+            }
+          </div>`).join('')}
+      </div>
+      <div class="remark-add" style="margin-top:8px">
+        <textarea class="remark-textarea" id="remark-inp" rows="2" placeholder="Add a note, decision, update, or blocker..." onkeydown="remarkKey(event)"></textarea>
         <button class="remark-submit" onclick="addRemark()">Add</button>
       </div>
     </div>
 
+    <!-- ATTACHMENTS -->
     <div>
-      <div class="dr-label">Attachments (${atts.length})</div>
+      <div class="dr-label">Files (${atts.length})</div>
       <div class="attach-list" id="att-list">
+        ${atts.length===0?'<div style="font-family:var(--font-mono);font-size:10px;color:var(--grey2);padding:4px 0">No files attached</div>':''}
         ${atts.map(a=>`
           <div class="attach-row">
-            <div>
+            <div style="min-width:0;flex:1">
               <div class="attach-name">${esc(a.name)}</div>
               <div class="attach-size">${fmtSz(a.size)}</div>
             </div>
@@ -1532,28 +1659,30 @@ function renderDrawer(task, atts) {
             <button class="attach-del" onclick="delAtt('${a.id}','${a.storage_path||a.path||''}')">x</button>
           </div>`).join('')}
       </div>
-      <div class="attach-drop" id="att-drop" ondragover="dragOn(event)" ondragleave="dragOff()" ondrop="dropFiles(event)">
+      <div class="attach-drop" id="att-drop" ondragover="dragOn(event)" ondragleave="dragOff()" ondrop="dropFiles(event)" style="margin-top:8px">
         <input type="file" multiple onchange="pickFiles(this)" onclick="event.stopPropagation()">
         <div class="attach-drop-text">Drop files or tap to upload (max 5MB each)</div>
       </div>
       <div id="att-warn" class="attach-warn" style="display:none"></div>
     </div>
 
+    <!-- FULL TASK JOURNEY -->
     <div>
-      <div class="dr-label">Activity Log</div>
-      <div class="act-list">
-        ${[...(task.activity||[])].reverse().slice(0,15).map(a=>`
+      <div class="dr-label">Task Journey (${(task.activity||[]).length} events)</div>
+      <div class="act-list" id="journey-list">
+        ${[...(task.activity||[])].reverse().map(a=>`
           <div class="act-item">
-            <div class="act-dot"></div>
+            <div class="act-dot" style="background:${a.text.includes('done')?'var(--green)':a.text.includes('Blocked')?'var(--red)':a.text.includes('Timer')?'var(--gold)':'var(--grey3)'}"></div>
             <div class="act-text">${esc(a.text)}</div>
             <div class="act-ts">${fmtTs(a.ts)}</div>
-          </div>`).join('')||'<div style="font-size:11px;color:var(--grey2);font-family:var(--font-mono)">No activity</div>'}
+          </div>`).join('')||'<div style="font-size:11px;color:var(--grey2);font-family:var(--font-mono)">No activity yet</div>'}
       </div>
     </div>
 
     <button class="dr-save" onclick="closeDrawer()">Close</button>
   `;
 }
+
 
 async function drPatch(field, val) {
   if (!S.openId) return;
@@ -1571,6 +1700,26 @@ async function drSetStage(stage) {
 }
 
 // remarks
+function editRemark(idx) {
+  S.editingRemark = idx;
+  refreshDrawer();
+}
+function cancelRemarkEdit() {
+  S.editingRemark = null;
+  refreshDrawer();
+}
+async function saveRemarkEdit(idx) {
+  const inp = document.getElementById('remark-edit-inp');
+  const text = inp?.value.trim();
+  if (!text || !S.openId) { S.editingRemark=null; await refreshDrawer(); return; }
+  const task = S.tasks.find(t => t.id === S.openId); if (!task) return;
+  const remarks = [...(task.remarks||[])];
+  remarks[idx] = { ...remarks[idx], text, editedAt: nowTs() };
+  S.editingRemark = null;
+  await patch(S.openId, { remarks }, `Remark edited`);
+  await refreshDrawer();
+}
+
 async function addRemark() {
   const inp = document.getElementById('remark-inp'), text = inp?.value.trim(); if (!text||!S.openId) return;
   const task = S.tasks.find(t => t.id === S.openId); if (!task) return;
