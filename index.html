@@ -7,6 +7,7 @@
 <style>
 
 
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -333,20 +334,67 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .tc-time.soon{color:var(--amber)}
 #toast.toast-warn{border-color:rgba(245,158,11,.3)}
 
+
+/* ── AUTH ── */
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.auth-box{width:100%;max-width:380px;background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:32px 28px;display:flex;flex-direction:column;gap:18px}
+.auth-logo{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;text-align:center}
+.auth-title{font-size:22px;font-weight:700;letter-spacing:-.02em;text-align:center}
+.auth-tabs{display:flex;gap:4px;background:var(--s2);border-radius:7px;padding:3px}
+.auth-tab{flex:1;font-size:12px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:7px;border-radius:5px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.auth-tab.active{background:var(--purple);color:#fff}
+.auth-field{display:flex;flex-direction:column;gap:5px}
+.auth-field label{font-size:10px;font-family:var(--mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.auth-inp{background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--sans);font-size:14px;padding:11px 14px;border-radius:8px;outline:none;transition:border-color .15s;width:100%}
+.auth-inp::placeholder{color:var(--muted)}
+.auth-inp:focus{border-color:var(--purple)}
+.auth-btn{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:12px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:opacity .15s}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed}
+.auth-err{font-size:12px;color:var(--red);font-family:var(--mono);text-align:center;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:8px 12px;display:none}
+.auth-err.show{display:block}
+.auth-success{font-size:12px;color:var(--green);font-family:var(--mono);text-align:center;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:8px 12px;display:none}
+.auth-success.show{display:block}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--muted2);font-size:11px;font-family:var(--mono)}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--b2)}
+.magic-btn{background:transparent;border:1px solid var(--b2);color:var(--muted);border-radius:8px;padding:11px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;cursor:pointer;transition:all .15s;width:100%;text-transform:uppercase}
+.magic-btn:hover{border-color:var(--purple);color:var(--purple)}
+/* ── USER BAR ── */
+.user-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.user-email{font-size:11px;font-family:var(--mono);color:var(--muted);background:var(--s2);border:1px solid var(--b1);padding:4px 10px;border-radius:5px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout-btn{font-size:11px;font-family:var(--mono);letter-spacing:.05em;padding:4px 10px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.logout-btn:hover{color:var(--red);border-color:rgba(239,68,68,.3)}
+/* ── SYNC DOT ── */
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);display:inline-block;transition:background .3s}
+.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
+.sync-dot.synced{background:var(--green)}
+.sync-dot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── LOADING ── */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-spinner{width:28px;height:28px;border:2px solid var(--b2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}
+.loading-logo{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--muted);text-transform:uppercase}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:6px;padding:12px 0 0;flex-wrap:wrap;align-items:center}
+.tb-btn{font-size:11px;font-family:var(--mono);letter-spacing:.05em;padding:5px 12px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tb-btn:hover{color:var(--white);border-color:var(--b3)}
+.tb-btn.danger:hover{color:var(--red);border-color:rgba(239,68,68,.3)}
+.tb-sep{flex:1}
+/* ── TIME STATES ── */
+.tc-time.od{color:var(--red)}
+.tc-time.soon{color:var(--amber)}
+#toast.toast-warn{border-color:rgba(245,158,11,.3)}
+#toast.toast-err{border-color:rgba(239,68,68,.3)}
+#toast.toast-ok{border-color:rgba(124,92,252,.3)}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="loading-overlay" style="display:flex">
-  <div class="loading-spinner"></div>
-  <div class="loading-logo">MUSTAINE · Loading</div>
-</div>
+<div id="loading-overlay"><div class="loading-spinner"></div><div class="loading-logo">MUSTAINE · Loading</div></div>
 
-<!-- AUTH SCREEN -->
-<div id="auth-screen" style="display:none">
+<div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">Troopod · MUSTAINE</div>
+    <div class="auth-logo">Troopod · MUSTAINE Dayplan</div>
     <div class="auth-title" id="auth-title">Welcome back</div>
     <div class="auth-tabs">
       <button class="auth-tab active" data-mode="login"  onclick="switchAuthTab('login')">Sign in</button>
@@ -358,7 +406,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
     </div>
     <div class="auth-field">
       <label>Email</label>
-      <input class="auth-inp" id="auth-email" type="email" placeholder="you@troopod.in" autocomplete="email">
+      <input class="auth-inp" id="auth-email" type="email" placeholder="vinit.singh@pushstart.in" autocomplete="email">
     </div>
     <div class="auth-field">
       <label>Password</label>
@@ -366,528 +414,560 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
     </div>
     <div class="auth-err"     id="auth-err"></div>
     <div class="auth-success" id="auth-success"></div>
-    <button class="auth-btn" id="auth-submit" onclick="handleAuth()">
-      <span id="auth-btn-label">Sign in</span>
-    </button>
+    <button class="auth-btn" id="auth-submit" onclick="handleAuth()"><span id="auth-btn-label">Sign in</span></button>
     <div class="auth-divider">or</div>
     <button class="magic-btn" onclick="handleMagicLink()">✉ Send magic link</button>
   </div>
 </div>
 
-<!-- APP SHELL -->
 <div id="app-shell" style="display:none">
-
-<div id="burn-wrap"><div id="burn-fill" style="width:0%"></div></div>
-
-<header>
-  <div class="h-left">
-    <div class="h-brand">MUSTAINE · Dayplan</div>
-    <div class="h-date" id="hdate">—</div>
-  </div>
-  <div class="h-right">
-    <div class="stat-chips">
-      <div class="sc">Total <b id="st-total">0</b></div>
-      <div class="sc">Done <b id="st-done">0</b></div>
-      <div class="sc">Active <b id="st-active">0</b></div>
-      <div class="sc overdue-chip">Overdue <b id="st-overdue">0</b></div>
+  <div id="burn-wrap"><div id="burn-fill" style="width:0%"></div></div>
+  <header>
+    <div class="h-left">
+      <div class="h-brand">MUSTAINE · Dayplan</div>
+      <div class="h-date" id="hdate">—</div>
     </div>
-    <div class="nav-btns">
-      <button class="nav-btn active" id="btn-tasks"     onclick="showView('tasks')">Tasks</button>
-      <button class="nav-btn"        id="btn-analytics" onclick="showView('analytics')">Analytics</button>
-    </div>
-    <div class="user-bar">
-      <span class="user-email" id="user-email-display">—</span>
-      <button class="logout-btn" onclick="handleLogout()">Sign out</button>
-    </div>
-    <div class="h-clock" id="hclock">00:00</div>
-  </div>
-</header>
-
-<main>
-  <div id="tasks-view">
-    <div class="add-block">
-      <div class="add-row1">
-        <input class="add-input" id="add-title" placeholder="Add task… e.g. Send Durex SOW to 100 Days" maxlength="140">
-        <button class="add-btn" onclick="addTask()">+ Add</button>
+    <div class="h-right">
+      <div class="stat-chips">
+        <div class="sc">Total <b id="st-total">0</b></div>
+        <div class="sc">Done <b id="st-done">0</b></div>
+        <div class="sc">Active <b id="st-active">0</b></div>
+        <div class="sc overdue-chip">Overdue <b id="st-overdue">0</b></div>
       </div>
-      <div class="add-row2">
-        <select class="sel sel-tag" id="add-tag">
-          <option value="sales">💰 Sales</option>
-          <option value="revenue">📈 Revenue</option>
-          <option value="client">🤝 Client</option>
-          <option value="kam">👤 KAM</option>
-          <option value="design">🎨 Design</option>
-          <option value="ops">⚙️ Ops</option>
-          <option value="follow-up">📞 Follow-up</option>
-          <option value="personal">🔵 Personal</option>
-        </select>
-        <select class="sel sel-pri" id="add-pri">
-          <option value="medium">● Medium</option>
-          <option value="urgent">🔴 Urgent</option>
-          <option value="high">🟠 High</option>
-          <option value="low">⚪ Low</option>
-        </select>
-        <input class="time-inp" type="time" id="add-time">
+      <div class="nav-btns">
+        <button class="nav-btn active" id="btn-tasks"     onclick="showView('tasks')">Tasks</button>
+        <button class="nav-btn"        id="btn-analytics" onclick="showView('analytics')">Analytics</button>
       </div>
-    </div>
-    <div class="filter-row">
-      <div class="filter-tabs">
-        <button class="ftab active" data-f="all"       onclick="setFilter(this)">All</button>
-        <button class="ftab" data-f="sales"     onclick="setFilter(this)">Sales</button>
-        <button class="ftab" data-f="revenue"   onclick="setFilter(this)">Revenue</button>
-        <button class="ftab" data-f="client"    onclick="setFilter(this)">Client</button>
-        <button class="ftab" data-f="kam"       onclick="setFilter(this)">KAM</button>
-        <button class="ftab" data-f="design"    onclick="setFilter(this)">Design</button>
-        <button class="ftab" data-f="ops"       onclick="setFilter(this)">Ops</button>
-        <button class="ftab" data-f="follow-up" onclick="setFilter(this)">Follow-up</button>
+      <div class="user-bar">
+        <span class="user-email" id="user-email-display">—</span>
+        <button class="logout-btn" onclick="handleLogout()">Sign out</button>
       </div>
-      <select class="sort-sel" id="sort-sel">
-        <option value="time">By Time</option>
-        <option value="priority">By Priority</option>
-        <option value="stage">By Stage</option>
-        <option value="created">By Created</option>
-      </select>
+      <div class="h-clock" id="hclock">00:00</div>
     </div>
-    <div class="toolbar">
-      <button class="tb-btn danger" onclick="clearCompleted()">Clear done</button>
-      <span class="tb-sep"></span>
-      <span class="sync-dot" id="sync-dot" title="Sync status"></span>
-      <span style="font-size:10px;font-family:var(--mono);color:var(--muted2)" id="db-status">Supabase</span>
-    </div>
-    <div class="overdue-banner" id="overdue-banner"></div>
-    <div class="sec-label">Active Tasks</div>
-    <div class="task-list" id="active-list"></div>
-    <div class="sec-label" id="done-sec-label" style="display:none"><span>Completed</span><button onclick="toggleDoneSection()">Hide</button></div>
-    <div class="task-list" id="done-list"></div>
-    <button class="sec-label" id="show-done-btn" style="display:none;cursor:pointer;background:none;border:none;color:var(--muted);font-size:10px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:10px 0;width:100%;text-align:left" onclick="toggleDoneSection()"></button>
-    <div class="sec-label" id="blocked-sec-label" style="display:none"><span>Blocked</span></div>
-    <div class="task-list" id="blocked-list"></div>
-  </div>
+  </header>
 
-  <div id="analytics-view" style="display:none">
-    <div class="sec-label">Today · <span id="an-date-lbl">—</span></div>
-    <div class="an-grid">
-      <div class="an-card"><h3>Completion Rate</h3>
-        <div class="donut-wrap">
-          <svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80" id="donut-svg"></svg>
-          <div class="donut-legend" id="donut-legend"></div>
+  <main>
+    <div id="tasks-view">
+      <div class="add-block">
+        <div class="add-row1">
+          <input class="add-input" id="add-title" placeholder="Add task… e.g. Send Durex SOW to 100 Days" maxlength="140">
+          <button class="add-btn" onclick="addTask()">+ Add</button>
+        </div>
+        <div class="add-row2">
+          <select class="sel sel-tag" id="add-tag">
+            <option value="sales">💰 Sales</option><option value="revenue">📈 Revenue</option>
+            <option value="client">🤝 Client</option><option value="kam">👤 KAM</option>
+            <option value="design">🎨 Design</option><option value="ops">⚙️ Ops</option>
+            <option value="follow-up">📞 Follow-up</option><option value="personal">🔵 Personal</option>
+          </select>
+          <select class="sel sel-pri" id="add-pri">
+            <option value="medium">● Medium</option><option value="urgent">🔴 Urgent</option>
+            <option value="high">🟠 High</option><option value="low">⚪ Low</option>
+          </select>
+          <input class="time-inp" type="time" id="add-time">
         </div>
       </div>
-      <div class="an-card"><h3>Day Velocity</h3>
-        <div class="an-big" id="an-velocity">—</div>
-        <div class="an-sub" id="an-velocity-sub">tasks completed</div>
-        <div style="margin-top:12px">
-          <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:6px">REMAINING</div>
-          <div style="display:flex;gap:8px;font-size:11px;font-family:var(--mono)">
-            <span style="color:var(--amber)" id="an-remaining">—</span>
-            <span style="color:var(--red)"   id="an-blocked-count">—</span>
+      <div class="filter-row">
+        <div class="filter-tabs">
+          <button class="ftab active" data-f="all"       onclick="setFilter(this)">All</button>
+          <button class="ftab" data-f="sales"     onclick="setFilter(this)">Sales</button>
+          <button class="ftab" data-f="revenue"   onclick="setFilter(this)">Revenue</button>
+          <button class="ftab" data-f="client"    onclick="setFilter(this)">Client</button>
+          <button class="ftab" data-f="kam"       onclick="setFilter(this)">KAM</button>
+          <button class="ftab" data-f="design"    onclick="setFilter(this)">Design</button>
+          <button class="ftab" data-f="ops"       onclick="setFilter(this)">Ops</button>
+          <button class="ftab" data-f="follow-up" onclick="setFilter(this)">Follow-up</button>
+        </div>
+        <select class="sort-sel" id="sort-sel">
+          <option value="time">By Time</option><option value="priority">By Priority</option>
+          <option value="stage">By Stage</option><option value="created">By Created</option>
+        </select>
+      </div>
+      <div class="toolbar">
+        <button class="tb-btn danger" onclick="clearCompleted()">Clear done</button>
+        <span class="tb-sep"></span>
+        <span class="sync-dot synced" id="sync-dot" title="Sync status"></span>
+        <span style="font-size:10px;font-family:var(--mono);color:var(--muted2)">Supabase</span>
+      </div>
+      <div class="overdue-banner" id="overdue-banner"></div>
+      <div class="sec-label">Active Tasks</div>
+      <div class="task-list" id="active-list"></div>
+      <div class="sec-label" id="done-sec-label" style="display:none"><span>Completed</span><button onclick="toggleDoneSection()">Hide</button></div>
+      <div class="task-list" id="done-list"></div>
+      <button class="sec-label" id="show-done-btn" style="display:none;cursor:pointer;background:none;border:none;color:var(--muted);font-size:10px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:10px 0;width:100%;text-align:left" onclick="toggleDoneSection()"></button>
+      <div class="sec-label" id="blocked-sec-label" style="display:none"><span>Blocked</span></div>
+      <div class="task-list" id="blocked-list"></div>
+    </div>
+
+    <div id="analytics-view" style="display:none">
+      <div class="sec-label">Today · <span id="an-date-lbl">—</span></div>
+      <div class="an-grid">
+        <div class="an-card"><h3>Completion Rate</h3>
+          <div class="donut-wrap"><svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80" id="donut-svg"></svg><div class="donut-legend" id="donut-legend"></div></div>
+        </div>
+        <div class="an-card"><h3>Day Velocity</h3>
+          <div class="an-big" id="an-velocity">—</div>
+          <div class="an-sub" id="an-velocity-sub">tasks done</div>
+          <div style="margin-top:12px">
+            <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:6px">REMAINING</div>
+            <div style="display:flex;gap:8px;font-size:11px;font-family:var(--mono)">
+              <span style="color:var(--amber)" id="an-remaining">—</span>
+              <span style="color:var(--red)"   id="an-blocked-count">—</span>
+            </div>
           </div>
         </div>
+        <div class="an-card full"><h3>Tasks by Category</h3><div class="bar-chart" id="tag-bar-chart"></div></div>
+        <div class="an-card full"><h3>7-Day Completion Trend</h3><div class="spark-wrap" id="spark-wrap"></div><div class="spark-labels" id="spark-labels"></div></div>
+        <div class="an-card full"><h3>Category Breakdown</h3>
+          <table class="tag-table" id="tag-table"><thead><tr><th>Category</th><th>Total</th><th>Done</th><th>Overdue</th><th>Rate</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="an-card full"><h3>Priority × Status Heatmap</h3><div class="heatmap-grid" id="heatmap-grid"></div></div>
       </div>
-      <div class="an-card full"><h3>Tasks by Category</h3><div class="bar-chart" id="tag-bar-chart"></div></div>
-      <div class="an-card full"><h3>7-Day Completion Trend</h3><div class="spark-wrap" id="spark-wrap"></div><div class="spark-labels" id="spark-labels"></div></div>
-      <div class="an-card full"><h3>Category Breakdown</h3>
-        <table class="tag-table" id="tag-table"><thead><tr><th>Category</th><th>Total</th><th>Done</th><th>Overdue</th><th>Rate</th></tr></thead><tbody></tbody></table>
-      </div>
-      <div class="an-card full"><h3>Priority × Status Heatmap</h3><div class="heatmap-grid" id="heatmap-grid"></div></div>
     </div>
-  </div>
-</main>
+  </main>
 
-<div id="backdrop" onclick="closeDrawer()"></div>
-<div id="drawer">
-  <div class="dr-header"><h2>Task Detail</h2><button class="dr-close" onclick="closeDrawer()">×</button></div>
-  <div class="dr-body" id="dr-body"></div>
+  <div id="backdrop" onclick="closeDrawer()"></div>
+  <div id="drawer">
+    <div class="dr-header"><h2>Task Detail</h2><button class="dr-close" onclick="closeDrawer()">×</button></div>
+    <div class="dr-body" id="dr-body"></div>
+  </div>
 </div>
+
 <div id="toast">
   <span id="t-icon" style="font-size:17px">⏰</span>
   <span class="t-text" id="t-msg">—</span>
   <button class="t-close" onclick="hideToast()">×</button>
 </div>
 
-</div><!-- /app-shell -->
-
 <script>
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MUSTAINE DAYPLAN v4 — Supabase Auth + Backend + IndexedDB offline cache
+// MUSTAINE DAYPLAN v5 — Fixed Supabase backend, full edge-case coverage
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SUPA_URL  = "https://ktropcqutvnbmekjindt.supabase.co";
 const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cm9wY3F1dHZuYm1la2ppbmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTAwOTAsImV4cCI6MjA5NzQ2NjA5MH0.wE0gKMIEeZzX-XHTMcblkBZJVXKgbG5Y-KCnZ8VJ5zE";
 
-// ─── SUPABASE CLIENT ─────────────────────────────────────────────────────────
+// ─── SUPABASE CLIENT (fixed) ──────────────────────────────────────────────────
 const SB = (() => {
-  const headers = () => {
-    const h = {
+  // Session helpers
+  function saveSession(data) {
+    localStorage.setItem("sb_session", JSON.stringify({
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at:    Date.now() + ((data.expires_in || 3600) * 1000),
+      user:          data.user,
+    }));
+  }
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem("sb_session")); } catch { return null; }
+  }
+  function clearSession() { localStorage.removeItem("sb_session"); }
+  function getUser() { return getSession()?.user || null; }
+
+  async function ensureSession() {
+    const sess = getSession();
+    if (!sess) return null;
+    // Refresh if within 2 min of expiry
+    if (Date.now() > sess.expires_at - 120000) {
+      return _refreshSession(sess.refresh_token);
+    }
+    return sess;
+  }
+
+  async function _refreshSession(refresh_token) {
+    if (!refresh_token) { clearSession(); return null; }
+    try {
+      const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: { "apikey": SUPA_ANON, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token }),
+      });
+      if (!r.ok) { clearSession(); return null; }
+      const data = await r.json();
+      if (data.access_token) { saveSession(data); return data; }
+      clearSession(); return null;
+    } catch { clearSession(); return null; }
+  }
+
+  // Core fetch helper for JSON REST calls
+  async function api(method, path, body, extraParams, extraHeaders) {
+    const sess = getSession();
+    const headers = {
       "apikey":       SUPA_ANON,
       "Content-Type": "application/json",
+      ...(sess?.access_token ? { "Authorization": `Bearer ${sess.access_token}` } : {}),
+      ...(extraHeaders || {}),
     };
-    const sess = getSession();
-    if (sess?.access_token) h["Authorization"] = "Bearer " + sess.access_token;
-    return h;
-  };
 
-  async function req(method, path, body, params) {
     let url = SUPA_URL + path;
-    if (params) url += "?" + new URLSearchParams(params).toString();
-    const opts = { method, headers: headers() };
-    if (body) opts.body = JSON.stringify(body);
+    if (extraParams) {
+      // Build URLSearchParams — allows duplicate keys for AND filters
+      const p = new URLSearchParams();
+      for (const [k, v] of Object.entries(extraParams)) p.append(k, v);
+      url += "?" + p.toString();
+    }
+
+    const opts = { method, headers };
+    if (body !== undefined && body !== null) opts.body = JSON.stringify(body);
+
     const r = await fetch(url, opts);
     const text = await r.text();
     let data;
     try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-    if (!r.ok) throw new Error(data?.message || data?.error_description || JSON.stringify(data) || r.statusText);
+    if (!r.ok) {
+      const msg = (Array.isArray(data) ? data[0]?.message : data?.message)
+               || data?.error_description || data?.error
+               || JSON.stringify(data) || r.statusText;
+      throw new Error(msg);
+    }
     return data;
   }
 
-  // ── AUTH ──
+  // ── AUTH ──────────────────────────────────────────────────────────────────
   async function signUp(email, password, fullName) {
-    const data = await req("POST", "/auth/v1/signup", {
-      email, password, options: { data: { full_name: fullName } }
+    const data = await api("POST", "/auth/v1/signup", {
+      email, password,
+      options: { data: { full_name: fullName } },
     });
     if (data?.access_token) saveSession(data);
     return data;
   }
 
   async function signIn(email, password) {
-    const data = await req("POST", "/auth/v1/token?grant_type=password", { email, password });
+    const data = await api("POST", "/auth/v1/token", { email, password },
+      { grant_type: "password" });
     if (data?.access_token) saveSession(data);
     return data;
   }
 
   async function signOut() {
-    try { await req("POST", "/auth/v1/logout"); } catch {}
+    try {
+      await api("POST", "/auth/v1/logout", {}, null,
+        { "Authorization": `Bearer ${getSession()?.access_token}` });
+    } catch {}
     clearSession();
   }
 
-  async function refreshSession() {
-    const sess = getSession();
-    if (!sess?.refresh_token) return null;
-    try {
-      const data = await req("POST", "/auth/v1/token?grant_type=refresh_token",
-        { refresh_token: sess.refresh_token });
-      if (data?.access_token) { saveSession(data); return data; }
-    } catch(e) {
-      console.warn("Session refresh failed:", e);
-      clearSession();
-    }
-    return null;
-  }
-
   async function magicLink(email) {
-    return req("POST", "/auth/v1/magiclink", { email });
+    return api("POST", "/auth/v1/magiclink", { email });
   }
 
-  function getSession() {
-    try { return JSON.parse(localStorage.getItem("sb_session")); } catch { return null; }
-  }
-  function saveSession(data) {
-    const sess = {
-      access_token:  data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at:    Date.now() + (data.expires_in || 3600) * 1000,
-      user:          data.user,
+  // ── TASKS ─────────────────────────────────────────────────────────────────
+  function taskPayload(task, userId) {
+    // Build a clean DB payload — strip JS-only fields, ensure correct column names
+    const p = {
+      id:         task.id,
+      user_id:    userId,
+      title:      task.title,
+      tag:        task.tag        || "personal",
+      priority:   task.priority   || "medium",
+      stage:      task.stage      || "todo",
+      done:       task.done       || false,
+      task_date:  task.task_date  || task.date  || todayKey(),
+      task_time:  task.task_time  || task.time  || null,
+      remarks:    JSON.stringify(Array.isArray(task.remarks)  ? task.remarks  : []),
+      activity:   JSON.stringify(Array.isArray(task.activity) ? task.activity : []),
     };
-    localStorage.setItem("sb_session", JSON.stringify(sess));
-  }
-  function clearSession() { localStorage.removeItem("sb_session"); }
-
-  function getUser() { return getSession()?.user || null; }
-
-  async function ensureSession() {
-    const sess = getSession();
-    if (!sess) return null;
-    if (Date.now() > sess.expires_at - 60000) return refreshSession();
-    return sess;
-  }
-
-  // ── TASKS REST API ──
-  async function getTasks(date) {
-    await ensureSession();
-    const data = await req("GET", "/rest/v1/tasks", null, {
-      task_date: "eq." + date,
-      select: "*",
-      order: "created_at.asc",
-    });
-    return Array.isArray(data) ? data : [];
-  }
-
-  async function getTasksRange(start, end) {
-    await ensureSession();
-    const data = await req("GET", "/rest/v1/tasks", null, {
-      task_date: `gte.${start},lte.${end}`,
-      select: "*",
-    });
-    return Array.isArray(data) ? data : [];
+    // created_at only on insert (don't send on update — let DB handle)
+    if (task.created_at) p.created_at = task.created_at;
+    return p;
   }
 
   async function upsertTask(task) {
     await ensureSession();
     const user = getUser();
-    const payload = { ...task, user_id: user.id,
-      remarks: JSON.stringify(task.remarks || []),
-      activity: JSON.stringify(task.activity || []) };
-    // Map JS keys → DB columns
-    if (payload.date)      { payload.task_date = payload.date; delete payload.date; }
-    if (payload.time)      { payload.task_time = payload.time; delete payload.time; }
-    delete payload.attachments; // stored separately
-    const data = await req("POST", "/rest/v1/tasks", payload, {
-      on_conflict: "id",
+    if (!user) throw new Error("Not authenticated");
+    const payload = taskPayload(task, user.id);
+    return api("POST", "/rest/v1/tasks", payload,
+      { on_conflict: "id" },
+      {
+        "Prefer": "resolution=merge-duplicates,return=representation",
+      }
+    );
+  }
+
+  async function getTasks(date) {
+    await ensureSession();
+    return api("GET", "/rest/v1/tasks", null, {
+      task_date: `eq.${date}`,
+      select:    "*",
+      order:     "created_at.asc",
+    }) || [];
+  }
+
+  async function getTasksRange(start, end) {
+    // PostgREST AND filter: same key twice = AND condition
+    await ensureSession();
+    const p = new URLSearchParams();
+    p.append("task_date", `gte.${start}`);
+    p.append("task_date", `lte.${end}`);
+    p.append("select", "*");
+    const r = await fetch(`${SUPA_URL}/rest/v1/tasks?${p.toString()}`, {
+      headers: {
+        "apikey":        SUPA_ANON,
+        "Authorization": `Bearer ${getSession()?.access_token}`,
+      },
     });
-    return data;
+    if (!r.ok) return [];
+    return r.json();
   }
 
   async function deleteTask(id) {
     await ensureSession();
-    return req("DELETE", "/rest/v1/tasks", null, { id: "eq." + id });
+    return api("DELETE", "/rest/v1/tasks", null, { id: `eq.${id}` },
+      { "Prefer": "return=minimal" });
   }
 
+  // ── ATTACHMENTS ──────────────────────────────────────────────────────────
   async function uploadFile(taskId, file) {
     await ensureSession();
     const user = getUser();
-    const path = `${user.id}/${taskId}/${Date.now()}_${file.name}`;
-    // Upload to storage
-    const uploadUrl = SUPA_URL + "/storage/v1/object/attachments/" + path;
-    const r = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "apikey": SUPA_ANON, "Authorization": "Bearer " + getSession().access_token },
+    if (!user) throw new Error("Not authenticated");
+    // Sanitise filename
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storagePath = `${user.id}/${taskId}/${Date.now()}_${safeName}`;
+
+    // Upload raw file to Supabase Storage
+    const uploadRes = await fetch(
+      `${SUPA_URL}/storage/v1/object/attachments/${storagePath}`, {
+      method:  "POST",
+      headers: {
+        "apikey":        SUPA_ANON,
+        "Authorization": `Bearer ${getSession().access_token}`,
+        "Content-Type":  file.type || "application/octet-stream",
+        "x-upsert":      "true",
+      },
       body: file,
     });
-    if (!r.ok) throw new Error("Upload failed: " + r.statusText);
+    if (!uploadRes.ok) {
+      const err = await uploadRes.text();
+      throw new Error(`Storage upload failed: ${err}`);
+    }
 
-    // Record in attachments table
-    const att = await req("POST", "/rest/v1/attachments", {
-      task_id: taskId, user_id: user.id,
-      name: file.name, size: file.size,
-      mime_type: file.type, storage_path: path,
-    });
-    return { path, att };
+    // Record metadata in attachments table
+    const rec = await api("POST", "/rest/v1/attachments",
+      { task_id: taskId, user_id: user.id, name: file.name, size: file.size, mime_type: file.type || "", storage_path: storagePath },
+      null, { "Prefer": "return=representation" }
+    );
+    return Array.isArray(rec) ? rec[0] : rec;
   }
 
   async function getAttachments(taskId) {
     await ensureSession();
-    const data = await req("GET", "/rest/v1/attachments", null, {
-      task_id: "eq." + taskId, select: "*",
-    });
-    return Array.isArray(data) ? data : [];
+    return api("GET", "/rest/v1/attachments", null, {
+      task_id: `eq.${taskId}`, select: "*", order: "created_at.asc",
+    }) || [];
   }
 
   async function deleteAttachmentRecord(id, storagePath) {
     await ensureSession();
-    // Delete from storage
+    // Delete from storage first (best effort)
     try {
-      await req("DELETE", "/storage/v1/object/attachments/" + storagePath);
-    } catch(e) { console.warn("Storage delete failed:", e); }
-    // Delete record
-    return req("DELETE", "/rest/v1/attachments", null, { id: "eq." + id });
+      await fetch(`${SUPA_URL}/storage/v1/object/attachments/${storagePath}`, {
+        method:  "DELETE",
+        headers: { "apikey": SUPA_ANON, "Authorization": `Bearer ${getSession()?.access_token}` },
+      });
+    } catch(e) { console.warn("Storage delete failed (non-fatal):", e); }
+    // Delete DB record
+    return api("DELETE", "/rest/v1/attachments", null, { id: `eq.${id}` },
+      { "Prefer": "return=minimal" });
   }
 
-  async function getFileUrl(storagePath) {
+  async function getSignedUrl(storagePath) {
     await ensureSession();
-    const data = await req("POST", "/storage/v1/object/sign/attachments/" + storagePath,
-      { expiresIn: 3600 });
-    return SUPA_URL + "/storage/v1" + data.signedURL;
+    const data = await api("POST",
+      `/storage/v1/object/sign/attachments/${storagePath}`,
+      { expiresIn: 3600 }
+    );
+    return `${SUPA_URL}/storage/v1${data.signedURL}`;
   }
 
   return {
-    signUp, signIn, signOut, magicLink, refreshSession,
-    getUser, getSession, ensureSession, clearSession,
-    getTasks, getTasksRange, upsertTask, deleteTask,
-    uploadFile, getAttachments, deleteAttachmentRecord, getFileUrl,
+    signUp, signIn, signOut, magicLink, ensureSession,
+    getUser, getSession, clearSession,
+    upsertTask, getTasks, getTasksRange, deleteTask,
+    uploadFile, getAttachments, deleteAttachmentRecord, getSignedUrl,
   };
 })();
 
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const TAG_META = {
+  sales:       { label: "💰 Sales",     col: "#22C55E" },
+  revenue:     { label: "📈 Revenue",   col: "#3B82F6" },
+  client:      { label: "🤝 Client",    col: "#7C5CFC" },
+  kam:         { label: "👤 KAM",       col: "#EC4899" },
+  design:      { label: "🎨 Design",    col: "#F59E0B" },
+  ops:         { label: "⚙️ Ops",       col: "#06B6D4" },
+  "follow-up": { label: "📞 Follow-up", col: "#EF4444" },
+  personal:    { label: "🔵 Personal",  col: "#8B8B9A" },
+};
+const PRI_META = {
+  urgent: { col: "#EF4444", label: "Urgent" },
+  high:   { col: "#F59E0B", label: "High"   },
+  medium: { col: "#7C5CFC", label: "Medium" },
+  low:    { col: "#3D3D48", label: "Low"    },
+};
+const STAGE_META = {
+  todo:        { label: "To Do",       icon: "○", col: "#6B6B7A" },
+  in_progress: { label: "In Progress", icon: "◑", col: "#7C5CFC" },
+  review:      { label: "Review",      icon: "◕", col: "#F59E0B" },
+  done:        { label: "Done",        icon: "●", col: "#22C55E" },
+  blocked:     { label: "Blocked",     icon: "✕", col: "#EF4444" },
+};
+const MAX_FILE  = 5 * 1024 * 1024;
+const WARN_FILE = 2 * 1024 * 1024;
+
+// ─── APP STATE ────────────────────────────────────────────────────────────────
+let STATE = {
+  tasks: [], filter: "all", sort: "time",
+  showDone: false, openTaskId: null,
+  reminded: new Set(), deleteConfirm: {},
+  loading: true, syncing: false,
+};
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function uid()      { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function todayKey() { return new Date().toISOString().slice(0, 10); }
+function nowTs()    { return Date.now(); }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }); }
+function esc(s)     { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fmtSize(b) { return b < 1024 ? b+"B" : b < 1048576 ? (b/1024).toFixed(1)+"KB" : (b/1048576).toFixed(1)+"MB"; }
+function fileIcon(n){ const e=(n||"").split(".").pop().toLowerCase(); if(["jpg","jpeg","png","gif","webp","svg"].includes(e))return "🖼"; if(e==="pdf")return "📄"; if(["doc","docx"].includes(e))return "📝"; if(["xls","xlsx","csv"].includes(e))return "📊"; return "📎"; }
+function minuteOffset(t) { if(!t) return null; const[h,m]=t.split(":").map(Number),n=new Date(),d=new Date(n); d.setHours(h,m,0,0); return Math.floor((n-d)/60000); }
+function isOverdue(t) { if(!t||t.done||t.stage==="done"||t.stage==="blocked") return false; const o=minuteOffset(t.task_time||t.time); return o!==null&&o>5; }
+
+// Normalise DB row → in-memory task
+function norm(t) {
+  return {
+    ...t,
+    date:        t.task_date || t.date || todayKey(),
+    time:        t.task_time || t.time || "",
+    remarks:     typeof t.remarks  === "string" ? safeJsonParse(t.remarks,  []) : (t.remarks  || []),
+    activity:    typeof t.activity === "string" ? safeJsonParse(t.activity, []) : (t.activity || []),
+    attachments: t.attachments || [],
+  };
+}
+function safeJsonParse(str, fallback) { try { return JSON.parse(str); } catch { return fallback; } }
+
+// Sync indicator
+function setSyncing(on) {
+  STATE.syncing = on;
+  const dot = document.getElementById("sync-dot");
+  if (dot) dot.className = "sync-dot " + (on ? "syncing" : "synced");
+}
+function setSyncErr() {
+  const dot = document.getElementById("sync-dot");
+  if (dot) dot.className = "sync-dot err";
+}
+
 // ─── AUTH UI ─────────────────────────────────────────────────────────────────
-let authMode = 'login'; // 'login' | 'signup'
+let authMode = "login";
+
+function showAppScreen(show) {
+  document.getElementById("auth-screen").style.display = show ? "none"  : "none";
+  document.getElementById("app-shell").style.display   = show ? ""      : "none";
+  document.getElementById("auth-screen").style.display = show ? "none"  : "flex";
+}
 
 function showAuthScreen(show) {
-  document.getElementById('auth-screen').style.display = show ? 'flex' : 'none';
-  document.getElementById('app-shell').style.display   = show ? 'none' : '';
+  document.getElementById("auth-screen").style.display = show ? "flex" : "none";
+  document.getElementById("app-shell").style.display   = show ? "none" : "";
 }
 
 function switchAuthTab(mode) {
   authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.mode === mode));
-  document.getElementById('auth-name-field').style.display = mode === 'signup' ? '' : 'none';
-  document.getElementById('auth-title').textContent = mode === 'signup' ? 'Create account' : 'Welcome back';
-  document.getElementById('auth-btn-label').textContent   = mode === 'signup' ? 'Create account' : 'Sign in';
+  document.querySelectorAll(".auth-tab").forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
+  document.getElementById("auth-name-field").style.display = mode === "signup" ? "" : "none";
+  document.getElementById("auth-title").textContent        = mode === "signup" ? "Create account" : "Welcome back";
+  document.getElementById("auth-btn-label").textContent    = mode === "signup" ? "Create account" : "Sign in";
   clearAuthMsg();
 }
 
 function clearAuthMsg() {
-  document.getElementById('auth-err').classList.remove('show');
-  document.getElementById('auth-success').classList.remove('show');
+  document.getElementById("auth-err").className     = "auth-err";
+  document.getElementById("auth-success").className = "auth-success";
 }
-
-function setAuthMsg(msg, type = 'err') {
-  const el = document.getElementById('auth-' + type);
+function setAuthMsg(msg, type = "err") {
+  const el = document.getElementById("auth-" + type);
   el.textContent = msg;
-  el.classList.add('show');
+  el.className = "auth-" + type + " show";
 }
 
 async function handleAuth() {
-  const email    = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const name     = document.getElementById('auth-name')?.value.trim() || '';
-  const btn      = document.getElementById('auth-submit');
+  const email    = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value;
+  const name     = (document.getElementById("auth-name")?.value || "").trim();
+  const btn      = document.getElementById("auth-submit");
   clearAuthMsg();
 
-  // Validation
-  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
-    setAuthMsg('Enter a valid email address'); return;
-  }
-  if (password.length < 6) {
-    setAuthMsg('Password must be at least 6 characters'); return;
-  }
-  if (authMode === 'signup' && !name) {
-    setAuthMsg('Enter your name'); return;
-  }
+  // Client-side validation
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setAuthMsg("Enter a valid email"); return; }
+  if (password.length < 6) { setAuthMsg("Password must be at least 6 characters"); return; }
+  if (authMode === "signup" && !name) { setAuthMsg("Enter your full name"); return; }
 
   btn.disabled = true;
-  btn.textContent = authMode === 'signup' ? 'Creating…' : 'Signing in…';
+  btn.textContent = authMode === "signup" ? "Creating account…" : "Signing in…";
 
   try {
-    if (authMode === 'signup') {
+    if (authMode === "signup") {
       const res = await SB.signUp(email, password, name);
-      if (res?.user?.identities?.length === 0) {
-        setAuthMsg('This email is already registered — please sign in');
-      } else if (res?.access_token) {
+      if (res?.access_token) {
         await onAuthSuccess();
       } else {
-        setAuthMsg('Check your email to confirm your account', 'success');
+        setAuthMsg("✓ Check your email to confirm your account", "success");
       }
     } else {
       await SB.signIn(email, password);
       await onAuthSuccess();
     }
   } catch(e) {
-    let msg = e.message || 'Something went wrong';
-    if (msg.includes('Invalid login'))   msg = 'Wrong email or password';
-    if (msg.includes('Email not confirmed')) msg = 'Please confirm your email first';
+    let msg = e.message || "Something went wrong";
+    if (msg.includes("Invalid login credentials")) msg = "Wrong email or password";
+    if (msg.includes("Email not confirmed"))       msg = "Please confirm your email first";
+    if (msg.includes("User already registered"))   msg = "Account exists — sign in instead";
     setAuthMsg(msg);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === "signup" ? "Create account" : "Sign in";
   }
-
-  btn.disabled = false;
-  btn.textContent = authMode === 'signup' ? 'Create account' : 'Sign in';
 }
 
 async function handleMagicLink() {
-  const email = document.getElementById('auth-email').value.trim();
-  if (!email) { setAuthMsg('Enter your email first'); return; }
-  try {
-    await SB.magicLink(email);
-    setAuthMsg('Magic link sent — check your email ✓', 'success');
-  } catch(e) {
-    setAuthMsg(e.message || 'Failed to send magic link');
-  }
+  const email = document.getElementById("auth-email").value.trim();
+  if (!email) { setAuthMsg("Enter your email first"); return; }
+  try { await SB.magicLink(email); setAuthMsg("✓ Magic link sent — check your email", "success"); }
+  catch(e) { setAuthMsg(e.message || "Failed to send magic link"); }
 }
 
 async function handleLogout() {
   await SB.signOut();
+  STATE.tasks = []; STATE.reminded = new Set();
   showAuthScreen(true);
-  STATE.tasks = [];
-  render();
-  showToast('Signed out');
+  showToast("Signed out");
 }
 
 async function onAuthSuccess() {
   const user = SB.getUser();
-  if (!user) return;
-  updateUserBar(user);
+  if (!user) { showAuthScreen(true); return; }
+  document.getElementById("user-email-display").textContent = user.email || "Vinit";
   showAuthScreen(false);
   await init();
 }
 
-function updateUserBar(user) {
-  const el = document.getElementById('user-email-display');
-  if (el) el.textContent = user.email || user.user_metadata?.full_name || 'User';
-}
-
-// Auth form keyboard
-document.addEventListener('keydown', e => {
-  const authVisible = document.getElementById('auth-screen').style.display !== 'none';
-  if (authVisible && e.key === 'Enter') handleAuth();
-});
-
-// ─── CONSTANTS (same as v3) ───────────────────────────────────────────────────
-const TAG_META = {
-  sales:      { label: '💰 Sales',     col: '#22C55E' },
-  revenue:    { label: '📈 Revenue',   col: '#3B82F6' },
-  client:     { label: '🤝 Client',    col: '#7C5CFC' },
-  kam:        { label: '👤 KAM',       col: '#EC4899' },
-  design:     { label: '🎨 Design',    col: '#F59E0B' },
-  ops:        { label: '⚙️ Ops',       col: '#06B6D4' },
-  'follow-up':{ label: '📞 Follow-up', col: '#EF4444' },
-  personal:   { label: '🔵 Personal',  col: '#8B8B9A' },
-};
-const PRI_META = {
-  urgent: { col: '#EF4444', label: 'Urgent' },
-  high:   { col: '#F59E0B', label: 'High'   },
-  medium: { col: '#7C5CFC', label: 'Medium' },
-  low:    { col: '#3D3D48', label: 'Low'    },
-};
-const STAGE_META = {
-  todo:        { label: 'To Do',       icon: '○', col: '#6B6B7A' },
-  in_progress: { label: 'In Progress', icon: '◑', col: '#7C5CFC' },
-  review:      { label: 'Review',      icon: '◕', col: '#F59E0B' },
-  done:        { label: 'Done',        icon: '●', col: '#22C55E' },
-  blocked:     { label: 'Blocked',     icon: '✕', col: '#EF4444' },
-};
-const MAX_FILE_BYTES  = 5 * 1024 * 1024;
-const WARN_FILE_BYTES = 2 * 1024 * 1024;
-
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let STATE = {
-  tasks: [], filter: 'all', sort: 'time', showDone: false,
-  openTaskId: null, reminded: new Set(), deleteConfirm: {},
-  loading: true, syncing: false,
-};
-
-// ─── UTILS ───────────────────────────────────────────────────────────────────
-function uid()      { return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2); }
-function todayKey() { return new Date().toISOString().slice(0,10); }
-function nowTs()    { return Date.now(); }
-function fmtTime(ts){ return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}); }
-function esc(s)     { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtSize(b) { if(b<1024)return b+'B'; if(b<1048576)return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(1)+'MB'; }
-function fileIcon(n){ const e=(n||'').split('.').pop().toLowerCase(); if(['jpg','jpeg','png','gif','webp','svg'].includes(e))return '🖼'; if(e==='pdf')return '📄'; if(['doc','docx'].includes(e))return '📝'; if(['xls','xlsx','csv'].includes(e))return '📊'; return '📎'; }
-function minuteOffset(t){ if(!t)return null; const[h,m]=t.split(':').map(Number),n=new Date(),d=new Date(n); d.setHours(h,m,0,0); return Math.floor((n-d)/60000); }
-function isOverdue(t){ if(!t||t.done||t.stage==='done'||t.stage==='blocked')return false; const o=minuteOffset(t.task_time||t.time); return o!==null&&o>5; }
-
-// DB column normaliser — Supabase uses task_date/task_time, in-memory uses date/time
-function norm(t) {
-  return {
-    ...t,
-    date:     t.task_date || t.date || todayKey(),
-    time:     t.task_time || t.time || '',
-    remarks:  typeof t.remarks  === 'string' ? JSON.parse(t.remarks  || '[]') : (t.remarks  || []),
-    activity: typeof t.activity === 'string' ? JSON.parse(t.activity || '[]') : (t.activity || []),
-    attachments: t.attachments || [],
-  };
-}
-
-// Sync indicator
-function setSyncing(on) {
-  STATE.syncing = on;
-  const dot = document.getElementById('sync-dot');
-  if (!dot) return;
-  dot.className = 'sync-dot ' + (on ? 'syncing' : 'synced');
-}
-function setSyncErr() {
-  const dot = document.getElementById('sync-dot');
-  if (dot) dot.className = 'sync-dot err';
-}
-
-// ─── INIT ────────────────────────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
   setLoading(true);
   try {
     const sess = await SB.ensureSession();
     if (!sess) { showAuthScreen(true); setLoading(false); return; }
 
-    updateUserBar(SB.getUser());
+    document.getElementById("user-email-display").textContent = SB.getUser()?.email || "—";
+
+    // Load reminded set (per user, per day)
+    const remKey = "rem_" + SB.getUser()?.id + "_" + todayKey();
+    try { STATE.reminded = new Set(JSON.parse(localStorage.getItem(remKey) || "[]")); } catch {}
+
     await loadTodayTasks();
     await maybeSeed();
     tick();
@@ -895,24 +975,19 @@ async function init() {
 
     setInterval(tick, 30000);
     setInterval(checkReminders, 30000);
-    setInterval(async () => { await loadTodayTasks(); render(); }, 60000);
+    setInterval(async () => { if (!document.hidden) { await loadTodayTasks(); render(); } }, 60000);
 
-    document.addEventListener('visibilitychange', async () => {
+    document.addEventListener("visibilitychange", async () => {
       if (!document.hidden) { await loadTodayTasks(); render(); }
-    });
+    }, { once: false });
 
-    if ('Notification' in window && Notification.permission === 'default') {
-      setTimeout(() => Notification.requestPermission(), 3000);
+    if ("Notification" in window && Notification.permission === "default") {
+      setTimeout(() => Notification.requestPermission(), 5000);
     }
-
-    // Load reminded from localStorage (per-user key)
-    const remKey = 'reminded_' + SB.getUser()?.id;
-    try { STATE.reminded = new Set(JSON.parse(localStorage.getItem(remKey) || '[]')); } catch {}
-
   } catch(e) {
-    console.error('Init error:', e);
+    console.error("Init error:", e);
     setSyncErr();
-    showToast('⚠ Failed to connect: ' + e.message, 'err');
+    showToast("⚠ Failed to connect: " + e.message, "err");
   } finally {
     setLoading(false);
   }
@@ -920,105 +995,115 @@ async function init() {
 
 function setLoading(on) {
   STATE.loading = on;
-  document.getElementById('loading-overlay').style.display = on ? 'flex' : 'none';
+  document.getElementById("loading-overlay").style.display = on ? "flex" : "none";
 }
 
 async function loadTodayTasks() {
   setSyncing(true);
   try {
     const raw = await SB.getTasks(todayKey());
-    STATE.tasks = raw.map(norm);
+    STATE.tasks = (raw || []).map(norm);
     setSyncing(false);
   } catch(e) {
     setSyncErr();
-    showToast('⚠ Sync failed — check connection', 'err');
+    console.error("loadTodayTasks:", e);
+    showToast("⚠ Sync failed — " + e.message, "err");
   }
 }
 
 // ─── SEEDING ─────────────────────────────────────────────────────────────────
 async function maybeSeed() {
   if (STATE.tasks.length > 0) return;
-  const seedKey = 'seeded_' + todayKey() + '_' + SB.getUser()?.id;
-  if (localStorage.getItem(seedKey)) return;
-  const mk = (title, tag, pri, time, stage='todo') => ({
-    id: uid(), title, tag, priority: pri, task_time: time, stage, done: stage==='done',
-    task_date: todayKey(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    remarks: '[]', activity: JSON.stringify([{ts:nowTs(),text:'Task created'}]),
+  const k = "seeded_" + todayKey() + "_" + (SB.getUser()?.id || "");
+  if (localStorage.getItem(k)) return;
+  const now = new Date().toISOString();
+  const mk = (title, tag, pri, time, stage = "todo") => ({
+    id: uid(), title, tag, priority: pri,
+    task_time: time || null, stage, done: stage === "done",
+    task_date: todayKey(), created_at: now, updated_at: now,
+    remarks: "[]", activity: JSON.stringify([{ ts: nowTs(), text: "Task created" }]),
   });
   const seeds = [
-    mk('Send Durex SOW deck to 100 Days',            'client',    'urgent', '09:30'),
-    mk('Follow-up: Wild Wand PDP approval',           'follow-up', 'high',   '10:00'),
-    mk('Weekly revenue report — Troopod',             'revenue',   'high',   '11:00'),
-    mk('KAM sync call — Mia / Tanishq',               'kam',       'medium', '12:00'),
-    mk('Bullet PDP push to GitHub Pages',             'design',    'high',   '14:00', 'in_progress'),
-    mk('Chase invoice — Mia Tanishq',                 'sales',     'urgent', '15:30'),
-    mk('Sweet Nothings desktop build update',         'client',    'medium', '16:00'),
-    mk('Vivi Longevity CVR review',                   'revenue',   'medium', '17:00'),
+    mk("Send Durex SOW deck to 100 Days",          "client",    "urgent", "09:30"),
+    mk("Follow-up: Wild Wand PDP approval",         "follow-up", "high",   "10:00"),
+    mk("Weekly revenue report — Troopod",           "revenue",   "high",   "11:00"),
+    mk("KAM sync — Mia / Tanishq",                  "kam",       "medium", "12:00"),
+    mk("Bullet PDP push to GitHub Pages",           "design",    "high",   "14:00", "in_progress"),
+    mk("Chase invoice — Mia Tanishq",               "sales",     "urgent", "15:30"),
+    mk("Sweet Nothings desktop build update",       "client",    "medium", "16:00"),
+    mk("Vivi Longevity CVR review",                 "revenue",   "medium", "17:00"),
+    mk("House of Vaulte deck feedback",             "design",    "low",    null),
+    mk("Cocosutra FAQ schema markup fix",           "ops",       "low",    null),
   ];
+  let seeded = 0;
   for (const t of seeds) {
-    try { await SB.upsertTask(t); } catch(e) { console.warn('Seed failed:', e); }
+    try { await SB.upsertTask(t); seeded++; } catch(e) { console.warn("Seed skip:", t.title, e.message); }
   }
-  localStorage.setItem(seedKey, '1');
-  await loadTodayTasks();
+  if (seeded > 0) {
+    localStorage.setItem(k, "1");
+    await loadTodayTasks();
+  }
 }
 
-// ─── TASK ACTIONS ────────────────────────────────────────────────────────────
+// ─── TASK ACTIONS ─────────────────────────────────────────────────────────────
 async function addTask() {
-  const inp   = document.getElementById('add-title');
+  const inp   = document.getElementById("add-title");
   const title = inp.value.trim();
-  if (!title) { inp.classList.add('shake'); setTimeout(()=>inp.classList.remove('shake'),400); inp.focus(); return; }
-
-  const dup = STATE.tasks.find(t => t.title.toLowerCase() === title.toLowerCase());
-  if (dup) showToast('⚠ Task with this name already exists today', 'warn');
-
+  if (!title) {
+    inp.classList.add("shake");
+    setTimeout(() => inp.classList.remove("shake"), 400);
+    inp.focus(); return;
+  }
+  // Duplicate warn
+  if (STATE.tasks.find(t => t.title.toLowerCase() === title.toLowerCase())) {
+    showToast("⚠ Task with this name already exists today", "warn");
+  }
+  const now = new Date().toISOString();
   const task = {
-    id:        uid(),
-    title,
-    tag:       document.getElementById('add-tag').value,
-    priority:  document.getElementById('add-pri').value,
-    task_time: document.getElementById('add-time').value,
-    stage:     'todo', done: false,
-    task_date: todayKey(),
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    remarks:   '[]',
-    activity:  JSON.stringify([{ts:nowTs(),text:'Task created'}]),
+    id: uid(), title,
+    tag:       document.getElementById("add-tag").value,
+    priority:  document.getElementById("add-pri").value,
+    task_time: document.getElementById("add-time").value || null,
+    stage: "todo", done: false,
+    task_date: todayKey(), created_at: now, updated_at: now,
+    remarks: "[]",
+    activity: JSON.stringify([{ ts: nowTs(), text: "Task created" }]),
   };
-
   setSyncing(true);
   try {
     await SB.upsertTask(task);
     await loadTodayTasks();
     render();
-    inp.value = ''; inp.focus();
-    showToast('✓ Task added');
+    inp.value = ""; inp.focus();
+    showToast("✓ Task added");
   } catch(e) {
-    setSyncErr(); showToast('⚠ Save failed: ' + e.message, 'err');
+    setSyncErr(); showToast("⚠ Save failed: " + e.message, "err");
   }
 }
 
-async function updateTask(id, changes, logMsg) {
+async function patchTask(id, changes, logMsg) {
   const task = STATE.tasks.find(t => t.id === id);
-  if (!task) return;
+  if (!task) return null;
   const updated = { ...task, ...changes, updated_at: new Date().toISOString() };
-  if (logMsg) updated.activity = [...(task.activity||[]), {ts:nowTs(),text:logMsg}];
-  // Optimistic update
+  if (logMsg) updated.activity = [...(task.activity || []), { ts: nowTs(), text: logMsg }];
+  // Optimistic
   const idx = STATE.tasks.findIndex(t => t.id === id);
   if (idx !== -1) STATE.tasks[idx] = updated;
+  render();
   setSyncing(true);
   try {
     await SB.upsertTask(updated);
     setSyncing(false);
   } catch(e) {
-    setSyncErr(); showToast('⚠ Sync error: ' + e.message, 'err');
-    await loadTodayTasks(); // rollback
+    setSyncErr(); showToast("⚠ Sync error: " + e.message, "err");
+    await loadTodayTasks(); render(); // rollback
   }
   return updated;
 }
 
 async function deleteTask(e, id) {
   e.stopPropagation();
-  const btn = document.getElementById('del-' + id);
-  if (!btn) return;
+  const btn = document.getElementById("del-" + id);
   if (STATE.deleteConfirm[id]) {
     clearTimeout(STATE.deleteConfirm[id]);
     delete STATE.deleteConfirm[id];
@@ -1027,51 +1112,43 @@ async function deleteTask(e, id) {
       await SB.deleteTask(id);
       if (STATE.openTaskId === id) closeDrawer();
       await loadTodayTasks(); render();
-      showToast('Task deleted');
-    } catch(e) { setSyncErr(); showToast('⚠ Delete failed: ' + e.message, 'err'); }
+      showToast("Task deleted");
+    } catch(e) { setSyncErr(); showToast("⚠ Delete failed: " + e.message, "err"); }
   } else {
-    if (btn) { btn.textContent = 'Confirm?'; btn.classList.add('confirming'); }
+    if (btn) { btn.textContent = "Confirm?"; btn.classList.add("confirming"); }
     STATE.deleteConfirm[id] = setTimeout(() => {
       delete STATE.deleteConfirm[id];
-      const b = document.getElementById('del-' + id);
-      if (b) { b.textContent = '×'; b.classList.remove('confirming'); }
+      const b = document.getElementById("del-" + id);
+      if (b) { b.textContent = "×"; b.classList.remove("confirming"); }
     }, 2500);
   }
 }
 
 async function toggleDone(e, id) {
   e.stopPropagation();
-  const task = STATE.tasks.find(t => t.id === id);
-  if (!task) return;
-  const ns = task.stage === 'done' ? 'todo' : 'done';
-  await updateTask(id, {stage:ns, done:ns==='done'}, ns==='done'?'Marked done':'Marked active');
-  render();
+  const task = STATE.tasks.find(t => t.id === id); if (!task) return;
+  const ns = task.stage === "done" ? "todo" : "done";
+  await patchTask(id, { stage: ns, done: ns === "done" }, ns === "done" ? "Marked done ✓" : "Marked active");
   if (STATE.openTaskId === id) await refreshDrawer();
 }
 
 async function cycleStage(e, id) {
   e.stopPropagation();
-  const task = STATE.tasks.find(t => t.id === id);
-  if (!task) return;
-  const order = ['todo','in_progress','review','done'];
-  const cur   = order.indexOf(task.stage);
-  const next  = order[(cur+1)%order.length];
-  await updateTask(id, {stage:next,done:next==='done'},
+  const task = STATE.tasks.find(t => t.id === id); if (!task) return;
+  const order = ["todo","in_progress","review","done"], cur = order.indexOf(task.stage), next = order[(cur+1)%order.length];
+  await patchTask(id, { stage: next, done: next === "done" },
     `Stage: ${STAGE_META[task.stage]?.label} → ${STAGE_META[next]?.label}`);
-  render();
   if (STATE.openTaskId === id) await refreshDrawer();
 }
 
 async function toggleBlock(e, id) {
   e.stopPropagation();
-  const task = STATE.tasks.find(t => t.id === id);
-  if (!task) return;
-  if (task.stage === 'blocked') {
-    await updateTask(id, {stage:'todo',done:false}, 'Unblocked');
+  const task = STATE.tasks.find(t => t.id === id); if (!task) return;
+  if (task.stage === "blocked") {
+    await patchTask(id, { stage: "todo", done: false }, "Unblocked");
   } else {
-    await updateTask(id, {stage:'blocked',done:false}, `Blocked (was ${STAGE_META[task.stage]?.label})`);
+    await patchTask(id, { stage: "blocked", done: false }, `Blocked (was ${STAGE_META[task.stage]?.label})`);
   }
-  render();
   if (STATE.openTaskId === id) await refreshDrawer();
 }
 
@@ -1079,158 +1156,168 @@ async function toggleBlock(e, id) {
 function startInlineEdit(e, id) {
   e.stopPropagation();
   const task = STATE.tasks.find(t => t.id === id); if (!task) return;
-  const el = document.getElementById('title-' + id);
-  if (!el || el.tagName === 'INPUT') return;
+  const el = document.getElementById("title-" + id);
+  if (!el || el.tagName === "INPUT") return;
   el.outerHTML = `<input class="tc-title-input" id="title-${id}" value="${esc(task.title)}" maxlength="140"
-    onclick="event.stopPropagation()" onblur="commitInlineEdit('${id}')" onkeydown="inlineKey(event,'${id}')">`;
-  const inp = document.getElementById('title-' + id);
+    onclick="event.stopPropagation()"
+    onblur="commitInlineEdit('${id}')"
+    onkeydown="inlineKey(event,'${id}')">`;
+  const inp = document.getElementById("title-" + id);
   if (inp) { inp.focus(); inp.select(); }
 }
 function inlineKey(e, id) {
-  if (e.key === 'Enter')  commitInlineEdit(id);
-  if (e.key === 'Escape') render();
+  if (e.key === "Enter")  { e.preventDefault(); commitInlineEdit(id); }
+  if (e.key === "Escape") { render(); }
 }
 async function commitInlineEdit(id) {
-  const inp  = document.getElementById('title-' + id);
-  if (!inp || inp.tagName !== 'INPUT') return;
-  const val  = inp.value.trim();
+  const inp = document.getElementById("title-" + id);
+  if (!inp || inp.tagName !== "INPUT") return;
+  const val = inp.value.trim();
   const task = STATE.tasks.find(t => t.id === id); if (!task) return;
-  if (val && val !== task.title) { await updateTask(id, {title:val}, `Title changed to "${val}"`); showToast('✓ Saved'); }
-  render();
+  if (val && val !== task.title) {
+    await patchTask(id, { title: val }, `Title changed: "${val}"`);
+    showToast("✓ Saved");
+  } else render();
 }
 
-// ─── FILTER / SORT ───────────────────────────────────────────────────────────
+// ─── FILTER / SORT ────────────────────────────────────────────────────────────
 function setFilter(el) {
-  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  STATE.filter = el.dataset.f;
-  render();
+  document.querySelectorAll(".ftab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active"); STATE.filter = el.dataset.f; render();
 }
 function toggleDoneSection() { STATE.showDone = !STATE.showDone; render(); }
 function filteredActive() {
-  let tt = STATE.tasks.filter(t => t.stage !== 'done' && t.stage !== 'blocked');
-  if (STATE.filter !== 'all') tt = tt.filter(t => t.tag === STATE.filter);
+  let tt = STATE.tasks.filter(t => t.stage !== "done" && t.stage !== "blocked");
+  if (STATE.filter !== "all") tt = tt.filter(t => t.tag === STATE.filter);
   const po={urgent:0,high:1,medium:2,low:3}, so={todo:0,in_progress:1,review:2};
-  tt.sort((a,b) => {
-    if (STATE.sort==='priority') return po[a.priority]-po[b.priority];
-    if (STATE.sort==='stage')    return so[a.stage]-so[b.stage];
-    if (STATE.sort==='created')  return new Date(a.created_at)-new Date(b.created_at);
+  tt.sort((a, b) => {
+    if (STATE.sort==="priority") return po[a.priority]-po[b.priority];
+    if (STATE.sort==="stage")    return so[a.stage]-so[b.stage];
+    if (STATE.sort==="created")  return new Date(a.created_at)-new Date(b.created_at);
     const at=a.task_time||a.time, bt=b.task_time||b.time;
-    if(at&&bt) return at<bt?-1:1; if(at&&!bt)return -1; if(!at&&bt)return 1;
+    if(at&&bt) return at<bt?-1:1; if(at&&!bt) return -1; if(!at&&bt) return 1;
     return new Date(a.created_at)-new Date(b.created_at);
   });
   return tt;
 }
 
-// ─── RENDER ──────────────────────────────────────────────────────────────────
+// ─── RENDER ───────────────────────────────────────────────────────────────────
 function render() {
   if (STATE.loading) return;
   const today   = STATE.tasks;
-  const done    = today.filter(t => t.stage === 'done');
-  const blocked = today.filter(t => t.stage === 'blocked');
-  const active  = today.filter(t => t.stage !== 'done' && t.stage !== 'blocked');
+  const done    = today.filter(t => t.stage === "done");
+  const blocked = today.filter(t => t.stage === "blocked");
+  const active  = today.filter(t => t.stage !== "done" && t.stage !== "blocked");
   const overdue = today.filter(isOverdue);
 
-  document.getElementById('st-total').textContent   = today.length;
-  document.getElementById('st-done').textContent    = done.length;
-  document.getElementById('st-active').textContent  = active.length;
-  document.getElementById('st-overdue').textContent = overdue.length;
+  document.getElementById("st-total").textContent   = today.length;
+  document.getElementById("st-done").textContent    = done.length;
+  document.getElementById("st-active").textContent  = active.length;
+  document.getElementById("st-overdue").textContent = overdue.length;
 
-  const ob = document.getElementById('overdue-banner');
-  if (overdue.length) { ob.style.display=''; ob.textContent=`⚠ ${overdue.length} overdue task${overdue.length>1?'s':''} — check your schedule`; }
-  else ob.style.display='none';
+  const ob = document.getElementById("overdue-banner");
+  if (overdue.length) { ob.style.display=""; ob.textContent=`⚠ ${overdue.length} overdue task${overdue.length>1?"s":""} — check your schedule`; }
+  else ob.style.display="none";
 
-  const al = document.getElementById('active-list');
-  al.innerHTML = '';
-  const filteredAct = filteredActive();
-  if (!filteredAct.length) {
-    al.innerHTML = `<div class="empty-state">no active tasks${STATE.filter!=='all'?' in this category':''}<br>
+  // Active list
+  const al = document.getElementById("active-list"); al.innerHTML="";
+  const fa = filteredActive();
+  if (!fa.length) {
+    al.innerHTML=`<div class="empty-state">no active tasks${STATE.filter!=="all"?" in this category":""}<br>
       <span style="color:var(--muted2);font-size:10px">add one above</span></div>`;
-  } else filteredAct.forEach(t => al.appendChild(buildCard(t)));
+  } else fa.forEach(t => al.appendChild(buildCard(t)));
 
-  const dl=document.getElementById('done-list'), dsl=document.getElementById('done-sec-label'), sdb=document.getElementById('show-done-btn');
-  const doneFilt = STATE.filter==='all' ? done : done.filter(t=>t.tag===STATE.filter);
-  dl.innerHTML='';
-  if (!doneFilt.length) { dsl.style.display='none'; sdb.style.display='none'; }
-  else if (STATE.showDone) { dsl.style.display='flex'; sdb.style.display='none'; doneFilt.forEach(t=>dl.appendChild(buildCard(t))); }
-  else { dsl.style.display='none'; sdb.style.display=''; sdb.textContent=`Show ${doneFilt.length} completed task${doneFilt.length>1?'s':''}`; }
+  // Done
+  const dl=document.getElementById("done-list"), dsl=document.getElementById("done-sec-label"), sdb=document.getElementById("show-done-btn");
+  const doneFilt = STATE.filter==="all" ? done : done.filter(t=>t.tag===STATE.filter);
+  dl.innerHTML="";
+  if (!doneFilt.length) { dsl.style.display="none"; sdb.style.display="none"; }
+  else if (STATE.showDone) { dsl.style.display="flex"; sdb.style.display="none"; doneFilt.forEach(t=>dl.appendChild(buildCard(t))); }
+  else { dsl.style.display="none"; sdb.style.display=""; sdb.textContent=`Show ${doneFilt.length} completed task${doneFilt.length>1?"s":""}`; }
 
-  const blockedFilt = STATE.filter==='all' ? blocked : blocked.filter(t=>t.tag===STATE.filter);
-  const bl = document.getElementById('blocked-list');
-  document.getElementById('blocked-sec-label').style.display = blockedFilt.length ? '' : 'none';
-  bl.innerHTML=''; blockedFilt.forEach(t=>bl.appendChild(buildCard(t)));
+  // Blocked
+  const blockedFilt = STATE.filter==="all" ? blocked : blocked.filter(t=>t.tag===STATE.filter);
+  document.getElementById("blocked-sec-label").style.display = blockedFilt.length ? "" : "none";
+  const bl=document.getElementById("blocked-list"); bl.innerHTML="";
+  blockedFilt.forEach(t=>bl.appendChild(buildCard(t)));
 
-  const ss=document.getElementById('sort-sel'); if(ss&&ss.value!==STATE.sort) ss.value=STATE.sort;
+  const ss=document.getElementById("sort-sel"); if(ss&&ss.value!==STATE.sort) ss.value=STATE.sort;
 }
 
 function buildCard(task) {
-  const tm=TAG_META[task.tag]||{label:task.tag,col:'#6B6B7A'};
+  const tm=TAG_META[task.tag]||{label:task.tag,col:"#6B6B7A"};
   const pm=PRI_META[task.priority]||PRI_META.medium;
   const sm=STAGE_META[task.stage]||STAGE_META.todo;
   const od=isOverdue(task);
-  const taskTime = task.task_time || task.time || '';
+  const taskTime=task.task_time||task.time||"";
   const off=minuteOffset(taskTime);
-  let timeLabel='', timeCls='tc-time';
+  let timeLabel="", timeCls="tc-time";
   if (taskTime) {
-    const[h,m]=taskTime.split(':').map(Number); const ap=h>=12?'pm':'am'; const hr=h%12||12;
-    timeLabel=`${hr}:${String(m).padStart(2,'0')} ${ap}`;
-    if (!task.done && task.stage!=='done' && off!==null) {
-      if(off>5){timeCls+=' od';timeLabel+=' · overdue';} else if(off>-20) timeCls+=' soon';
+    const[h,m]=taskTime.split(":").map(Number); const ap=h>=12?"pm":"am"; const hr=h%12||12;
+    timeLabel=`${hr}:${String(m).padStart(2,"0")} ${ap}`;
+    if(!task.done&&task.stage!=="done"&&off!==null){
+      if(off>5){timeCls+=" od";timeLabel+=" · overdue";} else if(off>-20) timeCls+=" soon";
     }
   }
   const rc=(task.remarks||[]).length, ac=(task.attachments||[]).length;
-  const card=document.createElement('div');
-  card.className='task-card'+(task.stage==='done'?' is-done':'')+(task.stage==='blocked'?' is-blocked':'')+(od?' is-overdue':'');
-  card.style.setProperty('--tag-col',tm.col); card.dataset.id=task.id;
+  const card=document.createElement("div");
+  card.className="task-card"+(task.stage==="done"?" is-done":"")+(task.stage==="blocked"?" is-blocked":"")+(od?" is-overdue":"");
+  card.style.setProperty("--tag-col",tm.col); card.dataset.id=task.id;
   card.innerHTML=`
-    <button class="tc-check" onclick="toggleDone(event,'${task.id}')" title="${task.stage==='done'?'Mark active':'Mark done'}">✓</button>
+    <button class="tc-check" onclick="toggleDone(event,'${task.id}')" title="${task.stage==="done"?"Unmark":"Mark done"}">✓</button>
     <div class="tc-body">
       <div class="tc-title-wrap">
         <div class="pri-dot" style="background:${pm.col}" title="${pm.label} priority"></div>
-        <div class="tc-title" id="title-${task.id}" ondblclick="startInlineEdit(event,'${task.id}')"
-          title="Double-click to edit">${esc(task.title)}</div>
+        <div class="tc-title" id="title-${task.id}" ondblclick="startInlineEdit(event,'${task.id}')" title="Double-click to rename">${esc(task.title)}</div>
         <div class="tc-counts">
-          ${rc?`<span class="tc-count">💬${rc}</span>`:''}
-          ${ac?`<span class="tc-count">📎${ac}</span>`:''}
+          ${rc?`<span class="tc-count" title="${rc} remark${rc>1?"s":""}">💬${rc}</span>`:""}
+          ${ac?`<span class="tc-count" title="${ac} file${ac>1?"s":""}">📎${ac}</span>`:""}
         </div>
       </div>
       <div class="tc-meta">
         <span class="tag-pill" style="background:${tm.col}18;color:${tm.col};border:1px solid ${tm.col}30">${tm.label}</span>
         <span class="stage-badge" style="background:${sm.col}18;color:${sm.col};border-color:${sm.col}30"
-          onclick="cycleStage(event,'${task.id}')">${sm.icon} ${sm.label}</span>
-        ${timeLabel?`<span class="${timeCls}">⏱ ${timeLabel}</span>`:''}
+          onclick="cycleStage(event,'${task.id}')" title="Click to advance stage">${sm.icon} ${sm.label}</span>
+        ${timeLabel?`<span class="${timeCls}">⏱ ${timeLabel}</span>`:""}
       </div>
     </div>
     <div class="tc-actions">
-      <button class="tc-del" id="del-${task.id}" onclick="deleteTask(event,'${task.id}')">×</button>
-      <button class="tc-block" onclick="toggleBlock(event,'${task.id}')">${task.stage==='blocked'?'unblock':'block'}</button>
+      <button class="tc-del" id="del-${task.id}" onclick="deleteTask(event,'${task.id}')" title="Delete (2-tap)">×</button>
+      <button class="tc-block" onclick="toggleBlock(event,'${task.id}')" title="${task.stage==="blocked"?"Unblock":"Block"}">${task.stage==="blocked"?"unblock":"block"}</button>
     </div>`;
-  card.addEventListener('click', e => {
-    if (e.target.closest('.tc-check,.tc-del,.tc-block,.stage-badge,.tc-title-input')) return;
+  card.addEventListener("click", e => {
+    if (e.target.closest(".tc-check,.tc-del,.tc-block,.stage-badge,.tc-title-input")) return;
     openDrawer(task.id);
   });
   return card;
 }
 
-// ─── DRAWER ──────────────────────────────────────────────────────────────────
-function openDrawer(id) { STATE.openTaskId=id; document.getElementById('backdrop').classList.add('open'); document.getElementById('drawer').classList.add('open'); refreshDrawer(); }
-function closeDrawer()  { STATE.openTaskId=null; document.getElementById('backdrop').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); }
+// ─── DRAWER ───────────────────────────────────────────────────────────────────
+function openDrawer(id) {
+  STATE.openTaskId=id;
+  document.getElementById("backdrop").classList.add("open");
+  document.getElementById("drawer").classList.add("open");
+  refreshDrawer();
+}
+function closeDrawer() {
+  STATE.openTaskId=null;
+  document.getElementById("backdrop").classList.remove("open");
+  document.getElementById("drawer").classList.remove("open");
+}
 
 async function refreshDrawer() {
   if (!STATE.openTaskId) return;
-  const task = STATE.tasks.find(t=>t.id===STATE.openTaskId);
+  const task=STATE.tasks.find(t=>t.id===STATE.openTaskId);
   if (!task) { closeDrawer(); return; }
-  let atts = [];
-  try { atts = await SB.getAttachments(task.id); } catch(e) { console.warn('Attachments load failed:', e); }
-  // Store refs on task
+  let atts=[];
+  try { atts = await SB.getAttachments(task.id); } catch(e) { console.warn("Attachments:", e); }
   task.attachments = atts.map(a=>({id:a.id,name:a.name,size:a.size,type:a.mime_type,path:a.storage_path}));
   renderDrawer(task, atts);
-  render(); // update attachment count chip
+  render();
 }
 
 function renderDrawer(task, atts) {
-  const body=document.getElementById('dr-body');
-  body.innerHTML=`
+  document.getElementById("dr-body").innerHTML=`
     <div class="dr-section">
       <div class="dr-label">Title</div>
       <input class="dr-title-input" id="dr-title" value="${esc(task.title)}" maxlength="140" onchange="drField('title',this.value)">
@@ -1239,16 +1326,16 @@ function renderDrawer(task, atts) {
       <div class="dr-label">Fields</div>
       <div class="dr-fields">
         <div class="dr-field"><label>Category</label>
-          <select class="dr-sel" onchange="drField('tag',this.value)">${Object.entries(TAG_META).map(([k,v])=>`<option value="${k}"${task.tag===k?' selected':''}>${v.label}</option>`).join('')}</select>
+          <select class="dr-sel" onchange="drField('tag',this.value)">${Object.entries(TAG_META).map(([k,v])=>`<option value="${k}"${task.tag===k?" selected":""}>${v.label}</option>`).join("")}</select>
         </div>
         <div class="dr-field"><label>Priority</label>
-          <select class="dr-sel" onchange="drField('priority',this.value)">${Object.entries(PRI_META).map(([k,v])=>`<option value="${k}"${task.priority===k?' selected':''}>${v.label}</option>`).join('')}</select>
+          <select class="dr-sel" onchange="drField('priority',this.value)">${Object.entries(PRI_META).map(([k,v])=>`<option value="${k}"${task.priority===k?" selected":""}>${v.label}</option>`).join("")}</select>
         </div>
         <div class="dr-field"><label>Time</label>
-          <input class="dr-time" type="time" value="${task.task_time||task.time||''}" onchange="drField('task_time',this.value)">
+          <input class="dr-time" type="time" value="${task.task_time||task.time||""}" onchange="drField('task_time',this.value)">
         </div>
         <div class="dr-field"><label>Date</label>
-          <input class="dr-time" type="date" value="${task.task_date||task.date||''}" onchange="drField('task_date',this.value)">
+          <input class="dr-time" type="date" value="${task.task_date||task.date||""}" onchange="drField('task_date',this.value)">
         </div>
       </div>
     </div>
@@ -1258,25 +1345,20 @@ function renderDrawer(task, atts) {
     </div>
     <div class="dr-section">
       <div class="dr-label">Remarks <span style="color:var(--muted2);font-size:10px;margin-left:4px">${(task.remarks||[]).length} notes</span></div>
-      <div class="remarks-list" id="remarks-list">
-        ${(task.remarks||[]).length ? (task.remarks||[]).map((r,i)=>`
-          <div class="remark-item">
-            <div class="remark-text">${esc(r.text)}</div>
-            <div class="remark-meta"><span class="remark-ts">${fmtTime(r.ts)}</span>
-              <button class="remark-del" onclick="deleteRemark(${i})">×</button></div>
-          </div>`).join('')
-        : '<div style="font-size:11px;font-family:var(--mono);color:var(--muted2);padding:4px 0">No remarks yet</div>'}
-      </div>
+      <div id="remarks-list">${(task.remarks||[]).map((r,i)=>`
+        <div class="remark-item">
+          <div class="remark-text">${esc(r.text)}</div>
+          <div class="remark-meta"><span class="remark-ts">${fmtTime(r.ts)}</span>
+            <button class="remark-del" onclick="deleteRemark(${i})">×</button></div>
+        </div>`).join("")||"<div style='font-size:11px;font-family:var(--mono);color:var(--muted2);padding:4px 0'>No remarks yet</div>"}</div>
       <div class="remark-add-row">
-        <textarea class="remark-inp" id="remark-inp" rows="2" placeholder="Add a note…" onkeydown="remarkKey(event)"></textarea>
+        <textarea class="remark-inp" id="remark-inp" rows="2" placeholder="Add a note, decision, update…" onkeydown="remarkKey(event)"></textarea>
         <button class="remark-add-btn" onclick="addRemark()">Add</button>
       </div>
     </div>
     <div class="dr-section">
       <div class="dr-label">Attachments <span style="color:var(--muted2);font-size:10px;margin-left:4px">${atts.length} files</span></div>
-      <div class="attach-list" id="attach-list">
-        ${atts.map(a=>buildAttachRow(a)).join('')}
-      </div>
+      <div id="attach-list">${atts.map(a=>buildAttachRow(a)).join("")}</div>
       <div class="attach-drop" id="attach-drop" ondragover="dragOver(event)" ondragleave="dragLeave()" ondrop="dropFiles(event)">
         <input type="file" multiple onchange="filesPicked(this)" onclick="event.stopPropagation()">
         <p>📎 Drop files or click to upload<br><span style="font-size:10px;color:var(--muted2)">Max 5MB · Stored in Supabase Storage</span></p>
@@ -1290,239 +1372,242 @@ function renderDrawer(task, atts) {
           <div class="activity-item"><div class="act-dot"></div>
             <div class="act-text">${esc(a.text)}</div>
             <div class="act-ts">${fmtTime(a.ts)}</div>
-          </div>`).join('') || '<div style="font-size:11px;color:var(--muted2)">No activity</div>'}
+          </div>`).join("")||"<div style='font-size:11px;color:var(--muted2)'>No activity yet</div>"}
       </div>
     </div>
     <button class="dr-save-btn" onclick="closeDrawer()">Close</button>`;
 }
 
 function buildStepper(task) {
-  const steps=['todo','in_progress','review','done'], cur=steps.indexOf(task.stage), isB=task.stage==='blocked';
+  const steps=["todo","in_progress","review","done"], cur=steps.indexOf(task.stage), isB=task.stage==="blocked";
   return steps.map((s,i)=>{
-    let cls='ss-node';
-    if(isB&&i===0) cls+=' blocked-node';
-    else if(i<cur) cls+=' past-node done-node';
-    else if(i===cur) cls+=' active-node'+(s==='done'?' done-done':'');
+    let cls="ss-node";
+    if(isB&&i===0) cls+=" blocked-node";
+    else if(i<cur) cls+=" past-node done-node";
+    else if(i===cur) cls+=" active-node"+(s==="done"?" done-done":"");
     return `<div class="${cls}" onclick="setStageDrawer('${s}')" title="${STAGE_META[s].label}">
-      <div class="ss-circle">${i<cur?'✓':STAGE_META[s].icon}</div>
-      <div class="ss-name">${STAGE_META[s].label}</div>
-    </div>`;
-  }).join('')+(isB?`<div class="ss-node blocked-node"><div class="ss-circle" style="border-color:#EF4444;background:rgba(239,68,68,.15)">✕</div><div class="ss-name">Blocked</div></div>`:'');
+      <div class="ss-circle">${i<cur?"✓":STAGE_META[s].icon}</div>
+      <div class="ss-name">${STAGE_META[s].label}</div></div>`;
+  }).join("")+(isB?`<div class="ss-node blocked-node"><div class="ss-circle" style="border-color:#EF4444;background:rgba(239,68,68,.15)">✕</div><div class="ss-name">Blocked</div></div>`:"");
 }
 
 async function setStageDrawer(stage) {
   if(!STATE.openTaskId) return;
   const task=STATE.tasks.find(t=>t.id===STATE.openTaskId); if(!task) return;
-  await updateTask(STATE.openTaskId,{stage,done:stage==='done'},`Stage: ${STAGE_META[task.stage]?.label} → ${STAGE_META[stage]?.label}`);
-  render(); await refreshDrawer();
+  await patchTask(STATE.openTaskId,{stage,done:stage==="done"},`Stage: ${STAGE_META[task.stage]?.label} → ${STAGE_META[stage]?.label}`);
+  await refreshDrawer();
 }
 
 async function drField(field, val) {
   if(!STATE.openTaskId) return;
   const task=STATE.tasks.find(t=>t.id===STATE.openTaskId); if(!task) return;
-  if(String(task[field]||'')===String(val)) return;
-  await updateTask(STATE.openTaskId,{[field]:val},`${field} updated`);
-  if(['tag','priority'].includes(field)) await refreshDrawer();
-  render();
+  if(String(task[field]||"")===String(val)) return;
+  await patchTask(STATE.openTaskId,{[field]:val},`${field} updated`);
+  if(["tag","priority"].includes(field)) await refreshDrawer();
 }
 
-// ─── REMARKS ─────────────────────────────────────────────────────────────────
+// ─── REMARKS ──────────────────────────────────────────────────────────────────
 async function addRemark() {
-  const inp=document.getElementById('remark-inp'); const text=inp?.value.trim(); if(!text||!STATE.openTaskId) return;
+  const inp=document.getElementById("remark-inp"); const text=inp?.value.trim(); if(!text||!STATE.openTaskId) return;
   const task=STATE.tasks.find(t=>t.id===STATE.openTaskId); if(!task) return;
-  const remarks=[...(task.remarks||[]),{ts:nowTs(),text}];
-  await updateTask(STATE.openTaskId,{remarks},'Remark added');
-  inp.value=''; await refreshDrawer(); render();
+  await patchTask(STATE.openTaskId,{remarks:[...(task.remarks||[]),{ts:nowTs(),text}]},"Remark added");
+  inp.value=""; await refreshDrawer();
 }
 async function deleteRemark(idx) {
   if(!STATE.openTaskId) return;
   const task=STATE.tasks.find(t=>t.id===STATE.openTaskId); if(!task) return;
   const remarks=[...(task.remarks||[])]; remarks.splice(idx,1);
-  await updateTask(STATE.openTaskId,{remarks},'Remark removed');
-  await refreshDrawer(); render();
+  await patchTask(STATE.openTaskId,{remarks},"Remark removed"); await refreshDrawer();
 }
-function remarkKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();addRemark();} }
+function remarkKey(e){ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();addRemark();} }
 
-// ─── ATTACHMENTS ─────────────────────────────────────────────────────────────
+// ─── ATTACHMENTS ──────────────────────────────────────────────────────────────
 function buildAttachRow(a) {
-  const isImg = (a.mime_type||a.type||'').startsWith('image/');
+  const isImg=(a.mime_type||a.type||"").startsWith("image/");
   return `<div class="attach-item">
-    <span class="attach-icon">${isImg?'🖼':fileIcon(a.name)}</span>
+    <span class="attach-icon">${isImg?"🖼":fileIcon(a.name)}</span>
     <div class="attach-info">
       <div class="attach-name" title="${esc(a.name)}">${esc(a.name)}</div>
       <div class="attach-size">${fmtSize(a.size)}</div>
     </div>
-    <button class="attach-dl" onclick="downloadAttach('${a.id}','${esc(a.storage_path||a.path||'')}','${esc(a.name)}')" title="Download">↓ Download</button>
-    <button class="attach-del" onclick="deleteAttach('${a.id}','${esc(a.storage_path||a.path||'')}')">×</button>
+    <button class="attach-dl" onclick="downloadAttach('${a.storage_path||a.path||""}','${esc(a.name)}')" title="Download">↓ Download</button>
+    <button class="attach-del" onclick="deleteAttach('${a.id}','${a.storage_path||a.path||""}')" title="Remove">×</button>
   </div>`;
 }
 
-async function downloadAttach(id, storagePath, name) {
+async function downloadAttach(storagePath, name) {
   try {
-    const url = await SB.getFileUrl(storagePath);
-    const a = document.createElement('a'); a.href=url; a.download=name; a.target='_blank'; a.click();
-  } catch(e) { showToast('⚠ Download failed: '+e.message,'err'); }
+    const url = await SB.getSignedUrl(storagePath);
+    const a=document.createElement("a"); a.href=url; a.download=name; a.target="_blank"; a.click();
+  } catch(e) { showToast("⚠ Download failed: "+e.message,"err"); }
 }
 
 async function processFiles(files) {
-  if (!STATE.openTaskId) return;
-  const warns=[], warnEl=document.getElementById('attach-warn');
+  if(!STATE.openTaskId) return;
+  const warns=[], warnEl=document.getElementById("attach-warn");
   for (const f of [...files]) {
-    if (f.size > MAX_FILE_BYTES) { warns.push(`${f.name} exceeds 5MB — skipped`); continue; }
-    if (f.size > WARN_FILE_BYTES) warns.push(`${f.name} is large (${fmtSize(f.size)})`);
+    if(f.size>MAX_FILE){ warns.push(`${f.name} exceeds 5MB — skipped`); continue; }
+    if(f.size>WARN_FILE) warns.push(`${f.name} is large (${fmtSize(f.size)})`);
+    setSyncing(true);
     try {
-      setSyncing(true);
       await SB.uploadFile(STATE.openTaskId, f);
-      await updateTask(STATE.openTaskId,{},'File attached: '+f.name);
-      setSyncing(false);
+      await patchTask(STATE.openTaskId,{},"File attached: "+f.name);
     } catch(e) { setSyncErr(); warns.push(`${f.name} failed: ${e.message}`); }
   }
-  if(warnEl){ if(warns.length){warnEl.style.display='';warnEl.textContent=warns.join(' · ');}else warnEl.style.display='none'; }
+  if(warnEl){ if(warns.length){warnEl.style.display="";warnEl.textContent=warns.join(" · ");}else warnEl.style.display="none"; }
   await refreshDrawer(); render();
 }
 
 async function deleteAttach(id, storagePath) {
   try {
     await SB.deleteAttachmentRecord(id, storagePath);
-    const task=STATE.tasks.find(t=>t.id===STATE.openTaskId);
-    if(task) await updateTask(STATE.openTaskId,{},'File removed');
+    await patchTask(STATE.openTaskId,{},"File removed");
     await refreshDrawer(); render();
-  } catch(e) { showToast('⚠ Could not delete: '+e.message,'err'); }
+  } catch(e) { showToast("⚠ Delete failed: "+e.message,"err"); }
 }
-function filesPicked(inp){ processFiles(inp.files); inp.value=''; }
-function dragOver(e){ e.preventDefault(); document.getElementById('attach-drop')?.classList.add('drag-over'); }
-function dragLeave(){ document.getElementById('attach-drop')?.classList.remove('drag-over'); }
+function filesPicked(inp){ processFiles(inp.files); inp.value=""; }
+function dragOver(e){ e.preventDefault(); document.getElementById("attach-drop")?.classList.add("drag-over"); }
+function dragLeave(){ document.getElementById("attach-drop")?.classList.remove("drag-over"); }
 function dropFiles(e){ e.preventDefault(); dragLeave(); processFiles(e.dataTransfer.files); }
 
-// ─── ANALYTICS ───────────────────────────────────────────────────────────────
+// ─── CLEAR COMPLETED ──────────────────────────────────────────────────────────
+async function clearCompleted() {
+  const done=STATE.tasks.filter(t=>t.stage==="done");
+  if(!done.length){ showToast("No completed tasks to clear"); return; }
+  if(!confirm(`Delete ${done.length} completed task${done.length>1?"s":""}?`)) return;
+  setSyncing(true);
+  for(const t of done) { try{ await SB.deleteTask(t.id); }catch(e){ console.warn(e); } }
+  await loadTodayTasks(); render(); showToast(`✓ Cleared ${done.length} tasks`);
+}
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
 function showView(v) {
-  document.getElementById('tasks-view').style.display     = v==='tasks'     ? '' : 'none';
-  document.getElementById('analytics-view').style.display = v==='analytics' ? '' : 'none';
-  document.getElementById('btn-tasks').classList.toggle('active',     v==='tasks');
-  document.getElementById('btn-analytics').classList.toggle('active', v==='analytics');
-  if(v==='analytics') renderAnalytics();
+  document.getElementById("tasks-view").style.display     = v==="tasks"     ? "" : "none";
+  document.getElementById("analytics-view").style.display = v==="analytics" ? "" : "none";
+  document.getElementById("btn-tasks").classList.toggle("active",     v==="tasks");
+  document.getElementById("btn-analytics").classList.toggle("active", v==="analytics");
+  if(v==="analytics") renderAnalytics();
 }
 
 async function renderAnalytics() {
-  const today=STATE.tasks, done=today.filter(t=>t.stage==='done'), blocked=today.filter(t=>t.stage==='blocked');
-  const active=today.filter(t=>t.stage!=='done'&&t.stage!=='blocked'), overdue=today.filter(isOverdue);
-  document.getElementById('an-date-lbl').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('an-velocity').textContent=done.length;
-  document.getElementById('an-velocity-sub').textContent=`of ${today.length} tasks done`;
-  document.getElementById('an-remaining').textContent=`${active.length} active, ${overdue.length} overdue`;
-  document.getElementById('an-blocked-count').textContent=`${blocked.length} blocked`;
+  const today=STATE.tasks, done=today.filter(t=>t.stage==="done");
+  const blocked=today.filter(t=>t.stage==="blocked"), active=today.filter(t=>t.stage!=="done"&&t.stage!=="blocked"), overdue=today.filter(isOverdue);
+  document.getElementById("an-date-lbl").textContent=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
+  document.getElementById("an-velocity").textContent=done.length;
+  document.getElementById("an-velocity-sub").textContent=`of ${today.length} tasks done`;
+  document.getElementById("an-remaining").textContent=`${active.length} active, ${overdue.length} overdue`;
+  document.getElementById("an-blocked-count").textContent=`${blocked.length} blocked`;
   renderDonut(today); renderTagBar(today); await renderSparkline(); renderTagTable(today); renderHeatmap(today);
 }
 
 function renderDonut(today) {
   const total=today.length||1;
   const segs=[
-    {label:'Done',val:today.filter(t=>t.stage==='done').length,col:'#22C55E'},
-    {label:'In Progress',val:today.filter(t=>t.stage==='in_progress').length,col:'#7C5CFC'},
-    {label:'Review',val:today.filter(t=>t.stage==='review').length,col:'#F59E0B'},
-    {label:'Blocked',val:today.filter(t=>t.stage==='blocked').length,col:'#EF4444'},
-    {label:'To Do',val:today.filter(t=>t.stage==='todo').length,col:'#3D3D48'},
+    {label:"Done",        val:today.filter(t=>t.stage==="done").length,        col:"#22C55E"},
+    {label:"In Progress", val:today.filter(t=>t.stage==="in_progress").length, col:"#7C5CFC"},
+    {label:"Review",      val:today.filter(t=>t.stage==="review").length,      col:"#F59E0B"},
+    {label:"Blocked",     val:today.filter(t=>t.stage==="blocked").length,     col:"#EF4444"},
+    {label:"To Do",       val:today.filter(t=>t.stage==="todo").length,        col:"#3D3D48"},
   ].filter(s=>s.val>0);
   const r=28,cx=40,cy=40,sw=12,circ=2*Math.PI*r; let offset=0;
-  const svg=document.getElementById('donut-svg');
+  const svg=document.getElementById("donut-svg");
   svg.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1D1D22" stroke-width="${sw}"/>`;
-  segs.forEach(s=>{ const dash=(s.val/total)*circ; const el=document.createElementNS('http://www.w3.org/2000/svg','circle'); el.setAttribute('cx',cx);el.setAttribute('cy',cy);el.setAttribute('r',r);el.setAttribute('fill','none');el.setAttribute('stroke',s.col);el.setAttribute('stroke-width',sw);el.setAttribute('stroke-dasharray',`${dash} ${circ-dash}`);el.setAttribute('stroke-dashoffset',-offset);el.setAttribute('transform',`rotate(-90 ${cx} ${cy})`);svg.appendChild(el);offset+=dash; });
-  const pct=Math.round(today.filter(t=>t.stage==='done').length/total*100);
+  segs.forEach(s=>{const dash=(s.val/total)*circ;const el=document.createElementNS("http://www.w3.org/2000/svg","circle");el.setAttribute("cx",cx);el.setAttribute("cy",cy);el.setAttribute("r",r);el.setAttribute("fill","none");el.setAttribute("stroke",s.col);el.setAttribute("stroke-width",sw);el.setAttribute("stroke-dasharray",`${dash} ${circ-dash}`);el.setAttribute("stroke-dashoffset",-offset);el.setAttribute("transform",`rotate(-90 ${cx} ${cy})`);svg.appendChild(el);offset+=dash;});
+  const pct=Math.round(today.filter(t=>t.stage==="done").length/total*100);
   svg.innerHTML+=`<text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="700" fill="#F0F0F3" font-family="JetBrains Mono">${pct}%</text>`;
-  document.getElementById('donut-legend').innerHTML=segs.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.col}"></div><span class="dl-label">${s.label}</span><span class="dl-val">${s.val}</span></div>`).join('');
+  document.getElementById("donut-legend").innerHTML=segs.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.col}"></div><span class="dl-label">${s.label}</span><span class="dl-val">${s.val}</span></div>`).join("");
 }
 function renderTagBar(today) {
   const max=Math.max(...Object.keys(TAG_META).map(tag=>today.filter(t=>t.tag===tag).length),1);
-  document.getElementById('tag-bar-chart').innerHTML=Object.entries(TAG_META).filter(([tag])=>today.some(t=>t.tag===tag)).map(([tag,tm])=>{
-    const all=today.filter(t=>t.tag===tag).length, done=today.filter(t=>t.tag===tag&&t.stage==='done').length;
-    return `<div class="bc-row"><div class="bc-label">${tm.label.slice(tm.label.indexOf(' ')+1)}</div><div class="bc-bar-wrap"><div class="bc-bar" style="width:${Math.round(all/max*100)}%;background:${tm.col}"></div></div><div class="bc-val" style="color:${tm.col}">${done}/${all}</div></div>`;
-  }).join('');
+  document.getElementById("tag-bar-chart").innerHTML=Object.entries(TAG_META).filter(([tag])=>today.some(t=>t.tag===tag)).map(([tag,tm])=>{
+    const all=today.filter(t=>t.tag===tag).length,done=today.filter(t=>t.tag===tag&&t.stage==="done").length;
+    return `<div class="bc-row"><div class="bc-label">${tm.label.slice(tm.label.indexOf(" ")+1)}</div><div class="bc-bar-wrap"><div class="bc-bar" style="width:${Math.round(all/max*100)}%;background:${tm.col}"></div></div><div class="bc-val" style="color:${tm.col}">${done}/${all}</div></div>`;
+  }).join("")||"<div style='font-size:11px;font-family:var(--mono);color:var(--muted2)'>No tasks yet</div>";
 }
 async function renderSparkline() {
-  const wrap=document.getElementById('spark-wrap'), lbls=document.getElementById('spark-labels'), data=[];
-  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const key=d.toISOString().slice(0,10); let dt=key===todayKey()?STATE.tasks:[];
-    if(key!==todayKey()){ try{dt=(await SB.getTasksRange(key,key)).map(norm);}catch{} }
-    const total=dt.length,done=dt.filter(t=>t.stage==='done').length;
-    data.push({key,label:d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,2),pct:total?Math.round(done/total*100):0,done,total});
+  const wrap=document.getElementById("spark-wrap"), lbls=document.getElementById("spark-labels"), data=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    let dt=key===todayKey()?STATE.tasks:[];
+    if(key!==todayKey()){ try{dt=(await SB.getTasksRange(key,key)).map(norm);}catch{dt=[];} }
+    const total=dt.length,done=dt.filter(t=>t.stage==="done").length;
+    data.push({key,label:d.toLocaleDateString("en-IN",{weekday:"short"}).slice(0,2),pct:total?Math.round(done/total*100):0,done,total});
   }
   const maxPct=Math.max(...data.map(d=>d.pct),1);
-  wrap.innerHTML=data.map(d=>`<div class="spark-bar" style="height:${Math.max(3,d.pct/maxPct*46)}px;opacity:${d.key===todayKey()?'1':'.5'}" title="${d.label}: ${d.done}/${d.total} (${d.pct}%)"></div>`).join('');
-  lbls.innerHTML=data.map(d=>`<div class="spark-lbl" style="color:${d.key===todayKey()?'var(--purple)':'var(--muted2)'}">${d.label}</div>`).join('');
+  wrap.innerHTML=data.map(d=>`<div class="spark-bar" style="height:${Math.max(3,d.pct/maxPct*46)}px;opacity:${d.key===todayKey()?"1":".5"}" title="${d.label}: ${d.done}/${d.total} (${d.pct}%)"></div>`).join("");
+  lbls.innerHTML=data.map(d=>`<div class="spark-lbl" style="color:${d.key===todayKey()?"var(--purple)":"var(--muted2)"}">${d.label}</div>`).join("");
 }
 function renderTagTable(today) {
-  const tbody=document.querySelector('#tag-table tbody');
+  const tbody=document.querySelector("#tag-table tbody");
   const rows=Object.entries(TAG_META).map(([tag,tm])=>{
-    const all=today.filter(t=>t.tag===tag); if(!all.length)return null;
-    const done=all.filter(t=>t.stage==='done').length, od=all.filter(isOverdue).length, rate=Math.round(done/all.length*100);
+    const all=today.filter(t=>t.tag===tag); if(!all.length) return null;
+    const done=all.filter(t=>t.stage==="done").length,od=all.filter(isOverdue).length,rate=Math.round(done/all.length*100);
     return {tm,total:all.length,done,od,rate};
   }).filter(Boolean).sort((a,b)=>b.total-a.total);
-  tbody.innerHTML=rows.map(r=>`<tr><td><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${r.tm.col};display:inline-block"></span>${r.tm.label}</span></td><td>${r.total}</td><td style="color:var(--green)">${r.done}</td><td style="color:${r.od?'var(--red)':'var(--muted)'}">${r.od||'—'}</td><td style="color:${r.rate>=75?'var(--green)':r.rate>=40?'var(--amber)':'var(--muted)'}">${r.rate}%</td></tr>`).join('');
+  tbody.innerHTML=rows.map(r=>`<tr><td><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${r.tm.col};display:inline-block"></span>${r.tm.label}</span></td><td>${r.total}</td><td style="color:var(--green)">${r.done}</td><td style="color:${r.od?"var(--red)":"var(--muted)"}">${r.od||"—"}</td><td style="color:${r.rate>=75?"var(--green)":r.rate>=40?"var(--amber)":"var(--muted)"}">${r.rate}%</td></tr>`).join("")||`<tr><td colspan="5" style="color:var(--muted2);font-size:11px;padding-top:12px">No tasks today</td></tr>`;
 }
 function renderHeatmap(today) {
-  const grid=document.getElementById('heatmap-grid'),pris=['urgent','high','medium','low'],stats=['todo','in_progress','review','done'];
+  const grid=document.getElementById("heatmap-grid"),pris=["urgent","high","medium","low"],stats=["todo","in_progress","review","done"];
   const cells=[`<div class="hm-cell hm-header"></div>`,...stats.map(s=>`<div class="hm-cell hm-header">${STAGE_META[s].label}</div>`)];
   pris.forEach(p=>{
     cells.push(`<div class="hm-cell hm-row-label"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:${PRI_META[p].col};display:inline-block;flex-shrink:0"></span><span style="font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase">${PRI_META[p].label}</span></span></div>`);
-    stats.forEach(s=>{ const n=today.filter(t=>t.priority===p&&t.stage===s).length,col=STAGE_META[s].col; cells.push(`<div class="hm-cell hm-data" style="background:${n?col+'22':'transparent'};color:${n?col:'var(--muted2)'};border:1px solid ${n?col+'33':'var(--b1)'}">${n||'—'}</div>`); });
+    stats.forEach(s=>{const n=today.filter(t=>t.priority===p&&t.stage===s).length,col=STAGE_META[s].col;cells.push(`<div class="hm-cell hm-data" style="background:${n?col+"22":"transparent"};color:${n?col:"var(--muted2)"};border:1px solid ${n?col+"33":"var(--b1)"}">${n||"—"}</div>`);});
   });
-  grid.innerHTML=cells.join('');
+  grid.innerHTML=cells.join("");
 }
 
-async function clearCompleted() {
-  const done=STATE.tasks.filter(t=>t.stage==='done');
-  if(!done.length){showToast('No completed tasks to clear');return;}
-  if(!confirm(`Delete ${done.length} completed task(s)?`))return;
-  for(const t of done){ try{await SB.deleteTask(t.id);}catch(e){console.warn(e);} }
-  await loadTodayTasks(); render(); showToast(`✓ Cleared ${done.length} tasks`);
-}
-
-// ─── CLOCK ───────────────────────────────────────────────────────────────────
+// ─── CLOCK + BURN ─────────────────────────────────────────────────────────────
 function tick() {
-  const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0');
-  document.getElementById('hclock').textContent=`${h}:${m}`;
-  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('hdate').textContent=`${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]}`;
+  const n=new Date(),h=String(n.getHours()).padStart(2,"0"),m=String(n.getMinutes()).padStart(2,"0");
+  document.getElementById("hclock").textContent=`${h}:${m}`;
+  const DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  document.getElementById("hdate").textContent=`${DAYS[n.getDay()]}, ${n.getDate()} ${MON[n.getMonth()]}`;
   const mins=n.getHours()*60+n.getMinutes();
-  document.getElementById('burn-fill').style.width=Math.min(100,Math.max(0,(mins-540)/720*100))+'%';
+  document.getElementById("burn-fill").style.width=Math.min(100,Math.max(0,(mins-540)/720*100))+"%";
 }
 
-// ─── REMINDERS ───────────────────────────────────────────────────────────────
+// ─── REMINDERS ────────────────────────────────────────────────────────────────
 function checkReminders() {
   const n=new Date(),nm=n.getHours()*60+n.getMinutes();
-  STATE.tasks.filter(t=>!t.done&&t.stage!=='done'&&(t.task_time||t.time)).forEach(t=>{
-    const time=t.task_time||t.time; const[h,m]=time.split(':').map(Number);
+  STATE.tasks.filter(t=>!t.done&&t.stage!=="done"&&(t.task_time||t.time)).forEach(t=>{
+    const time=t.task_time||t.time; const[h,m]=time.split(":").map(Number);
     const key=`${t.id}_${time}`;
     if(Math.abs(nm-(h*60+m))<=1&&!STATE.reminded.has(key)){
       STATE.reminded.add(key);
-      try{localStorage.setItem('reminded_'+SB.getUser()?.id,JSON.stringify([...STATE.reminded]));}catch{}
+      try{localStorage.setItem("rem_"+(SB.getUser()?.id||"")+"_"+todayKey(),JSON.stringify([...STATE.reminded]));}catch{}
       showToast(`⏰ ${t.title}`);
-      if(Notification.permission==='granted') new Notification('Dayplan',{body:t.title});
+      if(Notification.permission==="granted") new Notification("MUSTAINE",{body:t.title});
     }
   });
 }
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
-let _toastTimer;
-function showToast(msg,type='ok'){
-  const el=document.getElementById('toast');
-  document.getElementById('t-msg').textContent=msg;
-  el.className=type==='err'?'toast-err':type==='warn'?'toast-warn':'toast-ok';
-  el.classList.add('show'); clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(hideToast,type==='err'?6000:3500);
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let _tt;
+function showToast(msg,type="ok"){
+  const el=document.getElementById("toast");
+  document.getElementById("t-msg").textContent=msg;
+  el.className=type==="err"?"toast-err":type==="warn"?"toast-warn":"toast-ok";
+  el.classList.add("show"); clearTimeout(_tt);
+  _tt=setTimeout(hideToast,type==="err"?7000:3500);
 }
-function hideToast(){ document.getElementById('toast').classList.remove('show'); }
+function hideToast(){ document.getElementById("toast").classList.remove("show"); }
 
-// ─── KEYBOARD ────────────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key==='Escape') closeDrawer();
-  if ((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); document.getElementById('add-title').focus(); }
+// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if(e.key==="Escape") closeDrawer();
+  if((e.metaKey||e.ctrlKey)&&e.key==="k"){ e.preventDefault(); document.getElementById("add-title").focus(); }
 });
-document.getElementById('add-title').addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(); });
-document.getElementById('sort-sel').addEventListener('change', e=>{ STATE.sort=e.target.value; render(); });
+document.getElementById("add-title").addEventListener("keydown", e=>{ if(e.key==="Enter") addTask(); });
+document.getElementById("sort-sel").addEventListener("change", e=>{ STATE.sort=e.target.value; render(); });
+document.addEventListener("keydown", e=>{
+  const authVis=document.getElementById("auth-screen").style.display!=="none";
+  if(authVis&&e.key==="Enter") handleAuth();
+});
 
-// ─── BOOT ────────────────────────────────────────────────────────────────────
-if('Notification' in window && Notification.permission==='default') setTimeout(()=>Notification.requestPermission(),3000);
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+if("Notification" in window && Notification.permission==="default") setTimeout(()=>Notification.requestPermission(),5000);
 init();
 
 </script>
