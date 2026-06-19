@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAYPLAN — Troopod</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0A0C;--s1:#131316;--s2:#1A1A1F;--s3:#222228;
+  --b1:#1D1D22;--b2:#2A2A32;--b3:#38383F;
+  --purple:#7C5CFC;--purple-d:#5B3FD4;--purple-glow:rgba(124,92,252,.18);
+  --white:#F0F0F3;--muted:#6B6B7A;--muted2:#3D3D48;
+  --green:#22C55E;--amber:#F59E0B;--red:#EF4444;--blue:#3B82F6;--pink:#EC4899;--cyan:#06B6D4;
+  --sans:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ── BURN BAR ── */
+#burn-wrap{position:fixed;top:0;left:0;right:0;height:3px;background:var(--b1);z-index:300}
+#burn-fill{height:100%;background:linear-gradient(90deg,var(--purple),#B490FF);box-shadow:0 0 10px rgba(124,92,252,.5);transition:width 30s linear}
+
+/* ── HEADER ── */
+header{padding:20px 20px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:3px;background:rgba(10,10,12,.95);backdrop-filter:blur(12px);z-index:100}
+.h-left{display:flex;flex-direction:column;gap:3px}
+.h-brand{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase}
+.h-date{font-size:18px;font-weight:600;letter-spacing:-.02em}
+.h-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.h-clock{font-family:var(--mono);font-size:13px;color:var(--purple);background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.25);padding:5px 11px;border-radius:6px}
+.stat-chips{display:flex;gap:6px;flex-wrap:wrap}
+.sc{font-size:11px;font-family:var(--mono);padding:4px 10px;border-radius:5px;border:1px solid var(--b2);color:var(--muted);white-space:nowrap}
+.sc b{color:var(--white);font-weight:600}
+.sc.overdue-chip b{color:var(--red)}
+.nav-btns{display:flex;gap:4px}
+.nav-btn{font-size:11px;font-family:var(--mono);letter-spacing:.06em;padding:5px 12px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;text-transform:uppercase}
+.nav-btn.active,.nav-btn:hover{color:var(--white);border-color:rgba(124,92,252,.4);background:rgba(124,92,252,.1)}
+
+/* ── MAIN LAYOUT ── */
+main{max-width:720px;margin:0 auto;padding:0 16px 120px}
+
+/* ── ADD TASK ── */
+.add-block{padding:18px 0 0}
+.add-row1{display:flex;gap:6px;align-items:stretch}
+.add-row2{display:flex;gap:6px;margin-top:6px}
+.add-input{flex:1;background:var(--s1);border:1px solid var(--b2);color:var(--white);font-family:var(--sans);font-size:14px;padding:11px 14px;border-radius:8px;outline:none;transition:border-color .15s}
+.add-input::placeholder{color:var(--muted)}
+.add-input:focus{border-color:var(--purple)}
+.add-input.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.sel{background:var(--s1);border:1px solid var(--b2);color:var(--muted);font-family:var(--sans);font-size:12px;padding:0 10px;border-radius:8px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none}
+.sel:focus{border-color:var(--purple);color:var(--white)}
+.sel-tag{min-width:120px}
+.sel-pri{min-width:100px}
+.time-inp{background:var(--s1);border:1px solid var(--b2);color:var(--muted);font-family:var(--mono);font-size:12px;padding:0 10px;border-radius:8px;outline:none;width:90px;cursor:pointer}
+.time-inp:focus{border-color:var(--purple);color:var(--white)}
+.add-btn{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:0 18px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap;letter-spacing:.01em}
+.add-btn:active{opacity:.8;transform:scale(.98)}
+
+/* ── FILTERS + SORT ── */
+.filter-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 0 0;flex-wrap:wrap}
+.filter-tabs{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1}
+.filter-tabs::-webkit-scrollbar{display:none}
+.ftab{font-size:10px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border-radius:5px;border:1px solid var(--b2);color:var(--muted);background:transparent;cursor:pointer;white-space:nowrap;transition:all .15s}
+.ftab.active,.ftab:hover{color:var(--white);border-color:rgba(124,92,252,.35);background:rgba(124,92,252,.1)}
+.sort-sel{font-size:11px;font-family:var(--mono);background:var(--s1);border:1px solid var(--b2);color:var(--muted);padding:5px 10px;border-radius:5px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none}
+
+/* ── OVERDUE BANNER ── */
+.overdue-banner{display:none;background:#1C1010;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px 14px;font-size:11px;font-family:var(--mono);color:var(--red);margin-top:14px;letter-spacing:.04em}
+
+/* ── SECTION LABEL ── */
+.sec-label{font-size:10px;font-family:var(--mono);letter-spacing:.18em;color:var(--muted2);text-transform:uppercase;padding:18px 0 10px;display:flex;align-items:center;justify-content:space-between}
+.sec-label button{font-size:10px;font-family:var(--mono);background:none;border:none;color:var(--muted);cursor:pointer;letter-spacing:.05em;padding:0}
+.sec-label button:hover{color:var(--white)}
+
+/* ── TASK CARD ── */
+.task-list{display:flex;flex-direction:column;gap:5px}
+.task-card{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:12px 12px 12px 16px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:border-color .15s,background .15s,opacity .2s;position:relative;overflow:hidden}
+.task-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:8px 0 0 8px;background:var(--tag-col,var(--b2))}
+.task-card:hover{border-color:var(--b3);background:var(--s2)}
+.task-card.is-done{opacity:.38}
+.task-card.is-blocked{opacity:.55;border-color:rgba(239,68,68,.25)}
+.task-card.is-blocked::before{background:var(--red)}
+.task-card.is-overdue::before{background:var(--red)}
+.task-card.is-overdue .tc-time{color:var(--red)}
+
+.tc-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--b3);background:transparent;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent}
+.task-card.is-done .tc-check{background:var(--green);border-color:var(--green);color:#fff}
+.tc-body{flex:1;min-width:0}
+.tc-title-wrap{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tc-title{font-size:13px;font-weight:500;color:var(--white);line-height:1.4;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-card.is-done .tc-title{text-decoration:line-through;color:var(--muted)}
+.tc-title-input{font-size:13px;font-weight:500;color:var(--white);background:var(--s3);border:1px solid var(--purple);border-radius:4px;padding:2px 7px;outline:none;font-family:var(--sans);width:100%}
+.pri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tag-pill{font-size:10px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.stage-badge{font-size:9px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap;border:1px solid transparent}
+.stage-badge:hover{filter:brightness(1.2)}
+.tc-time{font-size:10px;font-family:var(--mono);color:var(--muted)}
+.tc-counts{display:flex;gap:6px;margin-left:auto}
+.tc-count{font-size:10px;font-family:var(--mono);color:var(--muted);background:var(--s3);padding:1px 6px;border-radius:4px}
+.tc-actions{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0}
+.tc-del{background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:18px;line-height:1;border-radius:4px;padding:1px 4px;transition:color .15s;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.tc-del:hover,.tc-del.confirming{color:var(--red)}
+.tc-del.confirming{font-size:10px;font-family:var(--mono);letter-spacing:.04em;width:auto;padding:2px 6px;border:1px solid rgba(239,68,68,.3)}
+.tc-block{background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:9px;font-family:var(--mono);letter-spacing:.05em;padding:2px 5px;border-radius:4px;transition:color .15s}
+.tc-block:hover{color:var(--red)}
+.task-card.is-blocked .tc-block{color:var(--amber)}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:44px 0;color:var(--muted);font-size:12px;font-family:var(--mono);letter-spacing:.05em;line-height:1.8}
+
+/* ── DRAWER ── */
+#backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px)}
+#backdrop.open{opacity:1;pointer-events:all}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:var(--s1);border-left:1px solid var(--b2);z-index:201;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#drawer.open{transform:translateX(0)}
+.dr-header{padding:18px 18px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.dr-header h2{font-size:13px;font-weight:600;flex:1}
+.dr-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;transition:color .15s}
+.dr-close:hover{color:var(--white)}
+.dr-body{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:18px;scrollbar-width:thin;scrollbar-color:var(--b3) transparent}
+.dr-body::-webkit-scrollbar{width:4px}
+.dr-body::-webkit-scrollbar-thumb{background:var(--b3);border-radius:2px}
+.dr-section{display:flex;flex-direction:column;gap:8px}
+.dr-label{font-size:10px;font-family:var(--mono);letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+.dr-title-input{font-size:15px;font-weight:600;color:var(--white);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:10px 12px;outline:none;font-family:var(--sans);width:100%}
+.dr-title-input:focus{border-color:var(--purple)}
+.dr-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dr-field{display:flex;flex-direction:column;gap:5px}
+.dr-field label{font-size:10px;font-family:var(--mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.dr-sel{background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--sans);font-size:12px;padding:8px 10px;border-radius:6px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;width:100%}
+.dr-sel:focus{border-color:var(--purple)}
+.dr-time{background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:6px;outline:none;cursor:pointer;width:100%}
+.dr-time:focus{border-color:var(--purple)}
+
+/* ── STAGE STEPPER ── */
+.stage-stepper{display:flex;align-items:center;gap:0}
+.ss-node{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1;position:relative}
+.ss-node:not(:last-child)::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--b2);z-index:0}
+.ss-node.done-node::after{background:var(--green) !important}
+.ss-node.active-node::after{background:linear-gradient(90deg,var(--purple),var(--b2))}
+.ss-circle{width:26px;height:26px;border-radius:50%;border:2px solid var(--b3);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:10px;z-index:1;position:relative;transition:all .2s;flex-shrink:0}
+.ss-node.past-node .ss-circle{border-color:var(--purple);background:var(--purple-glow)}
+.ss-node.active-node .ss-circle{border-color:var(--purple);background:var(--purple);box-shadow:0 0 12px rgba(124,92,252,.4)}
+.ss-node.done-done .ss-circle{border-color:var(--green);background:var(--green)}
+.ss-node.blocked-node .ss-circle{border-color:var(--red);background:rgba(239,68,68,.15)}
+.ss-node:hover .ss-circle{border-color:var(--purple)}
+.ss-name{font-size:9px;font-family:var(--mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;text-align:center;position:relative;z-index:1}
+.ss-node.active-node .ss-name{color:var(--white)}
+
+/* ── REMARKS ── */
+.remarks-list{display:flex;flex-direction:column;gap:6px}
+.remark-item{background:var(--s2);border-radius:7px;padding:10px 12px;position:relative;group:hover}
+.remark-text{font-size:13px;line-height:1.5;color:var(--white);margin-bottom:4px;word-break:break-word}
+.remark-meta{display:flex;align-items:center;justify-content:space-between}
+.remark-ts{font-size:10px;font-family:var(--mono);color:var(--muted)}
+.remark-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:0 2px;transition:color .15s}
+.remark-del:hover{color:var(--red)}
+.remark-add-row{display:flex;gap:6px}
+.remark-inp{flex:1;background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:7px;outline:none;resize:none;transition:border-color .15s}
+.remark-inp::placeholder{color:var(--muted)}
+.remark-inp:focus{border-color:var(--purple)}
+.remark-add-btn{background:var(--purple);color:#fff;border:none;border-radius:7px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);flex-shrink:0}
+
+/* ── ATTACHMENTS ── */
+.attach-drop{border:1px dashed var(--b3);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
+.attach-drop:hover,.attach-drop.drag-over{border-color:var(--purple);background:rgba(124,92,252,.06)}
+.attach-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.attach-drop p{font-size:12px;font-family:var(--mono);color:var(--muted);pointer-events:none}
+.attach-list{display:flex;flex-direction:column;gap:5px}
+.attach-item{background:var(--s2);border-radius:6px;padding:9px 12px;display:flex;align-items:center;gap:10px}
+.attach-icon{font-size:18px;flex-shrink:0}
+.attach-info{flex:1;min-width:0}
+.attach-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attach-size{font-size:10px;font-family:var(--mono);color:var(--muted)}
+.attach-dl{font-size:11px;font-family:var(--mono);color:var(--purple);text-decoration:none;cursor:pointer;background:none;border:none;padding:0;transition:opacity .15s}
+.attach-dl:hover{opacity:.7}
+.attach-del{background:none;border:none;color:var(--muted2);font-size:16px;cursor:pointer;padding:0 2px;transition:color .15s;flex-shrink:0}
+.attach-del:hover{color:var(--red)}
+.attach-preview{width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0}
+.attach-warn{font-size:11px;font-family:var(--mono);color:var(--amber);padding:6px 0}
+
+/* ── ACTIVITY LOG ── */
+.activity-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b3) transparent}
+.activity-list::-webkit-scrollbar{width:3px}
+.activity-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--b1)}
+.activity-item:last-child{border-bottom:none}
+.act-dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);flex-shrink:0;margin-top:5px}
+.act-text{font-size:11px;color:var(--muted);line-height:1.4;flex:1}
+.act-text b{color:var(--white)}
+.act-ts{font-size:10px;font-family:var(--mono);color:var(--muted2);flex-shrink:0}
+.dr-save-btn{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:11px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:opacity .15s}
+.dr-save-btn:hover{opacity:.88}
+
+/* ── ANALYTICS ── */
+#analytics-view{display:none;padding:18px 0 0}
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.an-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px}
+.an-card.full{grid-column:1/-1}
+.an-card h3{font-size:10px;font-family:var(--mono);letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:6px;flex:1}
+.dl-item{display:flex;align-items:center;gap:6px;font-size:11px}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dl-label{color:var(--muted);flex:1}
+.dl-val{font-family:var(--mono);font-weight:600;color:var(--white)}
+
+/* bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+.bc-row{display:flex;align-items:center;gap:8px}
+.bc-label{font-size:10px;font-family:var(--mono);color:var(--muted);width:70px;flex-shrink:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+.bc-bar-wrap{flex:1;height:8px;background:var(--s3);border-radius:4px;overflow:hidden}
+.bc-bar{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bc-val{font-size:10px;font-family:var(--mono);color:var(--muted);width:20px;text-align:right;flex-shrink:0}
+
+/* sparkline */
+.spark-wrap{display:flex;align-items:flex-end;gap:3px;height:50px;padding-top:4px}
+.spark-bar{flex:1;border-radius:3px 3px 0 0;background:var(--purple);opacity:.6;min-height:3px;transition:height .4s}
+.spark-labels{display:flex;gap:3px;margin-top:4px}
+.spark-lbl{flex:1;font-size:9px;font-family:var(--mono);color:var(--muted2);text-align:center;letter-spacing:.03em}
+
+/* heatmap */
+.heatmap-grid{display:grid;grid-template-columns:80px repeat(4,1fr);gap:4px}
+.hm-cell{font-size:9px;font-family:var(--mono);padding:6px 4px;border-radius:4px;text-align:center;letter-spacing:.03em}
+.hm-header{color:var(--muted);text-transform:uppercase;background:transparent;font-size:9px}
+.hm-row-label{color:var(--muted);text-align:left;padding-left:0;display:flex;align-items:center}
+.hm-data{color:var(--white);font-weight:600}
+
+/* tag table */
+.tag-table{width:100%;border-collapse:collapse}
+.tag-table th{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:0 0 8px;text-align:left;border-bottom:1px solid var(--b2)}
+.tag-table td{font-size:12px;padding:7px 0;border-bottom:1px solid var(--b1);vertical-align:middle}
+.tag-table tr:last-child td{border-bottom:none}
+.tag-table td:not(:first-child){font-family:var(--mono);text-align:right}
+.an-big{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--purple);letter-spacing:-.02em}
+.an-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--s1);border:1px solid rgba(124,92,252,.3);border-radius:10px;padding:13px 18px;display:flex;align-items:center;gap:10px;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:400;max-width:calc(100vw - 32px);min-width:260px}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast .t-text{flex:1;line-height:1.4}
+#toast .t-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 2px}
+#toast.toast-err{border-color:rgba(239,68,68,.3)}
+#toast.toast-ok{border-color:rgba(34,197,94,.3)}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--b1);margin:4px 0}
+
+
+/* ── LOADING OVERLAY ── */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-logo{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--muted);text-transform:uppercase}
+.loading-spinner{width:28px;height:28px;border:2px solid var(--b2);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:6px;padding:12px 0 0;flex-wrap:wrap;align-items:center}
+.tb-btn{font-size:11px;font-family:var(--mono);letter-spacing:.05em;padding:5px 12px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tb-btn:hover{color:var(--white);border-color:var(--b3)}
+.tb-btn.danger:hover{color:var(--red);border-color:rgba(239,68,68,.3)}
+.tb-sep{flex:1}
+.tb-file{display:none}
+
+/* ── TIME COLORS ── */
+.tc-time.od{color:var(--red)}
+.tc-time.soon{color:var(--amber)}
+
+/* ── TOAST VARIANTS ── */
+#toast.toast-warn{border-color:rgba(245,158,11,.3)}
+
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-logo">Dayplan · Loading</div>
+</div>
+
+<div id="burn-wrap"><div id="burn-fill" style="width:0%"></div></div>
+
+<header>
+  <div class="h-left">
+    <div class="h-brand">Troopod · Dayplan</div>
+    <div class="h-date" id="hdate">—</div>
+  </div>
+  <div class="h-right">
+    <div class="stat-chips">
+      <div class="sc">Total <b id="st-total">0</b></div>
+      <div class="sc">Done <b id="st-done">0</b></div>
+      <div class="sc">Active <b id="st-active">0</b></div>
+      <div class="sc overdue-chip">Overdue <b id="st-overdue">0</b></div>
+    </div>
+    <div class="nav-btns">
+      <button class="nav-btn active" id="btn-tasks"     onclick="showView('tasks')">Tasks</button>
+      <button class="nav-btn"        id="btn-analytics" onclick="showView('analytics')">Analytics</button>
+    </div>
+    <div class="h-clock" id="hclock">00:00</div>
+  </div>
+</header>
+
+<main>
+  <!-- TASKS VIEW -->
+  <div id="tasks-view">
+    <div class="add-block">
+      <div class="add-row1">
+        <input class="add-input" id="add-title" placeholder="Add task… e.g. Send Durex SOW to 100 Days" maxlength="140">
+        <button class="add-btn" onclick="addTask()">+ Add</button>
+      </div>
+      <div class="add-row2">
+        <select class="sel sel-tag" id="add-tag">
+          <option value="sales">💰 Sales</option>
+          <option value="revenue">📈 Revenue</option>
+          <option value="client">🤝 Client</option>
+          <option value="kam">👤 KAM</option>
+          <option value="design">🎨 Design</option>
+          <option value="ops">⚙️ Ops</option>
+          <option value="follow-up">📞 Follow-up</option>
+          <option value="personal">🔵 Personal</option>
+        </select>
+        <select class="sel sel-pri" id="add-pri">
+          <option value="medium">● Medium</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="high">🟠 High</option>
+          <option value="low">⚪ Low</option>
+        </select>
+        <input class="time-inp" type="time" id="add-time">
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="ftab active" data-f="all"       onclick="setFilter(this)">All</button>
+        <button class="ftab" data-f="sales"     onclick="setFilter(this)">Sales</button>
+        <button class="ftab" data-f="revenue"   onclick="setFilter(this)">Revenue</button>
+        <button class="ftab" data-f="client"    onclick="setFilter(this)">Client</button>
+        <button class="ftab" data-f="kam"       onclick="setFilter(this)">KAM</button>
+        <button class="ftab" data-f="design"    onclick="setFilter(this)">Design</button>
+        <button class="ftab" data-f="ops"       onclick="setFilter(this)">Ops</button>
+        <button class="ftab" data-f="follow-up" onclick="setFilter(this)">Follow-up</button>
+      </div>
+      <select class="sort-sel" id="sort-sel">
+        <option value="time">By Time</option>
+        <option value="priority">By Priority</option>
+        <option value="stage">By Stage</option>
+        <option value="created">By Created</option>
+      </select>
+    </div>
+
+    <div class="toolbar">
+      <button class="tb-btn" onclick="exportData()" title="Download full backup as JSON">↓ Backup</button>
+      <label class="tb-btn" title="Restore from JSON backup">↑ Restore
+        <input class="tb-file" type="file" accept=".json" onchange="importData(this)">
+      </label>
+      <button class="tb-btn danger" onclick="clearCompleted()">Clear done</button>
+      <span class="tb-sep"></span>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--muted2)" id="db-status">IndexedDB ready</span>
+    </div>
+
+    <div class="overdue-banner" id="overdue-banner"></div>
+
+    <div class="sec-label">Active Tasks</div>
+    <div class="task-list" id="active-list"></div>
+
+    <div class="sec-label" id="done-sec-label" style="display:none">
+      <span>Completed</span>
+      <button onclick="toggleDoneSection()">Hide</button>
+    </div>
+    <div class="task-list" id="done-list"></div>
+    <button class="sec-label" id="show-done-btn"
+      style="display:none;cursor:pointer;background:none;border:none;color:var(--muted);font-size:10px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:10px 0;width:100%;text-align:left"
+      onclick="toggleDoneSection()"></button>
+
+    <div class="sec-label" id="blocked-sec-label" style="display:none"><span>Blocked</span></div>
+    <div class="task-list" id="blocked-list"></div>
+  </div>
+
+  <!-- ANALYTICS VIEW -->
+  <div id="analytics-view" style="display:none">
+    <div class="sec-label">Today · <span id="an-date-lbl">—</span></div>
+    <div class="an-grid">
+      <div class="an-card">
+        <h3>Completion Rate</h3>
+        <div class="donut-wrap">
+          <svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80" id="donut-svg"></svg>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+      <div class="an-card">
+        <h3>Day Velocity</h3>
+        <div class="an-big" id="an-velocity">—</div>
+        <div class="an-sub" id="an-velocity-sub">tasks completed</div>
+        <div style="margin-top:12px">
+          <div style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:6px">REMAINING</div>
+          <div style="display:flex;gap:8px;font-size:11px;font-family:var(--mono)">
+            <span style="color:var(--amber)" id="an-remaining">—</span>
+            <span style="color:var(--red)"   id="an-blocked-count">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="an-card full">
+        <h3>Tasks by Category</h3>
+        <div class="bar-chart" id="tag-bar-chart"></div>
+      </div>
+      <div class="an-card full">
+        <h3>7-Day Completion Trend</h3>
+        <div class="spark-wrap" id="spark-wrap"></div>
+        <div class="spark-labels" id="spark-labels"></div>
+      </div>
+      <div class="an-card full">
+        <h3>Category Breakdown</h3>
+        <table class="tag-table" id="tag-table">
+          <thead><tr><th>Category</th><th>Total</th><th>Done</th><th>Overdue</th><th>Rate</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="an-card full">
+        <h3>Priority × Status Heatmap</h3>
+        <div class="heatmap-grid" id="heatmap-grid"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- DRAWER -->
+<div id="backdrop" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="dr-header">
+    <h2>Task Detail</h2>
+    <button class="dr-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span id="t-icon" style="font-size:17px">⏰</span>
+  <span class="t-text" id="t-msg">—</span>
+  <button class="t-close" onclick="hideToast()">×</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DAYPLAN v3 — Full IndexedDB Backend
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const DB_NAME = 'dayplan_db';
+const DB_VERSION = 1;
+const STORES = { tasks: 'tasks', attachments: 'attachments', meta: 'meta' };
+
+const TAG_META = {
+  sales:      { label: '💰 Sales',     col: '#22C55E' },
+  revenue:    { label: '📈 Revenue',   col: '#3B82F6' },
+  client:     { label: '🤝 Client',    col: '#7C5CFC' },
+  kam:        { label: '👤 KAM',       col: '#EC4899' },
+  design:     { label: '🎨 Design',    col: '#F59E0B' },
+  ops:        { label: '⚙️ Ops',       col: '#06B6D4' },
+  'follow-up':{ label: '📞 Follow-up', col: '#EF4444' },
+  personal:   { label: '🔵 Personal',  col: '#8B8B9A' },
+};
+const PRI_META = {
+  urgent: { col: '#EF4444', label: 'Urgent' },
+  high:   { col: '#F59E0B', label: 'High'   },
+  medium: { col: '#7C5CFC', label: 'Medium' },
+  low:    { col: '#3D3D48', label: 'Low'    },
+};
+const STAGE_META = {
+  todo:        { label: 'To Do',       icon: '○', col: '#6B6B7A' },
+  in_progress: { label: 'In Progress', icon: '◑', col: '#7C5CFC' },
+  review:      { label: 'Review',      icon: '◕', col: '#F59E0B' },
+  done:        { label: 'Done',        icon: '●', col: '#22C55E' },
+  blocked:     { label: 'Blocked',     icon: '✕', col: '#EF4444' },
+};
+const MAX_FILE_BYTES  = 5  * 1024 * 1024;  // hard reject
+const WARN_FILE_BYTES = 2  * 1024 * 1024;  // soft warn
+
+// ─── DATABASE LAYER ──────────────────────────────────────────────────────────
+const DB = (() => {
+  let _db = null;
+
+  function open() {
+    if (_db) return Promise.resolve(_db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+
+        // tasks store
+        if (!db.objectStoreNames.contains(STORES.tasks)) {
+          const ts = db.createObjectStore(STORES.tasks, { keyPath: 'id' });
+          ts.createIndex('date',     'date',     { unique: false });
+          ts.createIndex('tag',      'tag',      { unique: false });
+          ts.createIndex('stage',    'stage',    { unique: false });
+          ts.createIndex('priority', 'priority', { unique: false });
+        }
+
+        // attachments store — stores raw Blob, indexed by taskId
+        if (!db.objectStoreNames.contains(STORES.attachments)) {
+          const as = db.createObjectStore(STORES.attachments, { keyPath: 'id' });
+          as.createIndex('taskId', 'taskId', { unique: false });
+        }
+
+        // meta key-value store
+        if (!db.objectStoreNames.contains(STORES.meta)) {
+          db.createObjectStore(STORES.meta, { keyPath: 'key' });
+        }
+      };
+
+      req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+      req.onerror   = e => reject(new Error('IDB open failed: ' + e.target.error));
+
+      // Handle version conflict (tab open elsewhere)
+      req.onblocked = () => {
+        showToast('⚠ App updated — please close other tabs and refresh', 'err');
+      };
+    });
+  }
+
+  // Generic transaction helper
+  function tx(storeName, mode, fn) {
+    return open().then(db => new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, mode);
+      transaction.onerror   = e => reject(new Error('TX error: ' + e.target.error));
+      transaction.onabort   = e => reject(new Error('TX aborted: ' + e.target.error));
+      const store = transaction.objectStore(storeName);
+      try {
+        const result = fn(store, transaction);
+        if (result && typeof result.onsuccess === 'undefined') {
+          // fn returned a promise (IDB request)
+          resolve(result);
+        } else if (result && result.then) {
+          result.then(resolve).catch(reject);
+        } else {
+          transaction.oncomplete = () => resolve(result);
+        }
+      } catch(err) { reject(err); }
+    }));
+  }
+
+  function req2p(idbReq) {
+    return new Promise((res, rej) => {
+      idbReq.onsuccess = e => res(e.target.result);
+      idbReq.onerror   = e => rej(new Error(e.target.error));
+    });
+  }
+
+  // ── TASK CRUD ──
+  async function putTask(task) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.tasks, 'readwrite');
+      t.onerror = e => rej(e.target.error);
+      t.oncomplete = () => res(task);
+      t.objectStore(STORES.tasks).put(task);
+    });
+  }
+
+  async function getTask(id) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.tasks, 'readonly');
+      const r = t.objectStore(STORES.tasks).get(id);
+      r.onsuccess = e => res(e.target.result || null);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function deleteTask(id) {
+    const db = await open();
+    // Also delete all attachments for this task
+    await new Promise((res, rej) => {
+      const t = db.transaction(STORES.attachments, 'readwrite');
+      t.onerror = e => rej(e.target.error);
+      const idx = t.objectStore(STORES.attachments).index('taskId');
+      const req = idx.openCursor(IDBKeyRange.only(id));
+      req.onsuccess = e => {
+        const cursor = e.target.result;
+        if (cursor) { cursor.delete(); cursor.continue(); }
+        else res();
+      };
+      req.onerror = e => rej(e.target.error);
+    });
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.tasks, 'readwrite');
+      t.oncomplete = () => res(true);
+      t.onerror    = e => rej(e.target.error);
+      t.objectStore(STORES.tasks).delete(id);
+    });
+  }
+
+  async function getAllTasks() {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.tasks, 'readonly');
+      const r = t.objectStore(STORES.tasks).getAll();
+      r.onsuccess = e => res(e.target.result || []);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function getTasksByDate(date) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t   = db.transaction(STORES.tasks, 'readonly');
+      const idx = t.objectStore(STORES.tasks).index('date');
+      const r   = idx.getAll(IDBKeyRange.only(date));
+      r.onsuccess = e => res(e.target.result || []);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function getTasksByDateRange(start, end) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t   = db.transaction(STORES.tasks, 'readonly');
+      const idx = t.objectStore(STORES.tasks).index('date');
+      const r   = idx.getAll(IDBKeyRange.bound(start, end));
+      r.onsuccess = e => res(e.target.result || []);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  // ── ATTACHMENT CRUD ──
+  async function putAttachment(att) {
+    // att = { id, taskId, name, size, type, blob }
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.attachments, 'readwrite');
+      t.oncomplete = () => res(att);
+      t.onerror    = e => rej(e.target.error);
+      t.objectStore(STORES.attachments).put(att);
+    });
+  }
+
+  async function getAttachment(id) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.attachments, 'readonly');
+      const r = t.objectStore(STORES.attachments).get(id);
+      r.onsuccess = e => res(e.target.result || null);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function getAttachmentsByTask(taskId) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t   = db.transaction(STORES.attachments, 'readonly');
+      const idx = t.objectStore(STORES.attachments).index('taskId');
+      const r   = idx.getAll(IDBKeyRange.only(taskId));
+      r.onsuccess = e => res(e.target.result || []);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function deleteAttachment(id) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.attachments, 'readwrite');
+      t.oncomplete = () => res(true);
+      t.onerror    = e => rej(e.target.error);
+      t.objectStore(STORES.attachments).delete(id);
+    });
+  }
+
+  // ── META ──
+  async function getMeta(key, defaultVal = null) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.meta, 'readonly');
+      const r = t.objectStore(STORES.meta).get(key);
+      r.onsuccess = e => res(e.target.result ? e.target.result.value : defaultVal);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function setMeta(key, value) {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(STORES.meta, 'readwrite');
+      t.oncomplete = () => res(value);
+      t.onerror    = e => rej(e.target.error);
+      t.objectStore(STORES.meta).put({ key, value });
+    });
+  }
+
+  // ── EXPORT / IMPORT ──
+  async function exportAll() {
+    const [allTasks, allAttachments] = await Promise.all([getAllTasks(), (async () => {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const t = db.transaction(STORES.attachments, 'readonly');
+        const r = t.objectStore(STORES.attachments).getAll();
+        r.onsuccess = e => res(e.target.result || []);
+        r.onerror   = e => rej(e.target.error);
+      });
+    })()]);
+    // Convert blobs to base64 for JSON export
+    const attsExport = await Promise.all(allAttachments.map(async a => {
+      const b64 = await blobToBase64(a.blob);
+      return { ...a, blob: undefined, dataUrl: b64 };
+    }));
+    return { version: 3, exportedAt: new Date().toISOString(), tasks: allTasks, attachments: attsExport };
+  }
+
+  async function importAll(data) {
+    if (!data || !Array.isArray(data.tasks)) throw new Error('Invalid export format');
+    const db = await open();
+    // Clear existing
+    await Promise.all([
+      new Promise((res,rej) => { const t=db.transaction(STORES.tasks,'readwrite'); t.oncomplete=res; t.onerror=e=>rej(e.target.error); t.objectStore(STORES.tasks).clear(); }),
+      new Promise((res,rej) => { const t=db.transaction(STORES.attachments,'readwrite'); t.oncomplete=res; t.onerror=e=>rej(e.target.error); t.objectStore(STORES.attachments).clear(); }),
+    ]);
+    for (const task of data.tasks) await putTask(task);
+    for (const att of (data.attachments || [])) {
+      const blob = att.dataUrl ? base64ToBlob(att.dataUrl, att.type) : null;
+      if (blob) await putAttachment({ ...att, dataUrl: undefined, blob });
+    }
+  }
+
+  // ── MIGRATE from localStorage ──
+  async function migrateFromLocalStorage() {
+    const migrated = await getMeta('ls_migrated');
+    if (migrated) return;
+    try {
+      const raw = localStorage.getItem('dp_tasks');
+      if (!raw) { await setMeta('ls_migrated', true); return; }
+      const oldTasks = JSON.parse(raw);
+      if (!Array.isArray(oldTasks) || oldTasks.length === 0) { await setMeta('ls_migrated', true); return; }
+      let count = 0;
+      for (const t of oldTasks) {
+        // Normalise: old tasks had attachments as base64 dataUrls embedded
+        const attachRefs = [];
+        for (const a of (t.attachments || [])) {
+          const attId = uid();
+          const blob = a.dataUrl ? base64ToBlob(a.dataUrl, a.type || 'application/octet-stream') : null;
+          if (blob) {
+            await putAttachment({ id: attId, taskId: t.id, name: a.name, size: a.size, type: a.type || '', blob });
+            attachRefs.push({ id: attId, name: a.name, size: a.size, type: a.type || '' });
+          }
+        }
+        const clean = { ...t, attachments: attachRefs };
+        await putTask(clean);
+        count++;
+      }
+      await setMeta('ls_migrated', true);
+      localStorage.removeItem('dp_tasks');
+      localStorage.removeItem('dp_reminded');
+      console.log(`Migrated ${count} tasks from localStorage → IndexedDB`);
+    } catch(e) {
+      console.warn('Migration failed (non-fatal):', e);
+      await setMeta('ls_migrated', true);
+    }
+  }
+
+  return {
+    open, putTask, getTask, deleteTask, getAllTasks, getTasksByDate, getTasksByDateRange,
+    putAttachment, getAttachment, getAttachmentsByTask, deleteAttachment,
+    getMeta, setMeta, exportAll, importAll, migrateFromLocalStorage
+  };
+})();
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function todayKey() { return new Date().toISOString().slice(0, 10); }
+function nowTs() { return Date.now(); }
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = e => res(e.target.result);
+    r.onerror = () => rej(new Error('FileReader failed'));
+    r.readAsDataURL(blob);
+  });
+}
+function base64ToBlob(dataUrl, type) {
+  try {
+    const arr = dataUrl.split(','); const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]); let n = bstr.length; const u8 = new Uint8Array(n);
+    while(n--) u8[n] = bstr.charCodeAt(n);
+    return new Blob([u8], { type: type || mime });
+  } catch(e) { return null; }
+}
+function fileIcon(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return '🖼';
+  if (ext === 'pdf')  return '📄';
+  if (['doc','docx'].includes(ext)) return '📝';
+  if (['xls','xlsx','csv'].includes(ext)) return '📊';
+  if (['zip','rar','7z'].includes(ext)) return '🗜';
+  if (['mp4','mov','avi'].includes(ext)) return '🎬';
+  return '📎';
+}
+function fmtSize(b) {
+  if (b < 1024) return b + 'B';
+  if (b < 1048576) return (b/1024).toFixed(1) + 'KB';
+  return (b/1048576).toFixed(1) + 'MB';
+}
+function minuteOffset(timeStr) {
+  if (!timeStr) return null;
+  const [h, m] = timeStr.split(':').map(Number);
+  const n = new Date(), t = new Date(n);
+  t.setHours(h, m, 0, 0);
+  return Math.floor((n - t) / 60000);
+}
+function isOverdue(task) {
+  if (!task || task.done || task.stage === 'done' || task.stage === 'blocked') return false;
+  const off = minuteOffset(task.time);
+  return off !== null && off > 5;
+}
+
+
+// ─── APP STATE ────────────────────────────────────────────────────────────────
+let STATE = {
+  tasks: [],           // today's tasks (in memory, synced from IDB)
+  attachments: {},     // { taskId: [att...] }
+  filter: 'all',
+  sort: 'time',
+  showDone: false,
+  openTaskId: null,
+  reminded: new Set(),
+  deleteConfirm: {},   // taskId -> timeout handle
+  loading: true,
+};
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+async function init() {
+  setLoading(true);
+  try {
+    await DB.open();
+    await DB.migrateFromLocalStorage();
+
+    // Load reminded set from meta
+    const rem = await DB.getMeta('reminded', []);
+    STATE.reminded = new Set(Array.isArray(rem) ? rem : []);
+
+    await loadTodayTasks();
+    await maybeSeed();
+
+    tick();
+    render();
+
+    setInterval(tick, 30000);
+    setInterval(checkReminders, 30000);
+    setInterval(async () => { await loadTodayTasks(); render(); }, 60000);
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      setTimeout(() => Notification.requestPermission(), 3000);
+    }
+
+    // Visibility: refresh when tab becomes active again
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden) { await loadTodayTasks(); render(); }
+    });
+
+  } catch(err) {
+    console.error('Init failed:', err);
+    showToast('⚠ Failed to open database: ' + err.message, 'err');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  STATE.loading = on;
+  document.getElementById('loading-overlay').style.display = on ? 'flex' : 'none';
+}
+
+async function loadTodayTasks() {
+  STATE.tasks = await DB.getTasksByDate(todayKey());
+}
+
+// ─── SEEDING ─────────────────────────────────────────────────────────────────
+async function maybeSeed() {
+  const seeded = await DB.getMeta('seeded_' + todayKey());
+  if (seeded || STATE.tasks.length > 0) return;
+  const mk = (title, tag, pri, time, stage = 'todo') => ({
+    id: uid(), title, tag, priority: pri, time, stage, done: stage === 'done',
+    date: todayKey(), created: nowTs(), updated: nowTs(),
+    remarks: [], activity: [{ ts: nowTs(), text: 'Task created' }]
+  });
+  const seeds = [
+    mk('Send Durex SOW deck to 100 Days',           'client',    'urgent', '09:30'),
+    mk('Follow-up: Wild Wand PDP approval',          'follow-up', 'high',   '10:00'),
+    mk('Weekly revenue report — Troopod',            'revenue',   'high',   '11:00'),
+    mk('KAM sync call — Mia / Tanishq account',      'kam',       'medium', '12:00'),
+    mk('Bullet PDP build push to GitHub Pages',      'design',    'high',   '14:00', 'in_progress'),
+    mk('Chase pending invoice — Mia Tanishq',        'sales',     'urgent', '15:30'),
+    mk('Client update: Sweet Nothings desktop build','client',    'medium', '16:00'),
+    mk('Vivi Longevity CVR analytics review',        'revenue',   'medium', '17:00'),
+    mk('House of Vaulte deck feedback',              'design',    'low',    ''),
+    mk('Cocosutra FAQ schema fix',                   'ops',       'low',    ''),
+  ];
+  for (const t of seeds) await DB.putTask(t);
+  await DB.setMeta('seeded_' + todayKey(), true);
+  STATE.tasks = seeds;
+}
+
+// ─── TASK ACTIONS (all async, always re-sync) ─────────────────────────────────
+async function addTask() {
+  const inp   = document.getElementById('add-title');
+  const title = inp.value.trim();
+  if (!title) {
+    inp.classList.add('shake');
+    setTimeout(() => inp.classList.remove('shake'), 400);
+    inp.focus();
+    return;
+  }
+
+  // Duplicate guard
+  const dup = STATE.tasks.find(t => t.title.toLowerCase() === title.toLowerCase());
+  if (dup) showToast('⚠ A task with this name already exists today', 'warn');
+
+  const task = {
+    id: uid(),
+    title,
+    tag:      document.getElementById('add-tag').value,
+    priority: document.getElementById('add-pri').value,
+    time:     document.getElementById('add-time').value,
+    stage:    'todo',
+    done:     false,
+    date:     todayKey(),
+    created:  nowTs(),
+    updated:  nowTs(),
+    remarks:  [],
+    activity: [{ ts: nowTs(), text: 'Task created' }],
+  };
+
+  try {
+    await DB.putTask(task);
+    await loadTodayTasks();
+    render();
+    inp.value = '';
+    inp.focus();
+    showToast('✓ Task added');
+  } catch(e) {
+    showToast('⚠ Could not save task: ' + e.message, 'err');
+  }
+}
+
+async function updateTask(id, changes, logMsg) {
+  const task = await DB.getTask(id);
+  if (!task) return null;
+  const updated = { ...task, ...changes, updated: nowTs() };
+  if (logMsg) updated.activity = [...(task.activity || []), { ts: nowTs(), text: logMsg }];
+  await DB.putTask(updated);
+  // Sync in-memory
+  const idx = STATE.tasks.findIndex(t => t.id === id);
+  if (idx !== -1) STATE.tasks[idx] = updated;
+  return updated;
+}
+
+async function deleteTask(e, id) {
+  e.stopPropagation();
+  const btn = document.getElementById('del-' + id);
+  if (!btn) return;
+
+  if (STATE.deleteConfirm[id]) {
+    // Second click: confirmed
+    clearTimeout(STATE.deleteConfirm[id]);
+    delete STATE.deleteConfirm[id];
+    try {
+      await DB.deleteTask(id);
+      if (STATE.openTaskId === id) closeDrawer();
+      await loadTodayTasks();
+      render();
+      showToast('Task deleted');
+    } catch(err) {
+      showToast('⚠ Delete failed: ' + err.message, 'err');
+    }
+  } else {
+    // First click: arm
+    if (btn) {
+      btn.textContent = 'Confirm?';
+      btn.classList.add('confirming');
+    }
+    STATE.deleteConfirm[id] = setTimeout(() => {
+      delete STATE.deleteConfirm[id];
+      const b = document.getElementById('del-' + id);
+      if (b) { b.textContent = '×'; b.classList.remove('confirming'); }
+    }, 2500);
+  }
+}
+
+async function toggleDone(e, id) {
+  e.stopPropagation();
+  const task = STATE.tasks.find(t => t.id === id);
+  if (!task) return;
+  const newStage = task.stage === 'done' ? 'todo' : 'done';
+  await updateTask(id, { stage: newStage, done: newStage === 'done' },
+    newStage === 'done' ? 'Marked done' : 'Marked active');
+  render();
+  if (STATE.openTaskId === id) await refreshDrawer();
+}
+
+async function cycleStage(e, id) {
+  e.stopPropagation();
+  const task = STATE.tasks.find(t => t.id === id);
+  if (!task) return;
+  const order = ['todo', 'in_progress', 'review', 'done'];
+  const cur   = order.indexOf(task.stage);
+  const next  = order[(cur + 1) % order.length];
+  const msg = `Stage: ${STAGE_META[task.stage]?.label} → ${STAGE_META[next]?.label}`;
+  await updateTask(id, { stage: next, done: next === 'done' }, msg);
+  render();
+  if (STATE.openTaskId === id) await refreshDrawer();
+}
+
+async function toggleBlock(e, id) {
+  e.stopPropagation();
+  const task = STATE.tasks.find(t => t.id === id);
+  if (!task) return;
+  if (task.stage === 'blocked') {
+    await updateTask(id, { stage: 'todo', done: false }, 'Unblocked');
+  } else {
+    await updateTask(id, { stage: 'blocked', done: false },
+      `Blocked (was ${STAGE_META[task.stage]?.label})`);
+  }
+  render();
+  if (STATE.openTaskId === id) await refreshDrawer();
+}
+
+// ─── INLINE EDIT ─────────────────────────────────────────────────────────────
+function startInlineEdit(e, id) {
+  e.stopPropagation();
+  const task = STATE.tasks.find(t => t.id === id);
+  if (!task) return;
+  const el = document.getElementById('title-' + id);
+  if (!el || el.tagName === 'INPUT') return;
+  el.outerHTML = `<input class="tc-title-input" id="title-${id}" value="${esc(task.title)}" maxlength="140"
+    onclick="event.stopPropagation()"
+    onblur="commitInlineEdit('${id}')"
+    onkeydown="inlineKey(event,'${id}')">`;
+  const inp = document.getElementById('title-' + id);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function inlineKey(e, id) {
+  if (e.key === 'Enter') commitInlineEdit(id);
+  if (e.key === 'Escape') { render(); } // discard
+}
+
+async function commitInlineEdit(id) {
+  const inp = document.getElementById('title-' + id);
+  if (!inp || inp.tagName !== 'INPUT') return;
+  const val  = inp.value.trim();
+  const task = STATE.tasks.find(t => t.id === id);
+  if (!task) return;
+  if (val && val !== task.title) {
+    await updateTask(id, { title: val }, `Title changed to "${val}"`);
+    showToast('✓ Saved');
+  }
+  render();
+}
+
+// ─── FILTER / SORT ───────────────────────────────────────────────────────────
+function setFilter(el) {
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  STATE.filter = el.dataset.f;
+  render();
+}
+
+function toggleDoneSection() {
+  STATE.showDone = !STATE.showDone;
+  render();
+}
+
+function filteredActive() {
+  let tt = STATE.tasks.filter(t => t.stage !== 'done' && t.stage !== 'blocked');
+  if (STATE.filter !== 'all') tt = tt.filter(t => t.tag === STATE.filter);
+  const priOrder   = { urgent: 0, high: 1, medium: 2, low: 3 };
+  const stageOrder = { todo: 0, in_progress: 1, review: 2 };
+  tt.sort((a, b) => {
+    if (STATE.sort === 'priority') return priOrder[a.priority] - priOrder[b.priority];
+    if (STATE.sort === 'stage')    return stageOrder[a.stage] - stageOrder[b.stage];
+    if (STATE.sort === 'created')  return a.created - b.created;
+    // default: by time
+    if (a.time && b.time)  return a.time < b.time ? -1 : 1;
+    if (a.time && !b.time) return -1;
+    if (!a.time && b.time) return 1;
+    return a.created - b.created;
+  });
+  return tt;
+}
+
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  if (STATE.loading) return;
+  const today    = STATE.tasks;
+  const done     = today.filter(t => t.stage === 'done');
+  const blocked  = today.filter(t => t.stage === 'blocked');
+  const active   = today.filter(t => t.stage !== 'done' && t.stage !== 'blocked');
+  const overdue  = today.filter(isOverdue);
+
+  // Stats
+  document.getElementById('st-total').textContent   = today.length;
+  document.getElementById('st-done').textContent    = done.length;
+  document.getElementById('st-active').textContent  = active.length;
+  document.getElementById('st-overdue').textContent = overdue.length;
+
+  // Overdue banner
+  const ob = document.getElementById('overdue-banner');
+  if (overdue.length) {
+    ob.style.display = '';
+    ob.textContent = `⚠ ${overdue.length} overdue task${overdue.length > 1 ? 's' : ''} — check your schedule`;
+  } else ob.style.display = 'none';
+
+  // Active list
+  const filteredAct = filteredActive();
+  const al = document.getElementById('active-list');
+  al.innerHTML = '';
+  if (filteredAct.length === 0) {
+    al.innerHTML = `<div class="empty-state">no active tasks${STATE.filter !== 'all' ? ' in this category' : ''}<br>
+      <span style="color:var(--muted2);font-size:10px">add one above${STATE.filter !== 'all' ? ' or change filter' : ''}</span></div>`;
+  } else {
+    filteredAct.forEach(t => al.appendChild(buildCard(t)));
+  }
+
+  // Done list
+  const dl  = document.getElementById('done-list');
+  const dsl = document.getElementById('done-sec-label');
+  const sdb = document.getElementById('show-done-btn');
+  const doneFilt = STATE.filter === 'all' ? done : done.filter(t => t.tag === STATE.filter);
+  dl.innerHTML = '';
+  if (doneFilt.length === 0) {
+    dsl.style.display = 'none'; sdb.style.display = 'none';
+  } else if (STATE.showDone) {
+    dsl.style.display = 'flex'; sdb.style.display = 'none';
+    doneFilt.forEach(t => dl.appendChild(buildCard(t)));
+  } else {
+    dsl.style.display = 'none'; sdb.style.display = '';
+    sdb.textContent = `Show ${doneFilt.length} completed task${doneFilt.length > 1 ? 's' : ''}`;
+  }
+
+  // Blocked list
+  const blockedFilt = STATE.filter === 'all' ? blocked : blocked.filter(t => t.tag === STATE.filter);
+  const bl = document.getElementById('blocked-list');
+  document.getElementById('blocked-sec-label').style.display = blockedFilt.length ? '' : 'none';
+  bl.innerHTML = '';
+  blockedFilt.forEach(t => bl.appendChild(buildCard(t)));
+
+  // Sync sort select
+  const ss = document.getElementById('sort-sel');
+  if (ss && ss.value !== STATE.sort) ss.value = STATE.sort;
+}
+
+function buildCard(task) {
+  const tm  = TAG_META[task.tag]   || { label: task.tag, col: '#6B6B7A' };
+  const pm  = PRI_META[task.priority] || PRI_META.medium;
+  const sm  = STAGE_META[task.stage]  || STAGE_META.todo;
+  const od  = isOverdue(task);
+  const off = minuteOffset(task.time);
+
+  let timeLabel = '', timeCls = 'tc-time';
+  if (task.time) {
+    const [h, m] = task.time.split(':').map(Number);
+    const ap = h >= 12 ? 'pm' : 'am'; const hr = h % 12 || 12;
+    timeLabel = `${hr}:${String(m).padStart(2,'0')} ${ap}`;
+    if (!task.done && task.stage !== 'done' && off !== null) {
+      if (off > 5)    { timeCls += ' od'; timeLabel += ' · overdue'; }
+      else if (off > -20) timeCls += ' soon';
+    }
+  }
+
+  // attachment + remark counts (refs stored on task)
+  const rc = (task.remarks    || []).length;
+  // attachments are refs (no blobs) stored on task
+  const ac = (task.attachments || []).length;
+
+  const card = document.createElement('div');
+  card.className = 'task-card' +
+    (task.stage === 'done'    ? ' is-done'    : '') +
+    (task.stage === 'blocked' ? ' is-blocked' : '') +
+    (od                       ? ' is-overdue' : '');
+  card.style.setProperty('--tag-col', tm.col);
+  card.dataset.id = task.id;
+
+  card.innerHTML = `
+    <button class="tc-check" onclick="toggleDone(event,'${task.id}')"
+      title="${task.stage === 'done' ? 'Mark active' : 'Mark done'}">✓</button>
+    <div class="tc-body">
+      <div class="tc-title-wrap">
+        <div class="pri-dot" style="background:${pm.col}" title="${pm.label} priority"></div>
+        <div class="tc-title" id="title-${task.id}"
+          ondblclick="startInlineEdit(event,'${task.id}')"
+          title="Double-click to edit · Click card to open detail">${esc(task.title)}</div>
+        <div class="tc-counts">
+          ${rc ? `<span class="tc-count" title="${rc} remark${rc>1?'s':''}">💬${rc}</span>` : ''}
+          ${ac ? `<span class="tc-count" title="${ac} file${ac>1?'s':''}">📎${ac}</span>`  : ''}
+        </div>
+      </div>
+      <div class="tc-meta">
+        <span class="tag-pill" style="background:${tm.col}18;color:${tm.col};border:1px solid ${tm.col}30">${tm.label}</span>
+        <span class="stage-badge" style="background:${sm.col}18;color:${sm.col};border-color:${sm.col}30"
+          onclick="cycleStage(event,'${task.id}')" title="Click to advance stage">${sm.icon} ${sm.label}</span>
+        ${timeLabel ? `<span class="${timeCls}">⏱ ${timeLabel}</span>` : ''}
+      </div>
+    </div>
+    <div class="tc-actions">
+      <button class="tc-del" id="del-${task.id}" onclick="deleteTask(event,'${task.id}')" title="Delete">×</button>
+      <button class="tc-block" onclick="toggleBlock(event,'${task.id}')"
+        title="${task.stage === 'blocked' ? 'Unblock' : 'Block'}">${task.stage === 'blocked' ? 'unblock' : 'block'}</button>
+    </div>`;
+
+  card.addEventListener('click', e => {
+    if (e.target.closest('.tc-check,.tc-del,.tc-block,.stage-badge,.tc-title-input')) return;
+    openDrawer(task.id);
+  });
+  return card;
+}
+
+// ─── DRAWER ──────────────────────────────────────────────────────────────────
+function openDrawer(id) {
+  STATE.openTaskId = id;
+  document.getElementById('backdrop').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  refreshDrawer();
+}
+
+function closeDrawer() {
+  STATE.openTaskId = null;
+  document.getElementById('backdrop').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+async function refreshDrawer() {
+  if (!STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task) { closeDrawer(); return; }
+  // Also refresh in-memory
+  const idx = STATE.tasks.findIndex(t => t.id === task.id);
+  if (idx !== -1) STATE.tasks[idx] = task;
+  const atts = await DB.getAttachmentsByTask(task.id);
+  renderDrawer(task, atts);
+}
+
+function renderDrawer(task, atts) {
+  const body = document.getElementById('dr-body');
+  body.innerHTML = `
+    <div class="dr-section">
+      <div class="dr-label">Title</div>
+      <input class="dr-title-input" id="dr-title" value="${esc(task.title)}" maxlength="140"
+        onchange="drField('title',this.value)">
+    </div>
+    <div class="dr-section">
+      <div class="dr-label">Fields</div>
+      <div class="dr-fields">
+        <div class="dr-field"><label>Category</label>
+          <select class="dr-sel" onchange="drField('tag',this.value)">${
+            Object.entries(TAG_META).map(([k,v]) =>
+              `<option value="${k}"${task.tag===k?' selected':''}>${v.label}</option>`).join('')
+          }</select></div>
+        <div class="dr-field"><label>Priority</label>
+          <select class="dr-sel" onchange="drField('priority',this.value)">${
+            Object.entries(PRI_META).map(([k,v]) =>
+              `<option value="${k}"${task.priority===k?' selected':''}>${v.label}</option>`).join('')
+          }</select></div>
+        <div class="dr-field"><label>Time</label>
+          <input class="dr-time" type="time" value="${task.time||''}" onchange="drField('time',this.value)"></div>
+        <div class="dr-field"><label>Date</label>
+          <input class="dr-time" type="date" value="${task.date}" onchange="drField('date',this.value)"></div>
+      </div>
+    </div>
+    <div class="dr-section">
+      <div class="dr-label">Stage</div>
+      <div class="stage-stepper">${buildStepper(task)}</div>
+    </div>
+    <div class="dr-section">
+      <div class="dr-label">Remarks
+        <span style="color:var(--muted2);font-size:10px;margin-left:4px">${task.remarks.length} notes</span>
+      </div>
+      <div class="remarks-list" id="remarks-list">
+        ${task.remarks.length ? task.remarks.map((r,i) => `
+          <div class="remark-item">
+            <div class="remark-text">${esc(r.text)}</div>
+            <div class="remark-meta">
+              <span class="remark-ts">${fmtTime(r.ts)}</span>
+              <button class="remark-del" onclick="deleteRemark(${i})" title="Remove">×</button>
+            </div>
+          </div>`).join('')
+        : '<div style="font-size:11px;font-family:var(--mono);color:var(--muted2);padding:4px 0">No remarks yet</div>'}
+      </div>
+      <div class="remark-add-row">
+        <textarea class="remark-inp" id="remark-inp" rows="2"
+          placeholder="Add a note, decision, or update…"
+          onkeydown="remarkKey(event)"></textarea>
+        <button class="remark-add-btn" onclick="addRemark()">Add</button>
+      </div>
+    </div>
+    <div class="dr-section">
+      <div class="dr-label">Attachments
+        <span style="color:var(--muted2);font-size:10px;margin-left:4px">${atts.length} files</span>
+      </div>
+      <div class="attach-list" id="attach-list">
+        ${atts.map((a,i) => buildAttachRow(a, i)).join('')}
+      </div>
+      <div class="attach-drop" id="attach-drop"
+        ondragover="dragOver(event)" ondragleave="dragLeave()" ondrop="dropFiles(event)">
+        <input type="file" multiple onchange="filesPicked(this)" onclick="event.stopPropagation()">
+        <p>📎 Drop files or click to upload<br>
+          <span style="font-size:10px;color:var(--muted2)">Max 5MB per file · Stored in IndexedDB</span></p>
+      </div>
+      <div id="attach-warn" class="attach-warn" style="display:none"></div>
+    </div>
+    <div class="dr-section">
+      <div class="dr-label">Activity Log</div>
+      <div class="activity-list">
+        ${[...(task.activity || [])].reverse().map(a => `
+          <div class="activity-item">
+            <div class="act-dot"></div>
+            <div class="act-text">${esc(a.text)}</div>
+            <div class="act-ts">${fmtTime(a.ts)}</div>
+          </div>`).join('') || '<div style="font-size:11px;color:var(--muted2)">No activity yet</div>'}
+      </div>
+    </div>
+    <button class="dr-save-btn" onclick="closeDrawer()">Close</button>
+  `;
+}
+
+function buildStepper(task) {
+  const steps = ['todo','in_progress','review','done'];
+  const cur   = steps.indexOf(task.stage);
+  const isBlocked = task.stage === 'blocked';
+  return steps.map((s, i) => {
+    let cls = 'ss-node';
+    if (isBlocked && i === 0)  cls += ' blocked-node';
+    else if (i < cur)          cls += ' past-node done-node';
+    else if (i === cur)        cls += ' active-node' + (s === 'done' ? ' done-done' : '');
+    return `<div class="${cls}" onclick="setStageDrawer('${s}')" title="${STAGE_META[s].label}">
+      <div class="ss-circle">${i < cur ? '✓' : STAGE_META[s].icon}</div>
+      <div class="ss-name">${STAGE_META[s].label}</div>
+    </div>`;
+  }).join('') + (isBlocked ? `
+    <div class="ss-node blocked-node" title="Blocked">
+      <div class="ss-circle" style="border-color:#EF4444;background:rgba(239,68,68,.15)">✕</div>
+      <div class="ss-name">Blocked</div>
+    </div>` : '');
+}
+
+async function setStageDrawer(stage) {
+  if (!STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task) return;
+  const msg = `Stage: ${STAGE_META[task.stage]?.label} → ${STAGE_META[stage]?.label}`;
+  await updateTask(STATE.openTaskId, { stage, done: stage === 'done' }, msg);
+  render();
+  await refreshDrawer();
+}
+
+async function drField(field, val) {
+  if (!STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task || String(task[field]) === String(val)) return;
+  const msg = `${field.charAt(0).toUpperCase() + field.slice(1)} updated`;
+  await updateTask(STATE.openTaskId, { [field]: val }, msg);
+  if (['tag','priority','stage'].includes(field)) await refreshDrawer();
+  render();
+}
+
+// ─── REMARKS ─────────────────────────────────────────────────────────────────
+async function addRemark() {
+  const inp  = document.getElementById('remark-inp');
+  const text = inp ? inp.value.trim() : '';
+  if (!text || !STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task) return;
+  const remarks = [...(task.remarks || []), { ts: nowTs(), text }];
+  await updateTask(STATE.openTaskId, { remarks }, 'Remark added');
+  inp.value = '';
+  await refreshDrawer();
+  render();
+}
+
+async function deleteRemark(idx) {
+  if (!STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task) return;
+  const remarks = [...(task.remarks || [])];
+  remarks.splice(idx, 1);
+  await updateTask(STATE.openTaskId, { remarks }, 'Remark removed');
+  await refreshDrawer();
+  render();
+}
+
+function remarkKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addRemark(); }
+}
+
+// ─── ATTACHMENTS ─────────────────────────────────────────────────────────────
+function buildAttachRow(att, i) {
+  const isImg = att.type && att.type.startsWith('image/');
+  const thumb = isImg
+    ? `<img class="attach-preview" id="thumb-${att.id}" src="" alt="${esc(att.name)}">`
+    : `<span class="attach-icon">${fileIcon(att.name)}</span>`;
+  // Load blob URL async after render
+  if (isImg) setTimeout(() => loadThumb(att.id, att.blob), 0);
+  return `<div class="attach-item">
+    ${thumb}
+    <div class="attach-info">
+      <div class="attach-name" title="${esc(att.name)}">${esc(att.name)}</div>
+      <div class="attach-size">${fmtSize(att.size)}</div>
+    </div>
+    <button class="attach-dl" onclick="downloadAttach('${att.id}','${esc(att.name)}')" title="Download">↓ Download</button>
+    <button class="attach-del" onclick="deleteAttach('${att.id}')" title="Remove">×</button>
+  </div>`;
+}
+
+async function loadThumb(attId, blob) {
+  const el = document.getElementById('thumb-' + attId);
+  if (!el) return;
+  try {
+    let b = blob;
+    if (!b) { const att = await DB.getAttachment(attId); b = att?.blob; }
+    if (b) el.src = URL.createObjectURL(b);
+  } catch(e) { /* no-op */ }
+}
+
+async function downloadAttach(attId, name) {
+  try {
+    const att = await DB.getAttachment(attId);
+    if (!att || !att.blob) { showToast('⚠ File not found', 'err'); return; }
+    const url = URL.createObjectURL(att.blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } catch(e) { showToast('⚠ Download failed: ' + e.message, 'err'); }
+}
+
+async function processFiles(files) {
+  if (!STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task) return;
+  const warnEl = document.getElementById('attach-warn');
+  const warns  = [];
+
+  for (const f of [...files]) {
+    if (f.size > MAX_FILE_BYTES) {
+      warns.push(`${f.name} exceeds 5MB — skipped`);
+      continue;
+    }
+    if (f.size > WARN_FILE_BYTES) warns.push(`${f.name} is large (${fmtSize(f.size)})`);
+
+    const attId = uid();
+    try {
+      await DB.putAttachment({ id: attId, taskId: task.id, name: f.name, size: f.size, type: f.type, blob: f });
+      // Save ref on task
+      const refs = [...(task.attachments || []), { id: attId, name: f.name, size: f.size, type: f.type }];
+      await updateTask(task.id, { attachments: refs }, `File attached: ${f.name}`);
+    } catch(err) {
+      if (err.name === 'QuotaExceededError' || (err.message && err.message.includes('quota'))) {
+        shows = [`Storage quota exceeded — ${f.name} not saved`];
+      } else {
+        warns.push(`${f.name} failed: ${err.message}`);
+      }
+    }
+  }
+
+  if (warnEl) {
+    if (warns.length) { warnEl.style.display = ''; warnEl.textContent = warns.join(' · '); }
+    else warnEl.style.display = 'none';
+  }
+  await refreshDrawer();
+  render();
+}
+
+async function deleteAttach(attId) {
+  if (!STATE.openTaskId) return;
+  const task = await DB.getTask(STATE.openTaskId);
+  if (!task) return;
+  try {
+    await DB.deleteAttachment(attId);
+    const refs = (task.attachments || []).filter(a => a.id !== attId);
+    const found = (task.attachments || []).find(a => a.id === attId);
+    await updateTask(task.id, { attachments: refs }, `File removed: ${found?.name || attId}`);
+    await refreshDrawer();
+    render();
+  } catch(e) { showToast('⚠ Could not delete file: ' + e.message, 'err'); }
+}
+
+function filesPicked(inp) { processFiles(inp.files); inp.value = ''; }
+function dragOver(e)  { e.preventDefault(); document.getElementById('attach-drop')?.classList.add('drag-over'); }
+function dragLeave()  { document.getElementById('attach-drop')?.classList.remove('drag-over'); }
+function dropFiles(e) { e.preventDefault(); dragLeave(); processFiles(e.dataTransfer.files); }
+
+
+// ─── ANALYTICS ───────────────────────────────────────────────────────────────
+function showView(v) {
+  document.getElementById('tasks-view').style.display     = v === 'tasks'     ? '' : 'none';
+  document.getElementById('analytics-view').style.display = v === 'analytics' ? '' : 'none';
+  document.getElementById('btn-tasks').classList.toggle('active',     v === 'tasks');
+  document.getElementById('btn-analytics').classList.toggle('active', v === 'analytics');
+  if (v === 'analytics') renderAnalytics();
+}
+
+async function renderAnalytics() {
+  const today   = STATE.tasks;
+  const done    = today.filter(t => t.stage === 'done');
+  const blocked = today.filter(t => t.stage === 'blocked');
+  const active  = today.filter(t => t.stage !== 'done' && t.stage !== 'blocked');
+  const overdue = today.filter(isOverdue);
+
+  document.getElementById('an-date-lbl').textContent =
+    new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  document.getElementById('an-velocity').textContent     = done.length;
+  document.getElementById('an-velocity-sub').textContent = `of ${today.length} tasks done`;
+  document.getElementById('an-remaining').textContent    = `${active.length} active, ${overdue.length} overdue`;
+  document.getElementById('an-blocked-count').textContent= `${blocked.length} blocked`;
+
+  renderDonut(today);
+  renderTagBar(today);
+  await renderSparkline();
+  renderTagTable(today);
+  renderHeatmap(today);
+}
+
+function renderDonut(today) {
+  const total = today.length || 1;
+  const segs  = [
+    { label: 'Done',        val: today.filter(t=>t.stage==='done').length,        col: '#22C55E' },
+    { label: 'In Progress', val: today.filter(t=>t.stage==='in_progress').length, col: '#7C5CFC' },
+    { label: 'Review',      val: today.filter(t=>t.stage==='review').length,      col: '#F59E0B' },
+    { label: 'Blocked',     val: today.filter(t=>t.stage==='blocked').length,     col: '#EF4444' },
+    { label: 'To Do',       val: today.filter(t=>t.stage==='todo').length,        col: '#3D3D48' },
+  ].filter(s => s.val > 0);
+
+  const r = 28, cx = 40, cy = 40, sw = 12;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  const svg = document.getElementById('donut-svg');
+  svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1D1D22" stroke-width="${sw}"/>`;
+  segs.forEach(s => {
+    const dash = (s.val / total) * circ;
+    const el   = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    el.setAttribute('cx', cx); el.setAttribute('cy', cy); el.setAttribute('r', r);
+    el.setAttribute('fill', 'none'); el.setAttribute('stroke', s.col); el.setAttribute('stroke-width', sw);
+    el.setAttribute('stroke-dasharray', `${dash} ${circ - dash}`);
+    el.setAttribute('stroke-dashoffset', -offset);
+    el.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    svg.appendChild(el);
+    offset += dash;
+  });
+  const pct = Math.round(today.filter(t=>t.stage==='done').length / total * 100);
+  svg.innerHTML += `<text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle"
+    font-size="12" font-weight="700" fill="#F0F0F3" font-family="JetBrains Mono">${pct}%</text>`;
+  document.getElementById('donut-legend').innerHTML =
+    segs.map(s => `<div class="dl-item"><div class="dl-dot" style="background:${s.col}"></div>
+      <span class="dl-label">${s.label}</span><span class="dl-val">${s.val}</span></div>`).join('');
+}
+
+function renderTagBar(today) {
+  const max = Math.max(...Object.keys(TAG_META).map(tag => today.filter(t=>t.tag===tag).length), 1);
+  document.getElementById('tag-bar-chart').innerHTML =
+    Object.entries(TAG_META).filter(([tag]) => today.some(t=>t.tag===tag)).map(([tag, tm]) => {
+      const all  = today.filter(t=>t.tag===tag).length;
+      const done = today.filter(t=>t.tag===tag && t.stage==='done').length;
+      return `<div class="bc-row">
+        <div class="bc-label" title="${tm.label}">${tm.label.slice(tm.label.indexOf(' ')+1)}</div>
+        <div class="bc-bar-wrap"><div class="bc-bar" style="width:${Math.round(all/max*100)}%;background:${tm.col}"></div></div>
+        <div class="bc-val" style="color:${tm.col}">${done}/${all}</div>
+      </div>`;
+    }).join('') || '<div style="font-size:11px;font-family:var(--mono);color:var(--muted2)">No tasks today</div>';
+}
+
+async function renderSparkline() {
+  const days = 7;
+  const wrap = document.getElementById('spark-wrap');
+  const lbls = document.getElementById('spark-labels');
+  const data = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d   = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    let dt;
+    if (key === todayKey()) dt = STATE.tasks;
+    else dt = await DB.getTasksByDate(key);
+    const total = dt.length;
+    const done  = dt.filter(t => t.stage === 'done').length;
+    data.push({ key, label: d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,2), pct: total ? Math.round(done/total*100) : 0, done, total });
+  }
+
+  const maxPct = Math.max(...data.map(d => d.pct), 1);
+  wrap.innerHTML = data.map(d =>
+    `<div class="spark-bar" style="height:${Math.max(3, d.pct/maxPct*46)}px;opacity:${d.key===todayKey()?'1':'.5'}"
+      title="${d.label}: ${d.done}/${d.total} done (${d.pct}%)"></div>`).join('');
+  lbls.innerHTML = data.map(d =>
+    `<div class="spark-lbl" style="color:${d.key===todayKey()?'var(--purple)':'var(--muted2)'}">${d.label}</div>`).join('');
+}
+
+function renderTagTable(today) {
+  const tbody = document.querySelector('#tag-table tbody');
+  const rows = Object.entries(TAG_META).map(([tag, tm]) => {
+    const all  = today.filter(t => t.tag === tag);
+    if (!all.length) return null;
+    const done = all.filter(t => t.stage === 'done').length;
+    const od   = all.filter(isOverdue).length;
+    const rate = Math.round(done / all.length * 100);
+    return { tag, tm, total: all.length, done, od, rate };
+  }).filter(Boolean).sort((a,b) => b.total - a.total);
+
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td><span style="display:inline-flex;align-items:center;gap:6px">
+      <span style="width:7px;height:7px;border-radius:50%;background:${r.tm.col};display:inline-block"></span>
+      ${r.tm.label}</span></td>
+    <td>${r.total}</td>
+    <td style="color:var(--green)">${r.done}</td>
+    <td style="color:${r.od?'var(--red)':'var(--muted)'}">${r.od || '—'}</td>
+    <td style="color:${r.rate>=75?'var(--green)':r.rate>=40?'var(--amber)':'var(--muted)'}">${r.rate}%</td>
+  </tr>`).join('') || `<tr><td colspan="5" style="color:var(--muted2);font-size:11px;font-family:var(--mono);padding-top:12px">No tasks today</td></tr>`;
+}
+
+function renderHeatmap(today) {
+  const grid  = document.getElementById('heatmap-grid');
+  const pris  = ['urgent','high','medium','low'];
+  const stats = ['todo','in_progress','review','done'];
+  const cells = [
+    `<div class="hm-cell hm-header"></div>`,
+    ...stats.map(s => `<div class="hm-cell hm-header">${STAGE_META[s].label}</div>`)
+  ];
+  pris.forEach(p => {
+    cells.push(`<div class="hm-cell hm-row-label">
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <span style="width:6px;height:6px;border-radius:50%;background:${PRI_META[p].col};display:inline-block;flex-shrink:0"></span>
+        <span style="font-size:9px;font-family:var(--mono);color:var(--muted);text-transform:uppercase">${PRI_META[p].label}</span>
+      </span></div>`);
+    stats.forEach(s => {
+      const n   = today.filter(t => t.priority === p && t.stage === s).length;
+      const col = STAGE_META[s].col;
+      cells.push(`<div class="hm-cell hm-data" style="background:${n?col+'22':'transparent'};color:${n?col:'var(--muted2)'};border:1px solid ${n?col+'33':'var(--b1)'}">${n||'—'}</div>`);
+    });
+  });
+  grid.innerHTML = cells.join('');
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+async function exportData() {
+  try {
+    showToast('Exporting…', 'ok');
+    const data    = await DB.exportAll();
+    const json    = JSON.stringify(data, null, 2);
+    const blob    = new Blob([json], { type: 'application/json' });
+    const url     = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `dayplan-backup-${dateStr}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast('✓ Backup downloaded', 'ok');
+  } catch(e) { showToast('⚠ Export failed: ' + e.message, 'err'); }
+}
+
+async function importData(inp) {
+  if (!inp.files[0]) return;
+  const f = inp.files[0];
+  try {
+    const text = await f.text();
+    const data = JSON.parse(text);
+    if (!data.tasks || data.version !== 3) throw new Error('Unrecognised backup format');
+    if (!confirm(`Import ${data.tasks.length} tasks from ${data.exportedAt}?\nThis will replace all current data.`)) return;
+    await DB.importAll(data);
+    await loadTodayTasks();
+    render();
+    showToast(`✓ Imported ${data.tasks.length} tasks`, 'ok');
+  } catch(e) { showToast('⚠ Import failed: ' + e.message, 'err'); }
+  inp.value = '';
+}
+
+async function clearCompleted() {
+  const done = STATE.tasks.filter(t => t.stage === 'done');
+  if (!done.length) { showToast('No completed tasks to clear', 'ok'); return; }
+  if (!confirm(`Delete ${done.length} completed task(s)?`)) return;
+  for (const t of done) await DB.deleteTask(t.id);
+  await loadTodayTasks();
+  render();
+  showToast(`✓ Cleared ${done.length} completed tasks`);
+}
+
+// ─── CLOCK, BURN BAR ─────────────────────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  const h = String(n.getHours()).padStart(2,'0'), m = String(n.getMinutes()).padStart(2,'0');
+  document.getElementById('hclock').textContent = `${h}:${m}`;
+  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('hdate').textContent = `${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]}`;
+  const mins = n.getHours() * 60 + n.getMinutes();
+  const pct  = Math.min(100, Math.max(0, (mins - 540) / 720 * 100));
+  document.getElementById('burn-fill').style.width = pct + '%';
+}
+
+// ─── REMINDERS ────────────────────────────────────────────────────────────────
+async function checkReminders() {
+  const n  = new Date();
+  const nm = n.getHours() * 60 + n.getMinutes();
+  STATE.tasks.filter(t => !t.done && t.stage !== 'done' && t.time).forEach(t => {
+    const [h, m] = t.time.split(':').map(Number);
+    const key = `${t.id}_${t.time}`;
+    if (Math.abs(nm - (h*60 + m)) <= 1 && !STATE.reminded.has(key)) {
+      STATE.reminded.add(key);
+      DB.setMeta('reminded', [...STATE.reminded]);
+      showToast(`⏰ ${t.title}`);
+      if (Notification.permission === 'granted') new Notification('Dayplan — Troopod', { body: t.title });
+    }
+  });
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+let _toastTimer;
+function showToast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  document.getElementById('t-msg').textContent = msg;
+  el.className = type === 'err' ? 'toast-err' : type === 'warn' ? 'toast-warn' : 'toast-ok';
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(hideToast, type === 'err' ? 6000 : 3500);
+}
+function hideToast() { document.getElementById('toast').classList.remove('show'); }
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDrawer();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('add-title').focus(); }
+});
+document.getElementById('add-title').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+document.getElementById('sort-sel').addEventListener('change', e => { STATE.sort = e.target.value; render(); });
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+if ('Notification' in window && Notification.permission === 'default') {
+  setTimeout(() => Notification.requestPermission(), 3000);
+}
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden) { await loadTodayTasks(); render(); }
+});
+init();
+
+
+</script>
+</body>
+</html>
