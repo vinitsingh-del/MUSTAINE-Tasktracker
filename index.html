@@ -432,7 +432,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
           <option value="client">Client</option><option value="kam">KAM</option>
           <option value="design">Design</option><option value="ops">Ops</option>
           <option value="follow-up">Follow-up</option><option value="control">Control</option>
-          <option value="management">Management</option><option value="personal">Personal</option>
+          <option value="management">Management</option><option value="personal">Personal</option><option value="daily">Daily Work</option>
         </select>
         <select class="add-sel" id="add-pri">
           <option value="medium">Medium</option><option value="urgent">Urgent</option>
@@ -442,6 +442,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div class="add-row2">
         <input class="add-time" type="time" id="add-time">
         <input class="add-time" type="date" id="add-date">
+        <select class="add-sel" id="add-recur" style="font-size:10px;flex:1">
+          <option value="none">One-time</option>
+          <option value="daily">Daily Recurring</option>
+        </select>
       </div>
     </div>
 
@@ -465,6 +469,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button class="ftab" data-f="follow-up" onclick="setF(this)">Follow-up</button>
       <button class="ftab" data-f="control" onclick="setF(this)">Control</button>
       <button class="ftab" data-f="management" onclick="setF(this)">Management</button>
+      <button class="ftab" data-f="daily" onclick="setF(this)">Daily Work</button>
     </div>
   </div><!-- /view-head -->
   <div class="view-scroll">
@@ -551,6 +556,7 @@ const TAG = {
   design:{label:'Design',col:'#f59e0b'}, ops:{label:'Ops',col:'#06b6d4'},
   'follow-up':{label:'Follow-up',col:'#e63329'}, control:{label:'Control',col:'#a855f7'},
   management:{label:'Management',col:'#14b8a6'}, personal:{label:'Personal',col:'#666'},
+  daily:      { label: 'Daily Work',  col: '#f97316' },
 };
 const PRI = {
   urgent:{col:'#e63329',label:'Urgent'}, high:{col:'#f59e0b',label:'High'},
@@ -562,6 +568,7 @@ const STG = {
   blocked:{label:'Blocked',icon:'x',col:'#e63329'}, closed:{label:'Closed',icon:'-',col:'#444'},
 };
 const VALID_TAGS = Object.keys(TAG);
+const VALID_RECURRENCE = ['none','daily'];
 const VALID_STAGES = Object.keys(STG);
 const MAX_FILE = 5*1024*1024;
 const WARN_FILE = 2*1024*1024;
@@ -636,6 +643,7 @@ const SB = (() => {
       timer_started_at:t.timer_started_at||null,
       timer_stopped_at:t.timer_stopped_at||null,
       timer_total_seconds:t.timer_total_seconds||0,
+      recurrence: VALID_RECURRENCE.includes(t.recurrence) ? t.recurrence : 'none',
       ...(t.created_at?{created_at:t.created_at}:{}),
     };
   }
@@ -689,6 +697,7 @@ function norm(t){
   return {...t,
     date:t.task_date||t.date||today(), time:t.task_time||t.time||'',
     remarks: typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),
+    recurrence: t.recurrence||'none',
     activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),
     attachments:t.attachments||[], timer_total_seconds:t.timer_total_seconds||0,
   };
@@ -766,6 +775,66 @@ function showApp(){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// DAILY RECURRENCE ROLLOVER
+// ═══════════════════════════════════════════════════════════════
+async function rolloverDailyTasks() {
+  // Find daily tasks that were done yesterday and need to reappear today
+  const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); })();
+  const todayKey = today();
+  const rollKey = 'rolled_' + todayKey + '_' + (SB.uid()||'');
+  if (localStorage.getItem(rollKey)) return; // already rolled today
+
+  try {
+    // Fetch yesterday's completed daily tasks
+    const yesterdayTasks = await SB.getRange(yesterday, yesterday);
+    const dailyDone = yesterdayTasks
+      .map(norm)
+      .filter(t => t.recurrence === 'daily' && t.stage === 'done');
+
+    if (dailyDone.length === 0) { localStorage.setItem(rollKey, '1'); return; }
+
+    // Check which ones already exist today (avoid duplicates)
+    const todayTasks = await SB.getTasks(todayKey);
+    const todayTitles = new Set(todayTasks.map(t => t.title.toLowerCase()));
+
+    let rolled = 0;
+    for (const t of dailyDone) {
+      if (todayTitles.has(t.title.toLowerCase())) continue; // already exists today
+      const n = new Date().toISOString();
+      const newTask = {
+        id: uid6(),
+        title: t.title,
+        tag: t.tag,
+        priority: t.priority,
+        task_time: t.task_time || t.time || null,
+        task_date: todayKey,
+        stage: 'todo',
+        done: false,
+        created_at: n,
+        recurrence: 'daily',
+        remarks: '[]',
+        activity: JSON.stringify([
+          { ts: now(), text: 'Auto-created from daily recurring task' }
+        ]),
+        timer_total_seconds: 0,
+        timer_started_at: null,
+        timer_stopped_at: null,
+      };
+      try { await SB.upsert(newTask); rolled++; } catch(e) { console.warn('Rollover failed:', e); }
+    }
+
+    localStorage.setItem(rollKey, '1');
+    if (rolled > 0) {
+      toast(`${rolled} daily task${rolled>1?'s':''} reset for today`);
+      await loadTasks(); render();
+    }
+  } catch(e) {
+    console.warn('Daily rollover error (non-fatal):', e);
+    localStorage.setItem(rollKey, '1'); // don't retry on error
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 async function boot(){
@@ -792,6 +861,7 @@ async function boot(){
   await loadTasks();
   await loadNotifs();
   await maybeSeed();
+  await rolloverDailyTasks(); // check if daily tasks need to roll over
   tick(); render(); renderNotifs();
 
   // start timer loop
@@ -862,6 +932,7 @@ async function addTask(){
     task_time:document.getElementById('add-time').value||null,
     task_date:document.getElementById('add-date').value||today(),
     stage:'todo',done:false,created_at:n,
+    recurrence:document.getElementById('add-recur')?.value||'none',
     remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),
     timer_total_seconds:0,
     timer_started_at:new Date().toISOString(), // auto-start
@@ -1137,6 +1208,7 @@ function mkCard(task){
           <div class="pdot" style="background:${pm.col}" title="${pm.label}"></div>
           <span class="chip" style="color:${tm.col};border-color:${tm.col}25;background:${tm.col}12">${tm.label}</span>
           <span class="chip" style="color:${sm.col};border-color:${sm.col}25;background:${sm.col}12" onclick="event.stopPropagation();cycleStage(event,'${task.id}')">${sm.label}</span>
+          ${task.recurrence==='daily'?`<span class="chip" style="color:#f97316;border-color:#f9731625;background:#f9731612;letter-spacing:.08em">DAILY</span>`:''}
           ${tTxt?`<span class="${tCls}">${tTxt}</span>`:''}
           ${task.task_date&&task.task_date!==today()&&G.df!=='today'?`<span class="ctime" style="color:var(--amber)">${task.task_date}</span>`:''}
         </div>
@@ -1189,6 +1261,7 @@ function renderDrawer(task,atts){
 
   document.getElementById('dr-body').innerHTML=`
     ${isPast&&!isDone&&!isClosed?`<div style="background:rgba(230,51,41,.07);border:1px solid rgba(230,51,41,.22);border-radius:8px;padding:9px 13px;font-family:var(--font-m);font-size:10px;color:var(--red);letter-spacing:.05em">PAST TASK — ${task.task_date} — Action required</div>`:''}
+    ${task.recurrence==='daily'?`<div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.25);border-radius:8px;padding:9px 13px;font-family:var(--font-m);font-size:10px;color:#f97316;letter-spacing:.05em;display:flex;align-items:center;gap:8px"><span style="font-size:16px">&#8635;</span> DAILY RECURRING — completes today, resets tomorrow</div>`:''}
     ${isDone?`<div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);border-radius:8px;padding:9px 13px;font-family:var(--font-m);font-size:10px;color:var(--green);letter-spacing:.05em">COMPLETED</div>`:''}
     ${isClosed?`<div style="background:rgba(100,100,100,.07);border:1px solid rgba(100,100,100,.2);border-radius:8px;padding:9px 13px;font-family:var(--font-m);font-size:10px;color:var(--grey);letter-spacing:.05em">CLOSED</div>`:''}
 
@@ -1212,6 +1285,13 @@ function renderDrawer(task,atts){
       <div>
         <div class="dr-lbl">Priority</div>
         <select class="dr-sel" onchange="drPatch('priority',this.value)">${Object.entries(PRI).map(([k,v])=>`<option value="${k}"${task.priority===k?' selected':''}>${v.label}</option>`).join('')}</select>
+      </div>
+      <div>
+        <div class="dr-lbl">Recurrence</div>
+        <select class="dr-sel" onchange="drPatch('recurrence',this.value)">
+          <option value="none" ${(task.recurrence||'none')==='none'?'selected':''}>One-time</option>
+          <option value="daily" ${task.recurrence==='daily'?'selected':''}>Daily Recurring</option>
+        </select>
       </div>
     </div>
     <div class="dr-2col">
@@ -1583,6 +1663,28 @@ async function renderStats(){
       ${tdata.filter(d=>d.tt>0).length===0?'No task history yet.':`Avg completion: ${Math.round(tdata.filter(d=>d.tt>0).reduce((s,d)=>s+d.pct,0)/Math.max(tdata.filter(d=>d.tt>0).length,1))}% over ${tdata.filter(d=>d.tt>0).length} active days`}
     </div>`;
   wrap.appendChild(tsc);
+
+  // ── DAILY RECURRING TASKS ──────────────────────────────────
+  const dailyAll=all.filter(t=>t.recurrence==='daily');
+  if(dailyAll.length>0){
+    const dailyDone=dailyAll.filter(t=>t.stage==='done').length;
+    const dailyActive=dailyAll.filter(t=>t.stage!=='done').length;
+    const dc2=document.createElement('div');dc2.className='an-card';
+    dc2.style.cssText='border-color:rgba(249,115,22,.2)';
+    dc2.innerHTML=`
+      <div class="an-title" style="color:#f97316">Daily Routines (${dailyAll.length})</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <span style="font-family:var(--font-m);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:var(--green)">${dailyDone} done today</span>
+        <span style="font-family:var(--font-m);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);color:#f97316">${dailyActive} pending</span>
+      </div>
+      ${dailyAll.map(t=>`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--b1)">
+        <div style="width:8px;height:8px;border-radius:50%;background:${t.stage==='done'?'var(--green)':'#f97316'};flex-shrink:0"></div>
+        <div style="flex:1;font-size:12px;color:${t.stage==='done'?'var(--grey)':'var(--white)'};${t.stage==='done'?'text-decoration:line-through':''};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.title)}</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:${t.stage==='done'?'var(--green)':'var(--grey)'};">${t.stage==='done'?'Done':'Pending'}</div>
+      </div>`).join('')}
+      <div style="margin-top:8px;font-family:var(--font-m);font-size:9px;color:var(--grey2);letter-spacing:.06em">These tasks reset daily. Mark done each day.</div>`;
+    wrap.appendChild(dc2);
+  }
 
   // ── ACTIONS NEEDED SUMMARY ──────────────────────────────────
   const needs=[];
