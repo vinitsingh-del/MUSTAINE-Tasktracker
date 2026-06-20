@@ -28,7 +28,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* LOADING — CINEMATIC */
 @keyframes lp{from{width:0}to{width:100%}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes uspFade{0%,100%{opacity:0;transform:translateY(8px)}20%,80%{opacity:1;transform:translateY(0)}}
+@keyframes uspFade{0%{opacity:0;transform:translateY(14px) scale(.95);filter:blur(4px)}
+  15%,75%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+  100%{opacity:0;transform:translateY(-8px) scale(1.04);filter:blur(3px)}}
+@keyframes uspGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 20px rgba(200,168,75,.6),0 0 60px rgba(200,168,75,.2)}}
 @keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
 #ls{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(230,51,41,.07) 0%,transparent 70%);pointer-events:none}
@@ -37,10 +40,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .ls-logo{font-family:var(--fh);font-size:56px;font-weight:900;letter-spacing:.1em;color:var(--red);animation:glow 2s infinite, fadeInUp .5s ease .2s both}
 .ls-byline{font-family:var(--fm);font-size:10px;letter-spacing:.28em;color:var(--grey2);text-transform:uppercase;animation:fadeInUp .5s ease .35s both;opacity:0}
 .ls-usps{height:28px;display:flex;align-items:center;justify-content:center;margin:4px 0;overflow:hidden;position:relative;min-width:260px}
-.ls-usp{position:absolute;font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:.22em;color:var(--white);opacity:0;text-transform:uppercase;white-space:nowrap}
-#usp0{animation:uspFade 1.2s ease .5s both}
-#usp1{animation:uspFade 1.2s ease 1.7s both}
-#usp2{animation:uspFade 1.4s ease 2.9s both;color:var(--gold)}
+.ls-usp{position:absolute;font-family:var(--fh);font-size:22px;font-weight:900;letter-spacing:.28em;color:var(--white);opacity:0;text-transform:uppercase;white-space:nowrap}
+#usp0{animation:uspFade 1.3s cubic-bezier(.4,0,.2,1) .6s both}
+#usp1{animation:uspFade 1.3s cubic-bezier(.4,0,.2,1) 1.9s both}
+#usp2{animation:uspFade 1.5s cubic-bezier(.4,0,.2,1) 3.2s both,uspGlow 1.5s ease 3.6s both;color:var(--gold)}
 .ls-bar{width:200px;height:2px;background:var(--b2);border-radius:1px;overflow:hidden;margin-top:8px;animation:fadeInUp .5s ease .4s both;opacity:0}
 .ls-prog{height:100%;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));background-size:200% 100%;animation:lp 3.8s ease-out forwards,burnFlow 2s linear infinite}
 .ls-hint{font-family:var(--fm);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.12);text-transform:uppercase;animation:fadeInUp .5s ease 3.5s both;opacity:0}
@@ -74,7 +77,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* MOBILE HEADER */
 .mob-hdr{flex-shrink:0;background:var(--bg)}
-.hdr{padding:10px 14px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b1)}
+.hdr{padding:8px 12px 7px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--b1)}
 .hdr-logo{font-family:var(--fh);font-size:22px;font-weight:900;letter-spacing:.1em;color:var(--red);flex:1}
 .hdr-clock{font-family:var(--fm);font-size:11px;color:var(--gold);letter-spacing:.06em}
 .hdr-bell{position:relative;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--b2)}
@@ -85,7 +88,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .burn{height:2px;background:var(--b1)}
 .burn-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));background-size:200% 100%;animation:burnFlow 4s linear infinite;transition:width .5s}
 .nav{display:flex;border-bottom:1px solid var(--b1)}
-.ntab{flex:1;padding:9px 4px;font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;min-height:40px}
+.ntab{flex:1;padding:7px 4px;font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grey);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;min-height:36px}
 .ntab.on{color:var(--red);border-bottom-color:var(--red)}
 
 /* SIDEBAR (desktop) */
@@ -111,7 +114,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .view::-webkit-scrollbar{display:none}
 
 /* DAY STRIP */
-.day-strip{padding:10px 14px 8px;background:var(--s1);border-bottom:1px solid var(--b1)}
+.day-strip{padding:8px 12px 7px;background:var(--s1);border-bottom:1px solid var(--b1)}
 .day-date{font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
 .chips-row{display:flex;gap:5px;flex-wrap:wrap}
 .stat-chip{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--s2);border:1px solid var(--b2);color:var(--grey);cursor:pointer}
@@ -127,7 +130,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .lm-hi{display:block;background:rgba(230,51,41,.06);border-color:rgba(230,51,41,.2);color:var(--red)}
 
 /* ADD BOX */
-.add-box{padding:8px 12px 7px;border-bottom:1px solid var(--b1);background:var(--bg)}
+.add-box{padding:7px 10px 6px;border-bottom:1px solid var(--b1);background:var(--bg)}
 .add-row{display:flex;gap:7px}
 .add-inp{flex:1;background:var(--s1);border:1px solid var(--b2);color:var(--white);font-family:var(--fb);font-size:14px;padding:8px 12px;border-radius:7px;outline:none;-webkit-appearance:none}
 .add-inp:focus{border-color:var(--red)}
@@ -147,7 +150,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* TOOLBAR */
 .toolbar{display:flex;align-items:center;gap:5px;padding:6px 12px;border-bottom:1px solid var(--b1);overflow-x:auto;-webkit-overflow-scrolling:touch}
 .toolbar::-webkit-scrollbar{display:none}
-.tb{font-family:var(--fm);font-size:10px;padding:5px 10px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tb{font-family:var(--fm);font-size:9px;padding:4px 9px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;flex-shrink:0}
 .tb.on{color:var(--white);border-color:var(--gold)}
 .tb-sep{flex:1;flex-shrink:0}
 .sync{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
@@ -157,7 +160,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* FILTERS */
 .filters{display:flex;overflow-x:auto;border-bottom:1px solid var(--b1);-webkit-overflow-scrolling:touch}
 .filters::-webkit-scrollbar{display:none}
-.ftab{font-family:var(--fm);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;border:none;background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0;min-height:38px}
+.ftab{font-family:var(--fm);font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:6px 10px;border:none;background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0;min-height:34px}
 .ftab.on{color:var(--white);border-bottom-color:var(--gold)}
 .ftab.dim{opacity:.38}
 
@@ -177,11 +180,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .card.od-card::before{animation:pulse 1.5s infinite}
 .card.done-card{opacity:.38}
 .card.blocked-card{border-color:rgba(230,51,41,.3)}
-.card-inner{padding:10px 10px 10px 14px;display:flex;align-items:flex-start;gap:8px}
+.card-inner{padding:9px 8px 9px 13px;display:flex;align-items:flex-start;gap:7px}
 .card-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--b3);flex-shrink:0;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;background:transparent;transition:all .2s}
 .card-check.checked{background:var(--green);border-color:var(--green);color:#fff}
 .card-body{flex:1;min-width:0}
-.card-title{font-size:13px;font-weight:500;color:var(--white);line-height:1.35;margin-bottom:6px;word-break:break-word}
+.card-title{font-size:13px;font-weight:500;color:var(--white);line-height:1.3;margin-bottom:5px;word-break:break-word}
 .card.done-card .card-title{text-decoration:line-through;color:var(--grey)}
 .card-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .chip{font-family:var(--fm);font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid;white-space:nowrap}
@@ -344,7 +347,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* STAGE STRIP */
 .stage-strip{display:flex;overflow-x:auto;gap:5px;padding:5px 10px;border-bottom:1px solid var(--b1);-webkit-overflow-scrolling:touch;flex-shrink:0}
 .stage-strip::-webkit-scrollbar{display:none}
-.stab{font-family:var(--fm);font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:16px;border:1px solid var(--b2);background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.stab{font-family:var(--fm);font-size:9px;letter-spacing:.05em;padding:3px 9px;border-radius:14px;border:1px solid var(--b2);background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
 .stab.on{background:var(--red);border-color:var(--red);color:#fff}
 .stab.timer-btn{border-color:rgba(230,51,41,.4);color:var(--red);animation:pulse 1.5s infinite}
 
@@ -383,9 +386,50 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .done-stat-num{font-family:var(--fh);font-size:28px;font-weight:900;line-height:1}
 .done-stat-lbl{font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
 
-/* Smooth refresh */
+/* Smooth refresh + interactions */
 .view{scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* HOVER EFFECTS */
+.card{transition:transform .15s ease,box-shadow .15s ease,border-color .2s}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.45);border-color:var(--b3)}
+.card.done-card:hover{transform:none;box-shadow:none}
+.stat-chip{transition:all .15s ease}
+.stat-chip:hover{border-color:var(--gold);color:var(--white);transform:scale(1.05)}
+.ntab{transition:color .15s,border-color .15s}
+.sb-tab{transition:all .15s ease}
+.sb-tab:hover{color:var(--white);background:rgba(255,255,255,.05)}
+.ftab{transition:all .15s}
+.ftab:hover:not(.on){color:var(--grey2)}
+.stab{transition:all .12s ease}
+.stab:hover:not(.on){background:rgba(255,255,255,.06);color:var(--white)}
+.dtab{transition:all .15s}
+.dtab:hover:not(.on){border-color:var(--b3);color:var(--grey)}
+.tb{transition:all .15s}
+.tb:hover:not(.on){border-color:var(--b3);color:var(--grey)}
+.qa{transition:opacity .12s,transform .1s}
+.qa:active{transform:scale(.97)}
+.add-go{transition:opacity .12s,transform .1s}
+.add-go:hover{opacity:.92}
+.add-go:active{transform:scale(.97)}
+.card-del{transition:color .15s,background .15s}
+.card-blk{transition:color .15s}
+.sec-btn{transition:color .15s}
+.sec-btn:hover{color:var(--white)}
+.notif-item{transition:transform .15s,box-shadow .15s}
+.notif-item:hover{transform:translateX(3px);box-shadow:2px 0 0 var(--red) inset}
+.bc-row{transition:opacity .15s}
+.bc-row:hover{opacity:.75}
+.an-card{transition:border-color .2s}
+.an-card:hover{border-color:var(--b3)}
+/* CLICK RIPPLE — lightweight */
+@keyframes ripple{from{transform:scale(0);opacity:.3}to{transform:scale(4);opacity:0}}
+.card:active::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.04);border-radius:10px;animation:ripple .4s ease}
+/* SCROLL THUMB */
+.view::-webkit-scrollbar{width:3px;display:block}
+.view::-webkit-scrollbar-track{background:transparent}
+.view::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.view::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
 
 /* TOAST */
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(10px);opacity:0;background:var(--s1);border:1px solid var(--b3);border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;z-index:500;max-width:calc(100vw - 24px);pointer-events:none;min-width:180px}
@@ -540,8 +584,8 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     <div class="ls-byline">by Vinit &middot; Troopod</div>
     <div class="ls-usps">
       <div class="ls-usp" id="usp0">YOUR COFOUNDER</div>
-      <div class="ls-usp" id="usp1">YOUR COWORKER</div>
-      <div class="ls-usp" id="usp2">YOUR SAATHI</div>
+      <div class="ls-usp" id="usp1">YOUR EA</div>
+      <div class="ls-usp" id="usp2">YOUR TEAM MEMBER</div>
     </div>
     <div class="ls-bar"><div class="ls-prog"></div></div>
     <div class="ls-hint">Troopod Task OS · Stealth Mode</div>
@@ -659,7 +703,18 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     <div class="view on" id="v-tasks">
       <div class="viewer-banner" id="viewer-banner">VIEW ONLY ACCESS — No actions permitted</div>
       <div class="day-strip">
+        <div style="display:flex;align-items:center;gap:8px">
         <div class="day-date" id="day-date">—</div>
+        <div id="today-info-btn" title="What's in Today view?" style="font-family:var(--fm);font-size:9px;color:var(--grey2);cursor:pointer;border:1px solid var(--b2);border-radius:4px;padding:1px 6px;letter-spacing:.06em" onclick="toggleTodayInfo()">Today?</div>
+      </div>
+      <div id="today-info" style="display:none;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px 11px;margin-top:5px;font-family:var(--fm);font-size:10px;color:var(--grey);line-height:1.7">
+        <b style="color:var(--white);letter-spacing:.06em">TODAY shows tasks that match ANY of:</b><br>
+        <span style="color:var(--gold)">①</span> Created with <b>Due Date = today</b><br>
+        <span style="color:var(--amber)">②</span> Have <b>Next Action Date = today</b> (action due)<br>
+        <span style="color:var(--red)">③</span> Have <b>Finish Date = today</b> (deadline)<br>
+        <span style="color:var(--green)">④</span> <b>Recurring tasks</b> reopened for today<br>
+        <span style="color:var(--grey)">⑤</span> Past tasks still <b>active + overdue</b> appear in Overdue chip
+      </div>
         <div class="chips-row">
           <button class="stat-chip" id="chip-all" onclick="setChip('all')">Total <b id="st-tot">0</b></button>
           <button class="stat-chip" id="chip-done" onclick="setChip('done')">Done <b id="st-done">0</b></button>
@@ -824,6 +879,22 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
 <!-- TOAST -->
 <div class="stealth">MUSTAINE &middot; by Vinit &middot; Stealth Mode</div>
+<!-- MOTIVATION CARD -->
+<div id="mcard" style="position:fixed;bottom:80px;right:18px;width:260px;background:var(--s1);border:1px solid var(--b2);border-radius:12px;padding:14px 16px;z-index:400;transform:translateX(110%);transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .4s;opacity:0;box-shadow:0 12px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:8px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div style="font-family:var(--fm);font-size:8px;letter-spacing:.18em;color:var(--red);text-transform:uppercase">Founder Wisdom</div>
+    <button onclick="dismissMcard()" style="background:none;border:none;color:var(--grey2);font-size:16px;cursor:pointer;line-height:1;padding:0;flex-shrink:0">&#x2715;</button>
+  </div>
+  <div id="mcard-quote" style="font-family:var(--fb);font-size:12px;color:var(--white);line-height:1.55;font-style:italic"></div>
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <div id="mcard-name" style="font-family:var(--fh);font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--gold)"></div>
+    <div id="mcard-co" style="font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.08em"></div>
+  </div>
+  <div style="height:2px;background:var(--b2);border-radius:1px;overflow:hidden;margin-top:2px">
+    <div id="mcard-bar" style="height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:1px;width:100%;transition:width 20s linear"></div>
+  </div>
+</div>
+
 <div id="toast">
   <span class="t-msg" id="t-msg"></span>
   <button class="t-x" onclick="hideToast()">&#x2715;</button>
@@ -2192,6 +2263,14 @@ async function addRemark(id,ta){
   ta.value='';await refreshDrawer();
 }
 
+function toggleTodayInfo(){
+  const el=document.getElementById('today-info');
+  if(!el)return;
+  const show=el.style.display==='none';
+  el.style.display=show?'block':'none';
+  if(show)setTimeout(()=>el.style.display='none',8000);
+}
+
 /* ── CLOCK ── */
 function tick(){
   const n=new Date();const h=String(n.getHours()).padStart(2,'0');const m=String(n.getMinutes()).padStart(2,'0');
@@ -2239,6 +2318,51 @@ document.getElementById('drawer')?.addEventListener('touchstart',e=>{_dy=e.touch
 document.getElementById('drawer')?.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-_dy>90)closeDrawer();},{passive:true});
 
 /* ── START ── */
+/* ── FOUNDER QUOTES ── */
+const QUOTES=[
+  {q:"Move fast and break things.",n:"Mark Zuckerberg",c:"Meta · 2004"},
+  {q:"The best way to predict the future is to create it.",n:"Peter Drucker",c:"Consultant · 2013"},
+  {q:"If you're not embarrassed by the first version of your product, you've launched too late.",n:"Reid Hoffman",c:"LinkedIn · 2003"},
+  {q:"Make something people want.",n:"Paul Graham",c:"Y Combinator · 2005"},
+  {q:"It's not about ideas. It's about making ideas happen.",n:"Scott Belsky",c:"Behance · 2006"},
+  {q:"The secret to successful hiring is this: look for the people who want to change the world.",n:"Marc Benioff",c:"Salesforce · 1999"},
+  {q:"Chase the vision, not the money; the money will end up following you.",n:"Tony Hsieh",c:"Zappos · 2009"},
+  {q:"Your most unhappy customers are your greatest source of learning.",n:"Bill Gates",c:"Microsoft · 2013"},
+  {q:"The way to get started is to quit talking and begin doing.",n:"Walt Disney",c:"Disney · 2015"},
+  {q:"Build something 100 people love, not something 1 million people kind of like.",n:"Brian Chesky",c:"Airbnb · 2014"},
+  {q:"Great companies are built on great products.",n:"Elon Musk",c:"Tesla · 2017"},
+  {q:"If you are not growing, you are dying.",n:"Jensen Huang",c:"NVIDIA · 2022"},
+  {q:"Customers are always beautifully, wonderfully dissatisfied.",n:"Jeff Bezos",c:"Amazon · 2016"},
+  {q:"Work like there is someone working 24 hours a day to take it all away from you.",n:"Mark Cuban",c:"2013"},
+  {q:"You don't learn to walk by following rules. You learn by doing and by falling over.",n:"Richard Branson",c:"Virgin · 2014"},
+  {q:"The only way to do great work is to love what you do.",n:"Steve Jobs",c:"Apple · 2013"},
+  {q:"Operate as if you have 1000 users, and then think of what you will do when you have 1 million.",n:"Sam Altman",c:"OpenAI · 2019"},
+  {q:"Don't be afraid to give up the good to go for the great.",n:"John Rockefeller",c:"2015"},
+  {q:"Every problem is a gift — without problems we would not grow.",n:"Tony Robbins",c:"2014"},
+  {q:"Hire people who are better than you, then leave them to get on with it.",n:"David Ogilvy",c:"Ogilvy · 2015"},
+];
+let _mcardTimer=null,_mcardIdx=Math.floor(Math.random()*QUOTES.length);
+function showMcard(){
+  const q=QUOTES[_mcardIdx%QUOTES.length];_mcardIdx++;
+  const mc=document.getElementById('mcard');if(!mc)return;
+  document.getElementById('mcard-quote').textContent='“'+q.q+'”';
+  document.getElementById('mcard-name').textContent=q.n;
+  document.getElementById('mcard-co').textContent=q.c;
+  mc.style.transform='translateX(0)';mc.style.opacity='1';
+  // Progress bar countdown
+  const bar=document.getElementById('mcard-bar');
+  if(bar){bar.style.transition='none';bar.style.width='100%';requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.transition='width 20s linear';bar.style.width='0%';}));}
+  // Auto dismiss after 20s
+  clearTimeout(_mcardTimer);_mcardTimer=setTimeout(dismissMcard,20000);
+}
+function dismissMcard(){
+  const mc=document.getElementById('mcard');if(!mc)return;
+  mc.style.transform='translateX(110%)';mc.style.opacity='0';
+  clearTimeout(_mcardTimer);
+}
+// Show first card after 5 min, then every 5 min
+setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
+
 window.addEventListener('load',()=>setTimeout(boot,4200)); // wait for USP animations
 </script>
 </body>
