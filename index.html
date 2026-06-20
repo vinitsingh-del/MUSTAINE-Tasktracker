@@ -1785,54 +1785,137 @@ function render(){
 
 
 function mkCard(task){
-  const tm=TAG[task.tag]||{label:task.tag,col:'#666'};
-  const pm=PRI[task.priority]||PRI.medium;
-  const sm=STG[task.stage]||STG.todo;
-  const od=isOD(task), taskTime=task.task_time||task.time||'', off=minOff(taskTime);
-  let tTxt='',tCls='ctime';
-  if(taskTime){
-    const[h,m]=taskTime.split(':').map(Number),ap=h>=12?'pm':'am',hr=h%12||12;
-    tTxt=`${hr}:${String(m).padStart(2,'0')} ${ap}`;
-    if(!task.done&&!['done','blocked','closed'].includes(task.stage)&&off!==null){
-      if(off>5){tCls='ctime od';tTxt+=' - overdue';}else if(off>-20)tCls='ctime soon';
+  try{
+    const id   = task.id;
+    const tm   = TAG[task.tag]||{label:task.tag||'?',col:'#666'};
+    const pm   = PRI[task.priority]||PRI.medium;
+    const sm   = STG[task.stage]||STG.todo;
+    const od   = isOD(task);
+    const taskTime = task.task_time||task.time||'';
+    const off  = minOff(taskTime);
+    let tTxt='', tCls='ctime';
+    if(taskTime){
+      const h=parseInt(taskTime)||0, m=parseInt((taskTime.split(':')[1])||0);
+      const ap=h>=12?'pm':'am', hr=h%12||12;
+      tTxt = hr+':'+String(m).padStart(2,'0')+' '+ap;
+      if(!task.done&&!['done','blocked','closed'].includes(task.stage)&&off!==null){
+        if(off>5){tCls='ctime od';tTxt+=' - overdue';}else if(off>-20)tCls='ctime soon';
+      }
     }
-  }
-  const rc=(task.remarks||[]).length, ac=(task.attachments||[]).length;
-  const running=tRunning(task), elapsed=tElapsed(task);
-  const card=document.createElement('div');
-  card.className='card'+(['done','closed'].includes(task.stage)?' done':'')+(task.stage==='blocked'?' blocked':'')+(od?' od':'');
-  card.style.setProperty('--c',od?'#e63329':tm.col);
-  card.dataset.id=task.id;
-  card.innerHTML=`
-    <div class="card-inner">
-      <button class="card-check" onclick="toggleDone(event,'${task.id}')" style="${['done','closed'].includes(task.stage)?'background:var(--green);border-color:var(--green);color:#fff':''}">&#10003;</button>
-      <div class="card-body">
-        <div class="card-title" id="ct-${task.id}" ondblclick="startEdit(event,'${task.id}')">${esc(task.title)}</div>
-        <div class="card-chips">
-          <div class="pdot" style="background:${pm.col}" title="${pm.label}"></div>
-          <span class="chip" style="color:${tm.col};border-color:${tm.col}25;background:${tm.col}12">${tm.label}</span>
-          <span class="chip" style="color:${sm.col};border-color:${sm.col}25;background:${sm.col}12" onclick="event.stopPropagation();cycleStage(event,'${task.id}')">${sm.label}</span>
-          ${task.recurrence==='daily'?`<span class="chip" style="color:#f97316;border-color:#f9731625;background:#f9731612;letter-spacing:.08em">DAILY</span>`:''}
-          ${tTxt?`<span class="${tCls}">${tTxt}</span>`:''}
-          ${task.task_date&&task.task_date!==today()&&G.df!=='today'?`<span class="ctime" style="color:var(--amber)">${task.task_date}</span>`:''}
-        </div>
-        <div class="ccounts">
-          ${rc?`<span class="cc">${rc} note${rc>1?'s':''}</span>`:''}
-          ${ac?`<span class="cc">${ac} file${ac>1?'s':''}</span>`:''}
-          ${elapsed>0?`<span class="cc" id="ct-timer-${task.id}" style="color:${running?'var(--red)':'var(--gold)'}">${fmtT(elapsed)}</span>`:''}
-        </div>
-      </div>
-      <div class="card-acts">
-        ${!isViewer()?`<button class="card-del" id="del-${task.id}" onclick="delTask(event,'${task.id}')">x</button>
-        <button class="card-blk" onclick="toggleBlock(event,'${task.id}')">${task.stage==='blocked'?'unblock':'block'}</button>`:''}
-      </div>
-    </div>
-    ${running||elapsed>0?`<div class="card-timer"><span class="ct-disp${running?' run':''}" id="ct-timer-${task.id}">${fmtT(elapsed)}</span>${running?`<button class="ct-stop" onclick="stopTimer('${task.id}');event.stopPropagation()">Stop</button>`:''}</div>`:''}
-  `;
-  card.addEventListener('click',e=>{if(e.target.closest('.card-check,.card-del,.card-blk,.chip,.card-title[contenteditable]'))return;openDrawer(task.id);});
-  return card;
-}
+    const rc=(task.remarks||[]).length, ac=(task.attachments||[]).length;
+    const running=tRunning(task), elapsed=tElapsed(task);
+    const isDone=['done','closed'].includes(task.stage);
 
+    const card=document.createElement('div');
+    card.className='card'+(isDone?' done':'')+(task.stage==='blocked'?' blocked':'')+(od?' od':'');
+    card.style.setProperty('--c',od?'#e63329':tm.col);
+    card.dataset.id=id;
+
+    // Check button
+    const check=document.createElement('button');
+    check.className='card-check';
+    check.innerHTML='&#10003;';
+    if(isDone){check.style.background='var(--green)';check.style.borderColor='var(--green)';check.style.color='#fff';}
+    check.addEventListener('click',function(e){e.stopPropagation();toggleDone(e,id);});
+
+    // Title
+    const titleEl=document.createElement('div');
+    titleEl.className='card-title';
+    titleEl.id='ct-'+id;
+    titleEl.textContent=task.title||'';
+    titleEl.addEventListener('dblclick',function(e){e.stopPropagation();startEdit(e,id);});
+
+    // Chips
+    const chipsEl=document.createElement('div');
+    chipsEl.className='card-chips';
+
+    const pdot=document.createElement('div');
+    pdot.className='pdot';pdot.style.background=pm.col;pdot.title=pm.label;
+    chipsEl.appendChild(pdot);
+
+    const tagChip=document.createElement('span');
+    tagChip.className='chip';
+    tagChip.style.cssText='color:'+tm.col+';border-color:'+tm.col+'25;background:'+tm.col+'12';
+    tagChip.textContent=tm.label;chipsEl.appendChild(tagChip);
+
+    const stgChip=document.createElement('span');
+    stgChip.className='chip';
+    stgChip.style.cssText='color:'+sm.col+';border-color:'+sm.col+'25;background:'+sm.col+'12';
+    stgChip.textContent=sm.label;
+    stgChip.addEventListener('click',function(e){e.stopPropagation();cycleStage(e,id);});
+    chipsEl.appendChild(stgChip);
+
+    if(task.recurrence==='daily'){
+      const dc=document.createElement('span');dc.className='chip';
+      dc.style.cssText='color:#f97316;border-color:#f9731625;background:#f9731612';
+      dc.textContent='DAILY';chipsEl.appendChild(dc);
+    }
+    if(od){
+      const oc=document.createElement('span');oc.className='chip';
+      oc.style.cssText='color:var(--red);border-color:rgba(230,51,41,.3);background:rgba(230,51,41,.08)';
+      oc.textContent='OVERDUE';chipsEl.appendChild(oc);
+    }
+    if(tTxt){
+      const tc=document.createElement('span');tc.className=tCls;tc.textContent=tTxt;chipsEl.appendChild(tc);
+    }
+    if(task.task_date&&task.task_date!==today()&&G.df!=='today'){
+      const dc=document.createElement('span');dc.className='ctime';dc.style.color='var(--amber)';
+      dc.textContent=task.task_date;chipsEl.appendChild(dc);
+    }
+
+    // Counts
+    const countsEl=document.createElement('div');countsEl.className='ccounts';
+    if(rc){const s=document.createElement('span');s.className='cc';s.textContent=rc+' note'+(rc>1?'s':'');countsEl.appendChild(s);}
+    if(ac){const s=document.createElement('span');s.className='cc';s.textContent=ac+' file'+(ac>1?'s':'');countsEl.appendChild(s);}
+    if(elapsed>0){
+      const s=document.createElement('span');s.className='cc';s.id='ct-timer-'+id;
+      s.style.color=running?'var(--red)':'var(--gold)';s.textContent=fmtT(elapsed);countsEl.appendChild(s);
+    }
+
+    // Body
+    const body=document.createElement('div');body.className='card-body';
+    body.appendChild(titleEl);body.appendChild(chipsEl);body.appendChild(countsEl);
+
+    // Actions
+    const acts=document.createElement('div');acts.className='card-acts';
+    if(!isViewer()){
+      const delBtn=document.createElement('button');delBtn.className='card-del';delBtn.id='del-'+id;
+      delBtn.textContent='x';delBtn.addEventListener('click',function(e){e.stopPropagation();delTask(e,id);});acts.appendChild(delBtn);
+      const blkBtn=document.createElement('button');blkBtn.className='card-blk';
+      blkBtn.textContent=task.stage==='blocked'?'unblock':'block';
+      blkBtn.addEventListener('click',function(e){e.stopPropagation();toggleBlock(e,id);});acts.appendChild(blkBtn);
+    }
+
+    const inner=document.createElement('div');inner.className='card-inner';
+    inner.appendChild(check);inner.appendChild(body);inner.appendChild(acts);
+    card.appendChild(inner);
+
+    // Timer strip
+    if(running||elapsed>0){
+      const strip=document.createElement('div');strip.className='card-timer';
+      const disp=document.createElement('span');disp.className='ct-disp'+(running?' run':'');
+      disp.id='ct-timer-'+id;disp.textContent=fmtT(elapsed);strip.appendChild(disp);
+      if(running){
+        const stopBtn=document.createElement('button');stopBtn.className='ct-stop';stopBtn.textContent='Stop';
+        stopBtn.addEventListener('click',function(e){e.stopPropagation();stopTimer(id);});strip.appendChild(stopBtn);
+      }
+      card.appendChild(strip);
+    }
+
+    card.addEventListener('click',function(e){
+      if(e.target.closest('.card-check,.card-del,.card-blk,.chip')) return;
+      openDrawer(id);
+    });
+    return card;
+  }catch(err){
+    console.error('mkCard error:',err,task?.id);
+    const fb=document.createElement('div');fb.className='card';
+    const fi=document.createElement('div');fi.className='card-inner';
+    const fb2=document.createElement('div');fb2.className='card-body';
+    const ft=document.createElement('div');ft.className='card-title';ft.textContent=task?.title||'Task';
+    fb2.appendChild(ft);fi.appendChild(fb2);fb.appendChild(fi);return fb;
+  }
+}
 // ═══════════════════════════════════════════════════════════════
 // DRAWER
 // ═══════════════════════════════════════════════════════════════
