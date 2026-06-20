@@ -94,18 +94,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* VIEWS */
 .view{flex:1;min-height:0;display:none;flex-direction:column;overflow:hidden}
 .view.on{display:flex;overflow:hidden}
-/* view-head: sticky fixed controls, never scrolls */
-.view-head{flex-shrink:0;flex-grow:0;overflow:hidden;background:var(--bg);
-  border-bottom:1px solid var(--b1);z-index:20;position:relative}
-/* view-scroll: the only scrollable container, fills remaining height */
+/* view-head: sticky at top, scrolls away with content on mobile */
+.view-head{flex-shrink:0;background:var(--bg);position:relative;z-index:10}
+/* view-scroll: THE scrollable container for this view */
 .view-scroll{
   flex:1;min-height:0;
-  overflow-y:scroll;overflow-x:hidden;
+  overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;
-  scroll-behavior:smooth;
+  overscroll-behavior:contain;
   touch-action:pan-y;
-  position:relative;
 }
 .view-scroll::-webkit-scrollbar{display:none}
 
@@ -668,7 +665,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
   <!-- TASKS -->
   <div class="view on" id="v-tasks">
-  <div class="view-head">
+  <div class="view-scroll">
     <div class="day-strip">
       <div class="day-date" id="day-date">—</div>
       <div class="day-stats">
@@ -737,8 +734,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <button class="ftab" data-f="management" onclick="setF(this)">Management</button>
       <button class="ftab" data-f="daily" onclick="setF(this)">Daily Work</button>
     </div>
-  </div><!-- /view-head -->
-  <div class="view-scroll">
+    
     <div class="od-banner" id="od-banner"></div>
 
     <div class="sec"><div class="sec-title">Active</div></div>
@@ -766,13 +762,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
   <!-- NOTIFICATIONS -->
   <div class="view" id="v-notifs">
-  <div class="view-head">
+  <div class="view-scroll">
     <div class="sec">
       <div class="sec-title">Alerts</div>
       <button class="sec-btn" onclick="markAllRead()">Mark All Read</button>
     </div>
-  </div>
-  <div class="view-scroll">
     <div class="notif-list" id="notif-list"></div>
     <div style="height:60px"></div>
   </div>
@@ -780,10 +774,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
   <!-- STATS -->
   <div class="view" id="v-stats">
-  <div class="view-head">
-    <div class="sec"><div class="sec-title">Analytics</div></div>
-  </div>
   <div class="view-scroll">
+    <div class="sec"><div class="sec-title">Analytics</div></div>
     <div class="an-wrap" id="an-wrap"></div>
   </div>
   </div>
@@ -1393,14 +1385,14 @@ function setF(el){
 }
 function updateFilterCounts(){
   const todayStr=today();
-  const src=G.df==='today'?G.tasks:G.tasks.filter(t=>(t.task_date||t.date||todayStr)===todayStr);
+  const src2=G.tasks; // use all loaded tasks (matches df filter)
   document.querySelectorAll('.ftab[data-f]').forEach(btn=>{
     const f=btn.dataset.f;
     if(f==='all'){
-      const n=src.filter(t=>!['done','closed'].includes(t.stage)).length;
+      const n=src2.filter(t=>!['done','closed'].includes(t.stage)).length;
       btn.textContent=`All${n>0?' ('+n+')':''}`;
     } else {
-      const n=src.filter(t=>t.tag===f&&!['done','closed'].includes(t.stage)).length;
+      const n=src2.filter(t=>t.tag===f&&!['done','closed'].includes(t.stage)).length;
       // Show count only if >0
       const base={sales:'Sales',revenue:'Revenue',client:'Client',kam:'KAM',design:'Design',ops:'Ops','follow-up':'Follow-up',control:'Control',management:'Management'}[f]||f;
       btn.textContent=n>0?`${base} (${n})`:base;
@@ -1457,43 +1449,46 @@ function setStatFilter(sf){
 function render(){
   if(!G.tasks) return;
 
-  // ── 1. SOURCE TRUTH: always today for chips/stats, G.tasks for list ─
+  // ── 1. SOURCE: G.tasks matches whatever date filter is active ──────
   const todayStr = today();
-  const todayTasks = G.tasks.filter(t=>(t.task_date||t.date||todayStr)===todayStr);
-  const allTasks   = G.tasks; // may include past dates if df=week/all
+  const allTasks = G.tasks; // already filtered by df (today/week/all)
+  const tagOkAll = t => G.filter==='all' || t.tag===G.filter; // tag filter
 
-  // ── 2. CATEGORISE today's tasks (for stat chips) ──────────────────
-  const todayDone    = todayTasks.filter(t=>t.stage==='done'||t.stage==='closed');
-  const todayBlocked = todayTasks.filter(t=>t.stage==='blocked');
-  const todayActive  = todayTasks.filter(t=>!['done','closed','blocked'].includes(t.stage));
-  const todayOD      = todayActive.filter(isOD); // overdue = active + past scheduled time
+  // ── 2. CATEGORISE — count ALL loaded tasks, respecting tag filter ──
+  // Chips always reflect what's in view so numbers match the list
+  const chipSrc   = allTasks.filter(tagOkAll);
+  const chipDone  = chipSrc.filter(t=>t.stage==='done'||t.stage==='closed');
+  const chipBlock = chipSrc.filter(t=>t.stage==='blocked');
+  const chipAct   = chipSrc.filter(t=>!['done','closed','blocked'].includes(t.stage));
+  const chipOD    = chipAct.filter(isOD);
 
-  // ── 3. UPDATE STAT CHIPS (always today) ───────────────────────────
+  // ── 3. UPDATE STAT CHIPS ──────────────────────────────────────────
   const el = id => document.getElementById(id);
-  el('st-tot')?.textContent !== undefined && (el('st-tot').textContent = todayTasks.length);
-  el('st-done')?.textContent !== undefined && (el('st-done').textContent = todayDone.length);
-  el('st-active')?.textContent !== undefined && (el('st-active').textContent = todayActive.length);
-  el('st-od')?.textContent !== undefined && (el('st-od').textContent = todayOD.length);
-  if(el('sb-total')) el('sb-total').textContent = todayTasks.length;
-  if(el('sb-done'))  el('sb-done').textContent  = todayDone.length;
-  if(el('sb-od'))    el('sb-od').textContent    = todayOD.length;
+  const setTxt = (id,v) => { const e=el(id); if(e) e.textContent=v; };
+  setTxt('st-tot',   chipSrc.length);
+  setTxt('st-done',  chipDone.length);
+  setTxt('st-active',chipAct.length);
+  setTxt('st-od',    chipOD.length);
+  setTxt('sb-total', chipSrc.length);
+  setTxt('sb-done',  chipDone.length);
+  setTxt('sb-od',    chipOD.length);
 
   // ── 4. OVERDUE BANNER ─────────────────────────────────────────────
   const ob = el('od-banner');
   if(ob) {
-    if(todayOD.length){ob.className='od-banner on';ob.textContent=`${todayOD.length} overdue task${todayOD.length>1?'s':''}`;}
+    if(chipOD.length){ob.className='od-banner on';ob.textContent=`${todayOD.length} overdue task${chipOD.length>1?'s':''}`;}
     else ob.className='od-banner';
   }
 
   // ── 5. LOAD BAR ───────────────────────────────────────────────────
-  const timed  = todayActive.filter(t=>t.task_time||t.time);
+  const timed  = chipAct.filter(t=>t.task_time||t.time);
   const lbar   = el('load-bar'), lmsg = el('load-msg');
   if(todayTasks.length && lbar && lmsg){
     lbar.style.display='';lmsg.style.display='';
     const pct=Math.min(100,Math.round(timed.length/16*100));
     el('lb-fill').style.width=pct+'%';
     el('lb-val').textContent=timed.length+'h scheduled';
-    const n=todayActive.length;
+    const n=chipAct.length;
     if(n===0)      {lmsg.className='load-msg lm-ok'; lmsg.textContent='All done. Clean day.';}
     else if(n<=3)  {lmsg.className='load-msg lm-ok'; lmsg.textContent=`${n} tasks. Light load.`;}
     else if(n<=6)  {lmsg.className='load-msg lm-mid';lmsg.textContent=`${n} tasks, ${timed.length}h scheduled. Moderate.`;}
@@ -1503,7 +1498,7 @@ function render(){
 
   // ── 6. TASK LISTS ────────────────────────────────────────────────
   // statFilter controls what shows. Tag filter applies everywhere.
-  const tagOk = t => G.filter==='all' || t.tag===G.filter;
+  const tagOk = tagOkAll; // already defined above
 
   // Sort helper: by time then created_at
   const byTime = (a,b) => {
