@@ -79,7 +79,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .hdr-clock{font-family:var(--fm);font-size:11px;color:var(--gold);letter-spacing:.06em}
 .hdr-bell{position:relative;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--b2)}
 .hdr-bell svg{width:15px;height:15px;stroke:var(--grey)}
-.bell-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--red);border-radius:50%;display:none;animation:pulse 1.5s infinite}
+.bell-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--red);border-radius:50%;display:none;animation:pulse 1.5s infinite,ringPulse 2s infinite}
 .bell-dot.on{display:block}
 .hdr-out{font-family:var(--fm);font-size:10px;color:var(--grey2);cursor:pointer;padding:5px 9px;border-radius:5px;border:1px solid var(--b2)}
 .burn{height:2px;background:var(--b1)}
@@ -171,6 +171,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .card-list{padding:0 10px 8px;display:flex;flex-direction:column;gap:7px}
 .card{background:var(--s1);border:1px solid var(--b2);border-radius:10px;overflow:hidden;cursor:pointer;animation:fadeUp .2s ease both;transition:border-color .2s;position:relative}
 .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--b3))}
+.card.od-card::before{animation:pulse 1.5s infinite}
 .card.done-card{opacity:.38}
 .card.blocked-card{border-color:rgba(230,51,41,.3)}
 .card-inner{padding:10px 10px 10px 14px;display:flex;align-items:flex-start;gap:8px}
@@ -337,6 +338,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* SUB-STAGE */
 .sub-chip{font-family:var(--fm);font-size:8px;letter-spacing:.05em;text-transform:uppercase;padding:1px 5px;border-radius:3px;border:1px solid;opacity:.85}
 
+/* STAGE STRIP */
+.stage-strip{display:flex;overflow-x:auto;gap:5px;padding:5px 10px;border-bottom:1px solid var(--b1);-webkit-overflow-scrolling:touch;flex-shrink:0}
+.stage-strip::-webkit-scrollbar{display:none}
+.stab{font-family:var(--fm);font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:16px;border:1px solid var(--b2);background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.stab.on{background:var(--red);border-color:var(--red);color:#fff}
+.stab.timer-btn{border-color:rgba(230,51,41,.4);color:var(--red);animation:pulse 1.5s infinite}
+
 /* DONE TAB */
 .done-tab{display:flex;gap:6px;padding:6px 12px;border-bottom:1px solid var(--b1);overflow-x:auto;-webkit-overflow-scrolling:touch}
 .done-tab::-webkit-scrollbar{display:none}
@@ -362,7 +370,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .stealth{position:fixed;bottom:6px;right:10px;font-family:var(--fm);font-size:8px;letter-spacing:.15em;color:rgba(255,255,255,.08);pointer-events:none;z-index:1;user-select:none}
 
 /* TIMER FILTER CHIP */
-.timer-active-strip{display:none;background:rgba(230,51,41,.06);border-bottom:1px solid rgba(230,51,41,.15);padding:5px 12px;font-family:var(--fm);font-size:10px;color:var(--red);cursor:pointer;animation:blink 2s infinite}
+.timer-active-strip{display:none;background:rgba(230,51,41,.06);border-bottom:1px solid rgba(230,51,41,.15);padding:5px 12px;font-family:var(--fm);font-size:10px;color:var(--red);cursor:pointer}.timer-active-strip.on{animation:ringPulse 2s infinite,blink 3s infinite}
 .timer-active-strip.on{display:flex;align-items:center;gap:6px}
 
 /* DONE VIEW */
@@ -635,6 +643,16 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <button class="ftab" data-f="daily" onclick="setF(this)">Daily</button>
       </div>
       <div class="od-banner" id="od-banner"></div>
+      <!-- Stage filter strip -->
+      <div class="stage-strip" id="stage-strip">
+        <button class="stab on" data-stage="" onclick="setStage(this)">All</button>
+        <button class="stab" data-stage="todo" onclick="setStage(this)">Todo</button>
+        <button class="stab" data-stage="in_progress" onclick="setStage(this)">In Progress</button>
+        <button class="stab" data-stage="review" onclick="setStage(this)">Review</button>
+        <button class="stab" data-stage="blocked" onclick="setStage(this)">Blocked</button>
+        <button class="stab" data-stage="urgent" onclick="setStage(this)" style="color:var(--red)">🔴 Urgent</button>
+        <button class="stab timer-btn" data-stage="timer" onclick="setStage(this)" id="stage-timer-btn" style="display:none">⏱ Timer</button>
+      </div>
       <div class="sec" id="act-hdr" style="display:none"><div class="sec-title" id="act-title">Active</div></div>
       <div class="card-list" id="active-list"></div>
       <div id="done-sec">
@@ -659,10 +677,11 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <button class="sec-btn" onclick="exportDonePDF()" style="color:var(--red)">PDF Report</button>
       </div>
       <div class="done-tab">
-        <button class="dtab on" data-dr="today" onclick="setDoneRange(this)">Today</button>
+        <button class="dtab on" data-dr="today" onclick="setDoneRange(this)">Done Today</button>
         <button class="dtab" data-dr="week" onclick="setDoneRange(this)">7 Days</button>
         <button class="dtab" data-dr="month" onclick="setDoneRange(this)">30 Days</button>
-        <button class="dtab" data-dr="custom" onclick="setDoneRange(this)">Custom</button>
+        <button class="dtab" data-dr="custom" onclick="setDoneRange(this)">Custom Range</button>
+        <button class="dtab" data-dr="activity" onclick="setDoneRange(this)">Activity Feed</button>
       </div>
       <div class="dr-range" id="done-custom-range" style="display:none">
         <label>From</label><input type="date" id="done-from">
@@ -747,7 +766,7 @@ const PRI={urgent:{c:'#e63329',l:'Urgent'},high:{c:'#f59e0b',l:'High'},medium:{c
 const STG={todo:{l:'Todo',i:'o',c:'#555'},in_progress:{l:'In Progress',i:'/',c:'#c8a84b'},review:{l:'Review',i:'~',c:'#f59e0b'},done:{l:'Done',i:'+',c:'#22c55e'},blocked:{l:'Blocked',i:'x',c:'#e63329'},closed:{l:'Closed',i:'-',c:'#444'}};
 
 /* ── STATE ── */
-const G={tasks:[],notifs:[],df:'today',filter:'all',chip:'',showDone:false,openId:null,role:'owner',delArm:{},reminded:new Set(),tickLoop:null,editRemark:null};
+const G={tasks:[],notifs:[],df:'today',filter:'all',chip:'',showDone:false,openId:null,role:'owner',delArm:{},reminded:new Set(),tickLoop:null,editRemark:null,stageFilter:''};
 const V=()=>G.role==='viewer';
 const today=()=>new Date().toISOString().slice(0,10);
 const now=()=>Date.now();
@@ -888,16 +907,18 @@ async function rolloverDailyTasks(){
   if(new Date().getHours()<8){console.log('Before 8AM — no rollover');return;}
 
   try{
-    // Find tasks that are: recurrence=daily, stage=done, task_date=yesterday or earlier
-    const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
-    const yStr=yesterday.toISOString().slice(0,10);
-    const raw=await SB.getRange(yStr,yStr);
+    // Look back 90 days for any recurring tasks that are done but need reopening today
+    const lookback=new Date();lookback.setDate(lookback.getDate()-90);
+    const yStr=lookback.toISOString().slice(0,10);
+    const raw=await SB.getRange(yStr,today());
+    // Find all recurring tasks that are done (not already open today)
     const doneDailies=(raw||[]).map(norm).filter(t=>t.recurrence&&t.recurrence!=='none'&&(t.stage==='done'||t.stage==='closed'));
     if(!doneDailies.length){localStorage.setItem(rollKey,'1');return;}
 
     // Check which ones DON'T already exist today
     const todayRaw=await SB.getTasks(T);
-    const todayTitles=new Set((todayRaw||[]).map(t=>t.title.toLowerCase()));
+    // Skip if today already has an ACTIVE (not done) version of this recurring task
+    const todayTitles=new Set((todayRaw||[]).filter(t=>!['done','closed'].includes(t.stage)).map(t=>t.title.toLowerCase()));
 
     let created=0;
     for(const t of doneDailies){
@@ -988,7 +1009,12 @@ function render(){
   // Tag filter
   const tagOk=t=>G.filter==='all'||t.tag===G.filter;
   // Source = all loaded tasks matching tag
-  const src=G.tasks.filter(tagOk);
+  const tagOk2=t=>{
+    if(!G.stageFilter||G.stageFilter==='timer') return true;
+    if(G.stageFilter==='urgent') return t.priority==='urgent';
+    return t.stage===G.stageFilter;
+  };
+  const src=G.tasks.filter(t=>tagOk(t)&&tagOk2(t));
   // Categories
   const done=src.filter(t=>t.stage==='done'||t.stage==='closed');
   const blocked=src.filter(t=>t.stage==='blocked');
@@ -996,17 +1022,17 @@ function render(){
   const od=active.filter(isOD);
 
   // ── CHIPS ──
-  Q('st-tot',src.length);Q('st-done',done.length);Q('st-active',active.length);Q('st-od',od.length);
+  Q('st-tot',src.length);Q('st-done',done.length);Q('st-active',active.length);Q('st-od',od.length); const chipOdEl=document.getElementById('chip-od');if(chipOdEl){chipOdEl.classList.toggle('blink',od.length>0);chipOdEl.classList.toggle('ring-pulse',od.length>0);}
   Q('sb-tot',src.length);Q('sb-done',done.length);Q('sb-od',od.length);
 
   // Chip highlights
-  ['chip-all','chip-done','chip-active','chip-od'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});
+  ['chip-all','chip-done','chip-active','chip-od'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on','blink');});
   const cmap={all:'chip-all',done:'chip-done',active:'chip-active',overdue:'chip-od'};
   if(G.chip&&cmap[G.chip]){const e=document.getElementById(cmap[G.chip]);if(e)e.classList.add('on');}
   // Timer strip
   const runningCount=G.tasks.filter(tRun).length;
   const ts=document.getElementById('timer-strip');const tc=document.getElementById('timer-count');
-  if(ts){ts.className='timer-active-strip'+(runningCount>0?' on':'');if(tc)tc.textContent=runningCount>0?runningCount+' task'+(runningCount>1?'s':''):'';} 
+  if(ts){ts.className='timer-active-strip'+(runningCount>0?' on':'');if(tc)tc.textContent=runningCount>0?runningCount+' task'+(runningCount>1?'s':''):'';} const timerStab=document.getElementById('stage-timer-btn');if(timerStab)timerStab.style.display=runningCount>0?'':'none';
 
   // ── OD BANNER ──
   const ob=document.getElementById('od-banner');
@@ -1148,7 +1174,7 @@ function mkCard(task){
   const card=document.createElement('div');
   const isPaused=task.sub_stage==='paused';
   const isFocus=task.sub_stage==='focus_later';
-  card.className='card'+(isDone?' done-card':'')+(isBlocked?' blocked-card':'')+(isPaused?' paused-card':'')+(isFocus?' focus-card':'');
+  card.className='card'+(isDone?' done-card':'')+(isBlocked?' blocked-card':'')+(od?' od-card':'')+(isPaused?' paused-card':'')+(isFocus?' focus-card':'');
   card.style.setProperty('--accent',od?'#e63329':tm.c);
   card.dataset.id=id;
 
@@ -1172,7 +1198,7 @@ function mkCard(task){
   // Chips row
   const chips=document.createElement('div');chips.className='card-chips';
 
-  const pdot=document.createElement('div');pdot.className='pdot';pdot.style.background=pm.c;pdot.title=pm.l;chips.appendChild(pdot);
+  const pdot=document.createElement('div');pdot.className='pdot'+(task.priority==='urgent'?' blink':'');pdot.style.background=pm.c;pdot.title=pm.l;chips.appendChild(pdot);
 
   const tagC=document.createElement('span');tagC.className='chip';tagC.style.cssText='color:'+tm.c+';border-color:'+tm.c+'33;background:'+tm.c+'14';tagC.textContent=tm.l;chips.appendChild(tagC);
 
@@ -1236,6 +1262,14 @@ function Q(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function setSyncing(on,err){const e=document.getElementById('sync');if(!e)return;e.className='sync'+(err?' err':on?' busy':'');}
 function setChip(c){G.chip=G.chip===c&&c!=='timer'?'':c;render();}
 function setF(el){document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));el.classList.add('on');G.filter=el.dataset.f;render();}
+function setStage(el){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  G.stageFilter=el.dataset.stage;
+  if(G.stageFilter==='timer'){filterTimerTasks();return;}
+  render();
+}
+
 async function setDF(el){document.querySelectorAll('[data-df]').forEach(b=>b.classList.toggle('on',b===el));G.df=el.dataset.df;setSyncing(true);await loadTasks();render();}
 function toggleDoneVis(){G.showDone=!G.showDone;render();}
 function notifBadge(){
@@ -1261,6 +1295,35 @@ async function renderDoneView(){
   else if(G_doneRange==='custom'){
     from=document.getElementById('done-from')?.value||T;
     to=document.getElementById('done-to')?.value||T;
+  }
+
+  // Activity feed mode — show all events today
+  if(G_doneRange==='activity'){
+    wrap.innerHTML='';
+    if(statsRow) statsRow.innerHTML='';
+    const T=today();
+    let allToday=[];
+    try{const raw=await SB.getTasks(T);allToday=(raw||[]).map(norm);}catch{allToday=G.tasks.filter(t=>(t.task_date||t.date||T)===T);}
+    const events=[];
+    // Created today
+    allToday.forEach(t=>{events.push({ts:t.created_at,type:'created',icon:'✦',col:'var(--gold)',title:'Created: '+t.title,task:t});});
+    // Done/closed today (done_at = today)
+    allToday.filter(t=>t.done_at&&t.done_at.slice(0,10)===T).forEach(t=>{events.push({ts:t.done_at,type:'closed',icon:'✓',col:'var(--green)',title:'Closed: '+t.title,task:t});});
+    // Activity logs today
+    allToday.forEach(t=>{(t.activity||[]).filter(a=>a.ts&&new Date(a.ts).toISOString().slice(0,10)===T).forEach(a=>{events.push({ts:a.ts,type:'update',icon:'↻',col:'var(--amber)',title:'Updated: '+t.title+' — '+a.text,task:t});});});
+    events.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+    if(!events.length){wrap.innerHTML='<div class="empty"><div class="empty-ico">[ CLEAR ]</div><div class="empty-txt">No activity today yet</div></div>';return;}
+    const hdr=document.createElement('div');hdr.className='sec';const hdrT=document.createElement('div');hdrT.className='sec-title';hdrT.textContent='Today Activity ('+events.length+')';hdr.appendChild(hdrT);wrap.appendChild(hdr);
+    events.forEach(ev=>{
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);cursor:pointer';
+      const ico=document.createElement('div');ico.style.cssText='width:22px;height:22px;border-radius:50%;background:'+ev.col+'18;border:1px solid '+ev.col+'44;display:flex;align-items:center;justify-content:center;font-size:11px;color:'+ev.col+';flex-shrink:0;margin-top:2px';ico.textContent=ev.icon;row.appendChild(ico);
+      const cnt=document.createElement('div');cnt.style.flex='1';
+      const t=document.createElement('div');t.style.cssText='font-size:12px;font-weight:500;color:var(--white);line-height:1.4;margin-bottom:2px';t.textContent=ev.title;cnt.appendChild(t);
+      const ts=document.createElement('div');ts.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2)';ts.textContent=new Date(ev.ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})+' · '+ev.type;cnt.appendChild(ts);
+      row.appendChild(cnt);row.addEventListener('click',()=>{gTab('tasks');setTimeout(()=>openDrawer(ev.task.id),150);});
+      wrap.appendChild(row);
+    });
+    return;
   }
 
   let tasks=[];
@@ -1313,9 +1376,10 @@ function exportStatsPDF(){exportDonePDF();}
 async function markAllRead(){try{await SB.readAll();G.notifs.forEach(n=>n.read=true);notifBadge();renderNotifs();toast('All read');}catch(e){toast(e.message,'err');}}
 /* ── TIMER FILTER ── */
 function filterTimerTasks(){
-  // Switch to tasks tab, show only running timer tasks
   gTab('tasks');
   G.chip='timer';
+  // Sync the stage strip UI — highlight Timer button
+  document.querySelectorAll('.stab').forEach(t=>t.classList.toggle('on',t.dataset.stage==='timer'));
   render();
 }
 
@@ -1898,8 +1962,17 @@ function renderDrawer(task,atts){
   if(!actList.children.length)actList.innerHTML='<div style="font-family:var(--fm);font-size:10px;color:var(--grey2)">No activity</div>';
   actDiv.appendChild(actList);body.appendChild(actDiv);
 
-  // Close
-  const cls=document.createElement('button');cls.className='dr-save';cls.textContent='Close';cls.addEventListener('click',closeDrawer);body.appendChild(cls);
+  // Save & Close
+  const cls=document.createElement('button');cls.className='dr-save';
+  cls.style.cssText='background:var(--red);display:flex;align-items:center;justify-content:center;gap:8px';
+  cls.innerHTML='<span style="font-size:14px">&#10003;</span> Save & Close';
+  cls.addEventListener('click',()=>{
+    toast('Task saved','ok');
+    closeDrawer();
+  });
+  body.appendChild(cls);
+  // Also: keyboard shortcut Cmd+S / Ctrl+S saves and closes when drawer is open
+  cls.dataset.saveClose='1';
 }
 
 async function addRemark(id,ta){
