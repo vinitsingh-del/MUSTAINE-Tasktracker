@@ -66,7 +66,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .a-magic:active{border-color:var(--red);color:var(--red)}
 
 /* APP */
-#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
+#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;height:100%;height:100dvh}
 
 /* HEADER */
 .hdr{flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--b1);padding:9px 14px 8px;display:flex;align-items:center;gap:10px}
@@ -93,9 +93,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* VIEWS */
 .view{flex:1;min-height:0;display:none;flex-direction:column;overflow:hidden}
-.view.on{display:flex}
-.view-head{flex-shrink:0;flex-grow:0;overflow-x:hidden;overflow-y:hidden;background:var(--bg);box-shadow:0 1px 0 var(--b1)}
-.view-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scroll-behavior:smooth;touch-action:pan-y}
+.view.on{display:flex;overflow:hidden}
+/* view-head: sticky fixed controls, never scrolls */
+.view-head{flex-shrink:0;flex-grow:0;overflow:hidden;background:var(--bg);
+  border-bottom:1px solid var(--b1);z-index:20;position:relative}
+/* view-scroll: the only scrollable container, fills remaining height */
+.view-scroll{
+  flex:1;min-height:0;
+  overflow-y:scroll;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  scroll-behavior:smooth;
+  touch-action:pan-y;
+  position:relative;
+}
 .view-scroll::-webkit-scrollbar{display:none}
 
 /* DAY STRIP */
@@ -355,7 +366,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 .mob-hdr { display: flex; flex-direction: column; flex-shrink: 0; }
 .sidebar { display: none; }
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.main-area { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
 @media (min-width: 900px) {
   .mob-hdr { display: none; }
@@ -949,12 +960,16 @@ const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 const fmtTs = ts => new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
 const fmtSz = b => b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';
 const minOff = t => {if(!t)return null;const[h,m]=t.split(':').map(Number),n=new Date(),d=new Date(n);d.setHours(h,m,0,0);return Math.floor((n-d)/60000);};
-const isOD  = t => !t||t.done||['done','blocked','closed'].includes(t.stage)?false:(o=>o!==null&&o>5)(minOff(t.task_time||t.time));
+const isOD  = t => { if(!t||t.done||['done','blocked','closed'].includes(t.stage)) return false; const tm=t.task_time||t.time||''; if(!tm) return false; const o=minOff(tm); return o!==null&&o>5; };
 const pj    = (s,fb) => {try{return JSON.parse(s);}catch{return fb;}};
 
 function norm(t){
+  const date = t.task_date||t.date||today();
+  const time = t.task_time||t.time||'';
   return {...t,
-    date:t.task_date||t.date||today(), time:t.task_time||t.time||'',
+    date, time,
+    task_date: t.task_date||date, // ensure both names are set
+    task_time: t.task_time||time||null,
     remarks: typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),
     recurrence: t.recurrence||'none',
     activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),
@@ -1442,14 +1457,19 @@ function render(){
   const active=all.filter(t=>!['done','blocked','closed'].includes(t.stage)), od=all.filter(isOD);
 
   // stats
-  document.getElementById('st-tot').textContent=all.length;
-  document.getElementById('st-done').textContent=done.length;
-  document.getElementById('st-active').textContent=active.length;
-  document.getElementById('st-od').textContent=od.length;
+  // Stats chips: always show TODAY's data for accuracy
+  const todayTasks = G.df==='today' ? G.tasks : G.tasks.filter(t=>(t.task_date||t.date)===today());
+  const todayDone = todayTasks.filter(t=>t.stage==='done');
+  const todayActive = todayTasks.filter(t=>!['done','blocked','closed'].includes(t.stage));
+  const todayOd = todayTasks.filter(isOD);
+  document.getElementById('st-tot').textContent=todayTasks.length;
+  document.getElementById('st-done').textContent=todayDone.length;
+  document.getElementById('st-active').textContent=todayActive.length;
+  document.getElementById('st-od').textContent=todayOd.length;
   // Sidebar stats
-  const sbt=document.getElementById('sb-total');if(sbt)sbt.textContent=all.length;
-  const sbd=document.getElementById('sb-done');if(sbd)sbd.textContent=done.length;
-  const sbo=document.getElementById('sb-od');if(sbo)sbo.textContent=od.length;
+  const sbt=document.getElementById('sb-total');if(sbt)sbt.textContent=todayTasks.length;
+  const sbd=document.getElementById('sb-done');if(sbd)sbd.textContent=todayDone.length;
+  const sbo=document.getElementById('sb-od');if(sbo)sbo.textContent=todayOd.length;
 
   // overdue banner
   const ob=document.getElementById('od-banner');
@@ -1792,7 +1812,14 @@ async function markAllRead(){
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════════
 async function renderStats(){
-  const all=G.tasks;
+  // Always use TODAY's tasks for accurate stats regardless of df filter
+  let all;
+  try{
+    const raw = await SB.getTasks(today());
+    all = (raw||[]).map(norm);
+  }catch(e){
+    all = G.tasks.filter(t=>(t.task_date||t.date||t.task_date)===today());
+  }
   const done=all.filter(t=>t.stage==='done');
   const active=all.filter(t=>!['done','blocked','closed'].includes(t.stage));
   const od=all.filter(isOD);
@@ -2047,14 +2074,18 @@ async function renderStats(){
 // ═══════════════════════════════════════════════════════════════
 // TAB NAV
 // ═══════════════════════════════════════════════════════════════
-function goTab(name){
+async function goTab(name){
   ['tasks','notifs','stats'].forEach(n=>{
     document.getElementById('v-'+n).classList.toggle('on',n===name);
     // Update both desktop sidebar and mobile header nav tabs
     ['nt-'+n,'nt-'+n+'-m'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.toggle('on',n===name);});
   });
   if(name==='notifs'){renderNotifs();}
-  if(name==='stats'){renderStats();}
+  if(name==='stats'){
+    // Always reload today's tasks before rendering stats
+    if(G.df!=='today') await loadTasks();
+    renderStats();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
