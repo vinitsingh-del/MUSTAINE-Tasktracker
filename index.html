@@ -1884,179 +1884,287 @@ function renderNotifs(){
 /* ── STATS ── */
 async function renderStats(){
   const wrap=document.getElementById('an-wrap');if(!wrap)return;
+  wrap.innerHTML='<div style="text-align:center;padding:32px;font-family:var(--fm);font-size:11px;color:var(--grey2)">Loading analytics...</div>';
   const T=today();
-  let all;
-  try{const raw=await SB.getTasks(T);all=(raw||[]).map(norm);}catch{all=G.tasks.filter(t=>(t.task_date||t.date||T)===T);}
-  const done=all.filter(t=>t.stage==='done'||t.stage==='closed');
-  const active=all.filter(t=>!['done','closed','blocked'].includes(t.stage));
-  const od=all.filter(isOD);
-  const blocked=all.filter(t=>t.stage==='blocked');
-  const pct=all.length?Math.round(done.length/all.length*100):0;
-  // tEl() already caps to today-only for running timers
-  const timerH=all.reduce((s,t)=>s+tEl(t)/3600,0);
-  const runningCount=all.filter(tRun).length;
-  const loggedH=all.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0),0);
-  const schH=all.filter(t=>!['done','closed'].includes(t.stage)).reduce((s,t)=>s+(parseFloat(t.scheduled_hours)||0),0);
+  let all=[];
+  try{const raw=await SB.getTasks(T);all=(raw||[]).map(norm);}
+  catch{all=G.tasks.filter(t=>(t.task_date||t.date||T)===T);}
   wrap.innerHTML='';
 
-  // ── TODAY SCORECARD ──
-  const sc=document.createElement('div');sc.className='an-card';
-  const topGrid=document.createElement('div');topGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px';
-  [{num:done.length,lbl:'Done',c:'var(--green)'},{num:active.length,lbl:'Active',c:'var(--amber)'},{num:od.length,lbl:'Overdue',c:'var(--red)'},{num:pct+'%',lbl:'Rate',c:pct>=75?'var(--green)':pct>=40?'var(--amber)':'var(--red)'}].forEach(({num,lbl,c})=>{
-    const d=document.createElement('div');d.style.cssText='text-align:center';
-    d.innerHTML='<div style="font-family:var(--fh);font-size:32px;font-weight:900;color:'+c+';line-height:1">'+num+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--grey);margin-top:2px;text-transform:uppercase;letter-spacing:.1em">'+lbl+'</div>';
-    topGrid.appendChild(d);
-  });
-  sc.innerHTML='<div class="an-title">Today — '+T+'</div>';sc.appendChild(topGrid);
-  // Hours row
-  const hRow=document.createElement('div');hRow.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--b2)';
-  [{num:loggedH.toFixed(1)+'h',lbl:'Logged',c:'var(--gold)'},{num:timerH.toFixed(1)+'h',lbl:'Timer',c:'var(--amber)'},{num:schH.toFixed(1)+'h',lbl:'Scheduled',c:'var(--grey)'}].forEach(({num,lbl,c})=>{
-    const d=document.createElement('div');d.style.cssText='text-align:center';
-    d.innerHTML='<div style="font-family:var(--fh);font-size:22px;font-weight:900;color:'+c+';line-height:1">'+num+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.08em">'+lbl+'</div>';
-    hRow.appendChild(d);
-  });
-  sc.appendChild(hRow);
-  // Utilized bar
-  // Cap at 24h — simultaneous timers should not add beyond 24h
-  const effectiveH=Math.min(24,Math.max(loggedH,timerH));
-  const utilPct=Math.min(100,Math.round(effectiveH/24*100));
-  const barWrap=document.createElement('div');barWrap.style.cssText='margin-top:10px';
-  const simultWarn=runningCount>1?'<div style="font-family:var(--fm);font-size:9px;color:var(--amber);margin-top:3px">⚠ '+runningCount+' timers running simultaneously — only one should run at a time</div>':'';
-  barWrap.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em">Utilised today</span><span style="font-family:var(--fm);font-size:9px;color:var(--gold)">'+effectiveH.toFixed(1)+'h / 24h</span></div>'
-    +'<div style="height:5px;background:var(--b2);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;width:'+utilPct+'%;background:'+( utilPct>85?'linear-gradient(90deg,var(--amber),var(--red))':'linear-gradient(90deg,var(--green),var(--gold))')+'"></div></div>'+simultWarn;
-  sc.appendChild(barWrap);
-  // Quick action badges
-  const badges=document.createElement('div');badges.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:10px';
-  if(od.length){const ob=document.createElement('span');ob.style.cssText='font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:12px;background:rgba(230,51,41,.1);border:1px solid rgba(230,51,41,.3);color:var(--red);cursor:pointer';ob.textContent=od.length+' overdue';ob.addEventListener('click',()=>{gTab('tasks');setChip('overdue');});badges.appendChild(ob);}
-  if(blocked.length)badges.innerHTML+='<span style="font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:12px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:#a78bfa">'+blocked.length+' blocked</span>';
-  if(G.tasks.filter(tRun).length){const tb=document.createElement('span');tb.style.cssText='font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:12px;background:rgba(230,51,41,.1);border:1px solid rgba(230,51,41,.3);color:var(--red);cursor:pointer;animation:pulse 1.5s infinite';tb.textContent='⏱ Timer running';tb.addEventListener('click',filterTimerTasks);badges.appendChild(tb);}
-  sc.appendChild(badges);
-  // PDF button
-  const pdf=document.createElement('button');pdf.style.cssText='margin-top:10px;width:100%;background:transparent;border:1px solid var(--b3);color:var(--grey);font-family:var(--fm);font-size:10px;padding:8px;border-radius:7px;cursor:pointer;letter-spacing:.08em;text-transform:uppercase';
-  pdf.textContent="Download Today's Report (PDF)";pdf.addEventListener('click',exportDonePDF);sc.appendChild(pdf);
-  wrap.appendChild(sc);
+  // ── CORE METRICS ──────────────────────────────────────────
+  const done     = all.filter(t=>t.stage==='done'||t.stage==='closed');
+  const active   = all.filter(t=>!['done','closed','blocked'].includes(t.stage));
+  const blocked  = all.filter(t=>t.stage==='blocked');
+  const overdue  = active.filter(isOD);
+  const urgent   = all.filter(t=>t.priority==='urgent');
+  const urgDone  = urgent.filter(t=>t.stage==='done'||t.stage==='closed');
+  const withTimer= all.filter(t=>t.timer_total_seconds>0||tRun(t));
+  const running  = all.filter(tRun);
 
-  // ── OVERDUE ACTION LIST ──
-  if(od.length){
-    const oc=document.createElement('div');oc.className='an-card';oc.style.cssText='border-color:rgba(230,51,41,.3);background:rgba(230,51,41,.04)';
-    oc.innerHTML='<div class="an-title blink" style="color:var(--red)">Action Required ('+od.length+')</div>';
-    od.forEach(t=>{
-      const tm=TAG[t.tag]||{l:t.tag,c:'#666'};const off=minOff(t.task_time||t.time||'');
-      const late=off&&off>0?Math.floor(off/60)+'h '+off%60+'m late':'past due date';
-      const row=document.createElement('div');row.style.cssText='background:var(--s2);border-radius:7px;padding:9px 11px;margin-bottom:5px;cursor:pointer;border-left:3px solid var(--red)';
-      row.innerHTML='<div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">'+esc(t.title)+'</div><div style="display:flex;gap:6px;align-items:center"><span style="font-family:var(--fm);font-size:9px;color:'+tm.c+'">'+tm.l+'</span><span style="font-family:var(--fm);font-size:9px;color:var(--red)">'+late+'</span></div>';
-      row.addEventListener('click',()=>{gTab('tasks');setTimeout(()=>openDrawer(t.id),150);});
-      oc.appendChild(row);
-    });
-    wrap.appendChild(oc);
+  // ── HOURS ─────────────────────────────────────────────────
+  const loggedH  = Math.min(24, all.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0),0));
+  const timerH   = Math.min(24, all.reduce((s,t)=>s+tEl(t)/3600,0));
+  const schedH   = all.filter(t=>!['done','closed'].includes(t.stage)).reduce((s,t)=>s+(parseFloat(t.scheduled_hours)||0),0);
+  const utilH    = Math.min(24, Math.max(loggedH, timerH));
+  const utilPct  = Math.round(utilH/24*100);
+
+  // ── EFFICIENCY SCORE (0–100) ───────────────────────────────
+  // Formula: weighted blend of completion rate + urgency handling + time accuracy + no-overdue
+  const completionRate = all.length ? done.length/all.length : 0;
+  const urgencyRate    = urgent.length ? urgDone.length/urgent.length : 1;
+  const overdueHit     = all.length ? Math.max(0,1-overdue.length/Math.max(all.length,1)) : 1;
+  const timeAcc        = schedH>0 ? Math.min(1, loggedH/schedH) : (loggedH>0?0.7:0.5);
+  const effScore       = Math.round((completionRate*.35 + urgencyRate*.30 + overdueHit*.20 + timeAcc*.15)*100);
+  const effGrade       = effScore>=85?'A':effScore>=70?'B':effScore>=55?'C':effScore>=40?'D':'F';
+  const effColor       = effScore>=85?'var(--green)':effScore>=70?'var(--gold)':effScore>=55?'var(--amber)':'var(--red)';
+  const effLabel       = effScore>=85?'Excellent':effScore>=70?'Good':effScore>=55?'Average':effScore>=40?'Below Average':'Needs Work';
+
+  // ── CARD BUILDER ──────────────────────────────────────────
+  const card=(title,subtitle,content,accent)=>{
+    const c=document.createElement('div');c.className='an-card';
+    c.style.borderColor=accent?accent+'33':'rgba(255,255,255,.07)';
+    const h=document.createElement('div');h.style.cssText='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px';
+    const t=document.createElement('div');t.className='an-title';t.textContent=title;h.appendChild(t);
+    if(subtitle){const s=document.createElement('div');s.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.08em';s.textContent=subtitle;h.appendChild(s);}
+    c.appendChild(h);c.appendChild(content);
+    return c;
+  };
+  const stat=(num,lbl,col,note,clickFn)=>{
+    const d=document.createElement('div');d.style.cssText='text-align:center;cursor:'+(clickFn?'pointer':'default');
+    const n=document.createElement('div');n.style.cssText='font-family:var(--fh);font-size:30px;font-weight:900;color:'+col+';line-height:1;transition:transform .2s';
+    n.textContent=num;d.appendChild(n);
+    const l=document.createElement('div');l.style.cssText='font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--grey2);margin-top:3px';l.textContent=lbl;d.appendChild(l);
+    if(note){const nn=document.createElement('div');nn.style.cssText='font-family:var(--fm);font-size:8px;color:var(--grey2);margin-top:2px;opacity:.7';nn.textContent=note;d.appendChild(nn);}
+    if(clickFn){d.addEventListener('click',clickFn);d.addEventListener('mouseover',()=>n.style.transform='scale(1.08)');d.addEventListener('mouseout',()=>n.style.transform='scale(1)');}
+    return d;
+  };
+  const explainer=(text)=>{
+    const d=document.createElement('div');
+    d.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)';
+    d.innerHTML=text;return d;
+  };
+  const bar=(pct,col,h='5px',label)=>{
+    const w=document.createElement('div');w.style.cssText='margin-top:6px';
+    if(label){const r=document.createElement('div');r.style.cssText='display:flex;justify-content:space-between;font-family:var(--fm);font-size:9px;color:var(--grey2);margin-bottom:3px';r.innerHTML='<span>'+label+'</span><span style="color:'+col+'">'+pct+'%</span>';w.appendChild(r);}
+    const t=document.createElement('div');t.style.cssText='height:'+h+';background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden';
+    const f=document.createElement('div');f.style.cssText='height:100%;border-radius:3px;background:'+col+';width:0;transition:width .8s cubic-bezier(.4,0,.2,1)';
+    t.appendChild(f);w.appendChild(t);setTimeout(()=>f.style.width=Math.min(100,pct)+'%',100);
+    return w;
+  };
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 1 — EFFICIENCY SCORE (top card)
+  // ════════════════════════════════════════════════════════════
+  const effContent=document.createElement('div');
+  effContent.style.cssText='display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center';
+  // Score circle
+  const circle=document.createElement('div');
+  circle.style.cssText='width:80px;height:80px;border-radius:50%;border:3px solid '+effColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;background:'+effColor+'12;flex-shrink:0';
+  circle.innerHTML='<div style="font-family:var(--fh);font-size:26px;font-weight:900;color:'+effColor+';line-height:1">'+effGrade+'</div><div style="font-family:var(--fm);font-size:8px;color:var(--grey2);margin-top:1px">'+effScore+'/100</div>';
+  effContent.appendChild(circle);
+  // Score breakdown
+  const breakdown=document.createElement('div');breakdown.style.cssText='display:flex;flex-direction:column;gap:5px';
+  [
+    {l:'Completion',v:Math.round(completionRate*100),t:done.length+' of '+all.length+' tasks done'},
+    {l:'Urgency',v:Math.round(urgencyRate*100),t:urgDone.length+' of '+urgent.length+' urgent handled'},
+    {l:'On Schedule',v:Math.round(overdueHit*100),t:overdue.length+' overdue remaining'},
+    {l:'Time Accuracy',v:Math.round(timeAcc*100),t:loggedH.toFixed(1)+'h logged vs '+schedH.toFixed(1)+'h planned'},
+  ].forEach(({l,v,t})=>{
+    const row=document.createElement('div');
+    row.innerHTML='<div style="display:flex;justify-content:space-between;font-family:var(--fm);font-size:9px;margin-bottom:2px"><span style="color:var(--grey)">'+l+'</span><span style="color:'+(v>=70?'var(--green)':v>=50?'var(--amber)':'var(--red)')+'">'+v+'%</span></div>';
+    const bt=document.createElement('div');bt.style.cssText='height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden';
+    const bf=document.createElement('div');bf.style.cssText='height:100%;border-radius:2px;background:'+(v>=70?'var(--green)':v>=50?'var(--amber)':'var(--red)')+';width:0;transition:width .8s cubic-bezier(.4,0,.2,1)';
+    bt.appendChild(bf);row.appendChild(bt);setTimeout(()=>bf.style.width=v+'%',150);
+    const tt=document.createElement('div');tt.style.cssText='font-family:var(--fm);font-size:8px;color:var(--grey2);margin-top:1px';tt.textContent=t;row.appendChild(tt);
+    breakdown.appendChild(row);
+  });
+  effContent.appendChild(breakdown);
+  const effEx=explainer('<b>Efficiency Score</b> = 35% Completion + 30% Urgency Handling + 20% Zero-Overdue + 15% Time Accuracy. <span style="color:'+effColor+'">'+effLabel+' today.</span>');
+  effContent.appendChild(effEx);
+  wrap.appendChild(card('Efficiency Score','Today · '+T,effContent,effColor));
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 2 — TASK STATUS BREAKDOWN
+  // ════════════════════════════════════════════════════════════
+  const statusContent=document.createElement('div');
+  const statusGrid=document.createElement('div');statusGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px';
+  [
+    {num:all.length,    lbl:'Total Tasks',  col:'var(--white)',  note:'All loaded today',                fn:()=>{gTab('tasks');setChip('all');}},
+    {num:done.length,   lbl:'Completed',    col:'var(--green)',  note:done.length?fmtT(done.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0)*3600,0))+' worked':'No hours logged', fn:()=>{gTab('tasks');setChip('done');}},
+    {num:active.length, lbl:'Active',       col:'var(--amber)',  note:overdue.length+' overdue of these', fn:()=>{gTab('tasks');setChip('active');}},
+    {num:blocked.length,lbl:'Blocked',      col:'var(--red)',    note:blocked.length?'Need unblocking':'Clear!', fn:()=>{gTab('tasks');G.stageFilter='blocked';render();}},
+  ].forEach(({num,lbl,col,note,fn})=>statusGrid.appendChild(stat(num,lbl,col,note,fn)));
+  statusContent.appendChild(statusGrid);
+  // Completion bar
+  const compPct=all.length?Math.round(done.length/all.length*100):0;
+  statusContent.appendChild(bar(compPct,'var(--green)','6px','Completion rate'));
+  statusContent.appendChild(explainer(
+    '<b>Total</b> = all tasks with due/next-action date today. '+
+    '<b style="color:var(--green)">Completed</b> = marked done. '+
+    '<b style="color:var(--amber)">Active</b> = in progress or todo. '+
+    '<b style="color:var(--red)">Blocked</b> = waiting on external. '+(overdue.length?'<br><b style="color:var(--red)">⚠ '+overdue.length+' tasks are overdue</b> — action needed now.':'')
+  ));
+  wrap.appendChild(card('Task Status','Click any metric to filter',statusContent,'var(--gold)'));
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 3 — HOURS & TIME
+  // ════════════════════════════════════════════════════════════
+  const hoursContent=document.createElement('div');
+  const hoursGrid=document.createElement('div');hoursGrid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px';
+  [
+    {num:loggedH.toFixed(1)+'h',lbl:'Hours Logged',col:'var(--gold)',  note:'Manually recorded work'},
+    {num:timerH.toFixed(1)+'h', lbl:'Timer Tracked',col:'var(--amber)', note:running.length+' timer'+(running.length!==1?'s':'')+' running now'},
+    {num:schedH.toFixed(1)+'h', lbl:'Scheduled',   col:'var(--grey)',  note:'Planned across active tasks'},
+  ].forEach(({num,lbl,col,note})=>hoursGrid.appendChild(stat(num,lbl,col,note,null)));
+  hoursContent.appendChild(hoursGrid);
+  // Utilisation bar
+  hoursContent.appendChild(bar(utilPct,utilPct>85?'var(--red)':utilPct>60?'var(--amber)':'var(--green)','6px','Today utilised ('+utilH.toFixed(1)+'h of 24h)'));
+  // Efficiency of time
+  const timeEff=schedH>0?Math.min(200,Math.round(loggedH/schedH*100)):null;
+  if(timeEff!==null){
+    const te=document.createElement('div');te.style.cssText='margin-top:8px;font-family:var(--fm);font-size:10px;padding:6px 10px;border-radius:6px;border:1px solid '+(timeEff>110?'rgba(245,158,11,.3)':timeEff>80?'rgba(34,197,94,.3)':'rgba(96,165,250,.3)');
+    te.style.background=timeEff>110?'rgba(245,158,11,.05)':timeEff>80?'rgba(34,197,94,.05)':'rgba(96,165,250,.05)';
+    te.style.color=timeEff>110?'var(--amber)':timeEff>80?'var(--green)':'#60a5fa';
+    te.textContent=timeEff>110?'Running '+timeEff+'% over planned hours — review task complexity':timeEff>80?'On track — logged '+timeEff+'% of planned hours':'Under-tracked — only '+timeEff+'% of planned hours logged';
+    hoursContent.appendChild(te);
   }
+  if(running.length>1){
+    const warn=document.createElement('div');warn.style.cssText='margin-top:6px;font-family:var(--fm);font-size:9px;color:var(--amber);padding:5px 9px;border-radius:5px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2)';
+    warn.innerHTML='⚠ '+running.length+' timers running simultaneously. <b>Only one should run at a time.</b> Stop others to log accurately.';
+    hoursContent.appendChild(warn);
+  }
+  hoursContent.appendChild(explainer(
+    '<b>Hours Logged</b> = manually entered in each task after work. '+
+    '<b>Timer Tracked</b> = auto-measured via start/stop timer (today only). '+
+    '<b>Scheduled</b> = estimated hours across open tasks. '+
+    'Best practice: <b>log hours after completing</b> each task for accurate tracking.'
+  ));
+  wrap.appendChild(card('Time & Hours','Today only',hoursContent,'var(--amber)'));
 
-  // ── CATEGORY COHORTS (fully clickable) ──
-  const cc=document.createElement('div');cc.className='an-card';
-  cc.innerHTML='<div class="an-title">By Category — click to filter</div>';
-  const maxN=Math.max(...Object.keys(TAG).map(tag=>all.filter(t=>t.tag===tag).length),1);
+  // ════════════════════════════════════════════════════════════
+  // SECTION 4 — PRIORITY BREAKDOWN
+  // ════════════════════════════════════════════════════════════
+  const priContent=document.createElement('div');
+  const priGrid=document.createElement('div');priGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px';
+  ['urgent','high','medium','low'].forEach(p=>{
+    const pm=PRI[p]||{c:'#666',l:p};
+    const total=all.filter(t=>t.priority===p).length;
+    const dn=all.filter(t=>t.priority===p&&(t.stage==='done'||t.stage==='closed')).length;
+    const d=document.createElement('div');d.style.cssText='text-align:center;padding:10px 6px;border-radius:8px;border:1px solid '+pm.c+'22;background:'+pm.c+'08;cursor:pointer';
+    d.innerHTML='<div style="font-family:var(--fh);font-size:24px;font-weight:900;color:'+pm.c+';line-height:1">'+total+'</div>'
+      +'<div style="font-family:var(--fm);font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:'+pm.c+';margin:3px 0">'+pm.l+'</div>'
+      +'<div style="font-family:var(--fm);font-size:8px;color:var(--grey2)">'+dn+' done</div>';
+    const doneBar=document.createElement('div');doneBar.style.cssText='height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:5px;overflow:hidden';
+    const doneF=document.createElement('div');doneF.style.cssText='height:100%;background:'+pm.c+';width:0;border-radius:2px;transition:width .6s .2s';
+    doneBar.appendChild(doneF);d.appendChild(doneBar);setTimeout(()=>doneF.style.width=(total?Math.round(dn/total*100):0)+'%',200);
+    d.addEventListener('click',()=>{gTab('tasks');G.stageFilter=p==='urgent'?'urgent':'';render();});
+    priGrid.appendChild(d);
+  });
+  priContent.appendChild(priGrid);
+  priContent.appendChild(explainer(
+    '<b style="color:var(--red)">Urgent</b> = must close today, blocks revenue/client. '+
+    '<b style="color:var(--amber)">High</b> = significant impact if delayed. '+
+    '<b style="color:var(--gold)">Medium</b> = standard work. '+
+    '<b style="color:var(--grey)">Low</b> = background tasks. '+
+    (urgDone.length<urgent.length?'<br><b style="color:var(--red)">'+( urgent.length-urgDone.length)+' urgent task'+(urgent.length-urgDone.length>1?'s':'')+' still open</b> — these should be top priority.':'<br><span style="color:var(--green)">All urgent tasks handled today.</span>')
+  ));
+  wrap.appendChild(card('Priority Breakdown','Click to filter tasks',priContent,'rgba(255,255,255,.1)'));
+
+  // ════════════════════════════════════════════════════════════
+  // SECTION 5 — CATEGORY COHORTS (clickable)
+  // ════════════════════════════════════════════════════════════
+  const catContent=document.createElement('div');
+  const maxCat=Math.max(...Object.keys(TAG).map(tag=>all.filter(t=>t.tag===tag).length),1);
   Object.entries(TAG).forEach(([tag,tm])=>{
-    const n=all.filter(t=>t.tag===tag).length;
+    const n=all.filter(t=>t.tag===tag).length;if(!n)return;
     const dn=all.filter(t=>t.tag===tag&&(t.stage==='done'||t.stage==='closed')).length;
-    const an=all.filter(t=>t.tag===tag&&!['done','closed','blocked'].includes(t.stage)).length;
-    const row=document.createElement('div');row.className='bc-row';row.style.cursor='pointer';
-    row.title='Click to filter '+tm.l+' tasks';
-    row.innerHTML='<div class="bc-lbl" style="color:'+tm.c+'">'+tm.l+'</div><div class="bc-track"><div class="bc-fill" style="width:'+Math.round(n/maxN*100)+'%;background:'+tm.c+'"></div></div><div style="font-family:var(--fm);font-size:9px;width:52px;text-align:right;color:'+tm.c+'">'+dn+'✓ '+an+'⟳</div>';
-    row.addEventListener('click',()=>{gTab('tasks');// Set filter to this tag
-      document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on',b.dataset.f===tag));G.filter=tag;render();toast('Showing '+tm.l+' tasks');});
-    cc.appendChild(row);
+    const od=all.filter(t=>t.tag===tag&&isOD(t)).length;
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;padding:5px 8px;border-radius:6px;transition:background .15s';
+    row.addEventListener('mouseover',()=>row.style.background='rgba(255,255,255,.04)');
+    row.addEventListener('mouseout',()=>row.style.background='');
+    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:9px;color:'+tm.c+';width:72px;flex-shrink:0;text-transform:uppercase;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';lbl.textContent=tm.l;row.appendChild(lbl);
+    const track=document.createElement('div');track.style.cssText='flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden';
+    const fill=document.createElement('div');fill.style.cssText='height:100%;border-radius:4px;background:'+tm.c+';width:0;transition:width .6s cubic-bezier(.4,0,.2,1)';
+    track.appendChild(fill);setTimeout(()=>fill.style.width=Math.round(n/maxCat*100)+'%',200);row.appendChild(track);
+    const meta=document.createElement('div');meta.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);min-width:80px;text-align:right;flex-shrink:0';
+    meta.innerHTML='<span style="color:'+tm.c+'">'+n+' total</span> · <span style="color:var(--green)">'+dn+' done</span>'+(od?' · <span style="color:var(--red)">'+od+' late</span>':'');row.appendChild(meta);
+    row.addEventListener('click',()=>{gTab('tasks');document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on',b.dataset.f===tag));G.filter=tag;render();toast('Showing '+tm.l);});
+    catContent.appendChild(row);
   });
-  wrap.appendChild(cc);
+  catContent.appendChild(explainer('Click any category bar to filter to those tasks. Bar width = relative task volume. <b>Late</b> = past scheduled time and still active.'));
+  wrap.appendChild(card('By Category','Click to drill down',catContent,'rgba(255,255,255,.07)'));
 
-  // ── SUB-STAGE BREAKDOWN ──
-  const subStageData=Object.entries(SUB_STAGE).map(([k,v])=>({key:k,label:v.l,col:v.c,n:all.filter(t=>t.sub_stage===k).length})).filter(x=>x.n>0);
-  if(subStageData.length){
-    const sc2=document.createElement('div');sc2.className='an-card';
-    sc2.innerHTML='<div class="an-title">Task Sub-Stages</div>';
-    subStageData.forEach(({key,label,col,n})=>{
-      const row=document.createElement('div');row.className='bc-row';row.style.cursor='pointer';
-      row.innerHTML='<div class="bc-lbl" style="color:'+col+'">'+label+'</div><div class="bc-track"><div class="bc-fill" style="width:'+Math.round(n/all.length*100)+'%;background:'+col+'"></div></div><div class="bc-val" style="color:'+col+'">'+n+'</div>';
-      row.addEventListener('click',()=>{gTab('tasks');G.tasks.filter(t=>t.sub_stage===key).forEach(t=>{const card=document.getElementById('ct-'+t.id);if(card)card.parentElement?.parentElement?.scrollIntoView({behavior:'smooth'});});toast('Showing '+label+' tasks');});
-      sc2.appendChild(row);
-    });
-    wrap.appendChild(sc2);
-  }
-
-  // ── USAGE HISTORY (day-wise, clickable) ──
+  // ════════════════════════════════════════════════════════════
+  // SECTION 6 — 7-DAY HISTORY
+  // ════════════════════════════════════════════════════════════
   const histCard=document.createElement('div');histCard.className='an-card';
-  histCard.innerHTML='<div class="an-title">7-Day Usage History — click a day to view</div>';
-  // Build day-wise data from all loaded tasks
+  histCard.innerHTML='<div class="an-title" style="margin-bottom:12px">7-Day History <span style="font-family:var(--fm);font-size:9px;color:var(--grey2);font-weight:400;letter-spacing:.06em">— click a day</span></div>';
   const dayMap={};
-  for(let i=6;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);const dStr=d.toISOString().slice(0,10);
-    dayMap[dStr]={h:0,tasks:0,done:0};
-  }
-  // Also include tasks from last week
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);dayMap[ds]={h:0,done:0,total:0,label:['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()]};}
   try{
     const d7=new Date();d7.setDate(d7.getDate()-7);
-    const rawHist=await SB.getRange(d7.toISOString().slice(0,10),T);
-    (rawHist||[]).map(norm).forEach(t=>{
-      const d=t.task_date||t.date||T;
-      if(!dayMap[d])return;
-      dayMap[d].tasks++;
-      if(t.stage==='done'||t.stage==='closed')dayMap[d].done++;
-      // Timer hours for that day (use timer_total_seconds, not live elapsed)
-      const timerSec=t.timer_total_seconds||0;
-      dayMap[d].h+=timerSec/3600;
-    });
-  }catch(e){console.warn('History fetch error:',e);}
-  const days=Object.keys(dayMap).sort();
-  const maxH=Math.max(...days.map(d=>dayMap[d].h),1);
-  const histGrid=document.createElement('div');histGrid.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:80px;margin-bottom:8px';
+    const raw7=await SB.getRange(d7.toISOString().slice(0,10),T);
+    (raw7||[]).map(norm).forEach(t=>{const d=t.task_date||t.date||T;if(!dayMap[d])return;dayMap[d].total++;if(t.stage==='done'||t.stage==='closed')dayMap[d].done++;dayMap[d].h+=t.timer_total_seconds/3600;});
+  }catch{}
+  const days=Object.keys(dayMap).sort();const maxH7=Math.max(...days.map(d=>dayMap[d].h),1);
+  const histGrid=document.createElement('div');histGrid.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:80px;align-items:end';
   days.forEach(d=>{
-    const {h,tasks,done}=dayMap[d];const isToday=d===T;
-    const barPct=Math.min(100,Math.round(h/maxH*100));
-    const col=isToday?'var(--red)':h>8?'var(--amber)':h>4?'var(--gold)':'var(--grey2)';
-    const colWrap=document.createElement('div');colWrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;height:100%;justify-content:flex-end';
-    colWrap.title=d+': '+h.toFixed(1)+'h, '+done+'/'+tasks+' done';
-    const bar=document.createElement('div');bar.style.cssText='width:100%;border-radius:4px 4px 0 0;min-height:3px;background:'+col+(isToday?';animation:pulse 2s infinite':'');
-    bar.style.height=Math.max(3,barPct)+'%';
-    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:8px;color:'+(isToday?'var(--red)':'var(--grey2)')+';text-align:center;white-space:nowrap';
-    const dayNames=['Su','Mo','Tu','We','Th','Fr','Sa'];lbl.textContent=isToday?'Today':dayNames[new Date(d+'T12:00:00').getDay()];
-    colWrap.appendChild(bar);colWrap.appendChild(lbl);
-    // Click to switch to that day's tasks
-    colWrap.addEventListener('click',async()=>{
-      gTab('tasks');
-      G.df=isToday?'today':'all';
-      document.querySelectorAll('[data-df]').forEach(b=>b.classList.toggle('on',b.dataset.df===(isToday?'today':'all')));
-      // Filter to that specific date
-      G.dateFilter=d;
-      setSyncing(true);
-      const raw=isToday?await SB.getTasks(d):await SB.getRange(d,d);
-      G.tasks=(raw||[]).map(norm);setSyncing(false);
-      render();
-      toast('Showing '+d+(isToday?' (today)':''));
+    const {h,done,total,label}=dayMap[d];const isT=d===T;
+    const col=isT?'var(--red)':h>6?'var(--amber)':h>2?'var(--gold)':'var(--grey2)';
+    const col2=document.createElement('div');col2.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;height:100%;justify-content:flex-end';
+    col2.title=d+' · '+h.toFixed(1)+'h · '+done+'/'+total+' done';
+    const b=document.createElement('div');b.style.cssText='width:100%;border-radius:4px 4px 0 0;background:'+col+(isT?';animation:pulse 2s infinite':'');
+    const hPct=Math.max(4,Math.round(h/maxH7*75));b.style.height=hPct+'px';
+    const l=document.createElement('div');l.style.cssText='font-family:var(--fm);font-size:8px;letter-spacing:.05em;color:'+(isT?'var(--red)':'var(--grey2)')+';font-weight:'+(isT?'700':'400');l.textContent=isT?'NOW':label;
+    col2.appendChild(b);col2.appendChild(l);
+    col2.addEventListener('click',async()=>{
+      gTab('tasks');G.df='all';document.querySelectorAll('[data-df]').forEach(b2=>b2.classList.toggle('on',b2.dataset.df==='all'));
+      setSyncing(true);const raw=await SB.getRange(d,d);G.tasks=(raw||[]).map(norm);setSyncing(false);render();toast('Showing '+d+(isT?' (today)':''));
     });
-    histGrid.appendChild(colWrap);
+    histGrid.appendChild(col2);
   });
   histCard.appendChild(histGrid);
-  // Hour totals row
-  const totRow=document.createElement('div');totRow.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:4px';
-  days.forEach(d=>{const {h,done,tasks}=dayMap[d];const isToday=d===T;
-    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:8px;color:'+(isToday?'var(--red)':'var(--grey2)')+';text-align:center';
-    lbl.textContent=h>0?h.toFixed(1)+'h':'—';totRow.appendChild(lbl);
-  });
+  const totRow=document.createElement('div');totRow.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:5px';
+  days.forEach(d=>{const {h,done,total}=dayMap[d];const isT=d===T;const l=document.createElement('div');l.style.cssText='font-family:var(--fm);font-size:8px;text-align:center;color:'+(isT?'var(--red)':'var(--grey2)');l.textContent=h>0?h.toFixed(1)+'h':'—';totRow.appendChild(l);});
   histCard.appendChild(totRow);
+  const doneRow=document.createElement('div');doneRow.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:2px';
+  days.forEach(d=>{const {done,total}=dayMap[d];const l=document.createElement('div');l.style.cssText='font-family:var(--fm);font-size:8px;text-align:center;color:var(--green)';l.textContent=total>0?done+'/'+total:'';doneRow.appendChild(l);});
+  histCard.appendChild(doneRow);
+  histCard.appendChild(explainer('Bar height = hours tracked. Numbers = hours / done/total tasks. <b>Click any day</b> to view its tasks.'));
   wrap.appendChild(histCard);
 
-  // ── RULES VIOLATIONS ──
-  const violations=[];G.tasks.forEach(t=>{checkTaskRules(t).forEach(v=>violations.push({...v,task:t}));});
+  // ════════════════════════════════════════════════════════════
+  // SECTION 7 — FIELD ISSUES (Rules violations)
+  // ════════════════════════════════════════════════════════════
+  const violations=[];G.tasks.forEach(t=>checkTaskRules(t).forEach(v=>violations.push({...v,task:t})));
   if(violations.length){
-    const vc=document.createElement('div');vc.className='an-card';vc.style.cssText='border-color:rgba(96,165,250,.3)';
-    vc.innerHTML='<div class="an-title" style="color:#60a5fa">Field Issues ('+violations.length+')</div>';
-    violations.slice(0,10).forEach(({rule,field,sev,task})=>{
-      const row=document.createElement('div');row.style.cssText='background:var(--s2);border-radius:6px;padding:8px 10px;margin-bottom:5px;cursor:pointer;border-left:3px solid '+(sev==='error'?'var(--red)':'var(--amber)');
-      row.innerHTML='<div style="font-family:var(--fm);font-size:10px;color:'+(sev==='error'?'var(--red)':'var(--amber)')+'">'+rule+'</div><div style="font-size:12px;color:var(--grey);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(task.title)+'</div>';
-      row.addEventListener('click',()=>openDrawer(task.id));vc.appendChild(row);
+    const vc=document.createElement('div');vc.className='an-card';vc.style.borderColor='rgba(96,165,250,.25)';
+    vc.innerHTML='<div class="an-title" style="color:#60a5fa;margin-bottom:8px">Field Issues ('+violations.length+')</div>';
+    const vex=document.createElement('div');vex.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);margin-bottom:10px;line-height:1.5';
+    vex.textContent='These tasks are missing recommended fields. Filling them improves your efficiency score and task tracking accuracy.';vc.appendChild(vex);
+    violations.slice(0,8).forEach(({rule,field,sev,task})=>{
+      const row=document.createElement('div');row.style.cssText='background:rgba(255,255,255,.03);border-radius:6px;padding:7px 10px;margin-bottom:5px;cursor:pointer;display:flex;align-items:center;gap:8px;border-left:3px solid '+(sev==='error'?'var(--red)':'var(--amber)');
+      const icon=document.createElement('div');icon.style.cssText='font-size:14px;flex-shrink:0';icon.textContent=sev==='error'?'⛔':'⚠';row.appendChild(icon);
+      const info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+      info.innerHTML='<div style="font-family:var(--fm);font-size:9px;color:'+(sev==='error'?'var(--red)':'var(--amber)')+'">'+rule+'</div><div style="font-size:11px;color:var(--grey);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(task.title)+'</div>';
+      row.appendChild(info);row.addEventListener('click',()=>openDrawer(task.id));vc.appendChild(row);
     });
+    if(violations.length>8){const m=document.createElement('div');m.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);text-align:center;margin-top:5px';m.textContent='+ '+(violations.length-8)+' more';vc.appendChild(m);}
     wrap.appendChild(vc);
   }
+
+  // ════════════════════════════════════════════════════════════
+  // PDF BUTTON
+  // ════════════════════════════════════════════════════════════
+  const pdf=document.createElement('div');pdf.className='an-card';
+  const pdfBtn=document.createElement('button');pdfBtn.style.cssText='width:100%;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--grey);font-family:var(--fm);font-size:10px;padding:10px;border-radius:7px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:all .2s';
+  pdfBtn.textContent='⬇ Download Today’s Report (PDF)';pdfBtn.addEventListener('click',exportDonePDF);
+  pdfBtn.addEventListener('mouseover',()=>{pdfBtn.style.borderColor='var(--red)';pdfBtn.style.color='var(--red)';});
+  pdfBtn.addEventListener('mouseout',()=>{pdfBtn.style.borderColor='rgba(255,255,255,.1)';pdfBtn.style.color='var(--grey)';});
+  pdf.appendChild(pdfBtn);wrap.appendChild(pdf);
 }
+
+
 
 
 /* ── DRAWER ── */
