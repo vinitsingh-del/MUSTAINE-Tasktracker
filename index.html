@@ -318,8 +318,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .ni-ts{font-family:var(--fm);font-size:9px;color:var(--grey2);margin-top:4px}
 
 /* ANALYTICS */
-.an-card{background:rgba(18,18,22,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:13px;margin-bottom:9px;animation:fadeUp .3s ease both}
-.an-title{font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--grey);text-transform:uppercase;margin-bottom:10px}
+.an-card{background:rgba(16,16,20,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;margin-bottom:0;animation:fadeUp .3s ease both}
+.an-title{font-family:var(--fh);font-size:13px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:12px}
 .bc-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .bc-lbl{font-family:var(--fm);font-size:9px;color:var(--grey);width:60px;flex-shrink:0;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bc-track{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
@@ -582,6 +582,23 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .card-title{font-size:14px}
   .od-banner{margin:6px 24px}
   .day-strip,.add-box,.toolbar,.filters,.stage-strip{padding-left:24px;padding-right:24px}
+}
+
+/* ANALYTICS LAYOUT — 2 column grid on desktop */
+@media(min-width:900px){
+  #an-wrap{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    padding:12px 16px 32px;
+    align-items:start;
+  }
+  /* Full-width sections */
+  #an-wrap > .an-card:first-child,  /* efficiency score */
+  #an-wrap > .an-card:last-child    /* PDF button */
+  { grid-column:1/-1; }
+  /* An-card max-width so content breathes */
+  .an-card{max-width:none}
 }
 </style>
 </head>
@@ -1930,17 +1947,22 @@ async function renderStats(){
     return c;
   };
   const stat=(num,lbl,col,note,clickFn)=>{
-    const d=document.createElement('div');d.style.cssText='text-align:center;cursor:'+(clickFn?'pointer':'default');
-    const n=document.createElement('div');n.style.cssText='font-family:var(--fh);font-size:30px;font-weight:900;color:'+col+';line-height:1;transition:transform .2s';
+    const d=document.createElement('div');
+    d.style.cssText='text-align:center;cursor:'+(clickFn?'pointer':'default')+';padding:10px 6px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:all .2s';
+    const n=document.createElement('div');n.style.cssText='font-family:var(--fh);font-size:38px;font-weight:900;color:'+col+';line-height:1;transition:transform .2s;letter-spacing:-.02em';
     n.textContent=num;d.appendChild(n);
-    const l=document.createElement('div');l.style.cssText='font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--grey2);margin-top:3px';l.textContent=lbl;d.appendChild(l);
-    if(note){const nn=document.createElement('div');nn.style.cssText='font-family:var(--fm);font-size:8px;color:var(--grey2);margin-top:2px;opacity:.7';nn.textContent=note;d.appendChild(nn);}
-    if(clickFn){d.addEventListener('click',clickFn);d.addEventListener('mouseover',()=>n.style.transform='scale(1.08)');d.addEventListener('mouseout',()=>n.style.transform='scale(1)');}
+    const l=document.createElement('div');l.style.cssText='font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--grey2);margin-top:5px;font-weight:600';l.textContent=lbl;d.appendChild(l);
+    if(note){const nn=document.createElement('div');nn.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);margin-top:4px;line-height:1.3;opacity:.8';nn.textContent=note;d.appendChild(nn);}
+    if(clickFn){
+      d.addEventListener('click',clickFn);
+      d.addEventListener('mouseover',()=>{n.style.transform='scale(1.1)';d.style.borderColor=col+'44';d.style.background=col+'0a';});
+      d.addEventListener('mouseout',()=>{n.style.transform='scale(1)';d.style.borderColor='rgba(255,255,255,.06)';d.style.background='rgba(255,255,255,.03)';});
+    }
     return d;
   };
   const explainer=(text)=>{
     const d=document.createElement('div');
-    d.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)';
+    d.style.cssText='font-family:var(--fm);font-size:10px;color:var(--grey);line-height:1.65;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);letter-spacing:.01em';
     d.innerHTML=text;return d;
   };
   const bar=(pct,col,h='5px',label)=>{
@@ -1956,14 +1978,14 @@ async function renderStats(){
   // SECTION 1 — EFFICIENCY SCORE (top card)
   // ════════════════════════════════════════════════════════════
   const effContent=document.createElement('div');
-  effContent.style.cssText='display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center';
+  effContent.style.cssText='display:grid;grid-template-columns:100px 1fr;gap:20px;align-items:start';
   // Score circle
   const circle=document.createElement('div');
-  circle.style.cssText='width:80px;height:80px;border-radius:50%;border:3px solid '+effColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;background:'+effColor+'12;flex-shrink:0';
-  circle.innerHTML='<div style="font-family:var(--fh);font-size:26px;font-weight:900;color:'+effColor+';line-height:1">'+effGrade+'</div><div style="font-family:var(--fm);font-size:8px;color:var(--grey2);margin-top:1px">'+effScore+'/100</div>';
+  circle.style.cssText='width:90px;height:90px;border-radius:50%;border:4px solid '+effColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;background:'+effColor+'10;box-shadow:0 0 20px '+effColor+'20;flex-shrink:0';
+  circle.innerHTML='<div style="font-family:var(--fh);font-size:36px;font-weight:900;color:'+effColor+';line-height:1;letter-spacing:-.02em">'+effGrade+'</div><div style="font-family:var(--fm);font-size:10px;color:'+effColor+';margin-top:3px;opacity:.8">'+effScore+'/100</div>';
   effContent.appendChild(circle);
   // Score breakdown
-  const breakdown=document.createElement('div');breakdown.style.cssText='display:flex;flex-direction:column;gap:5px';
+  const breakdown=document.createElement('div');breakdown.style.cssText='display:flex;flex-direction:column;gap:8px;flex:1;min-width:0';
   [
     {l:'Completion',v:Math.round(completionRate*100),t:done.length+' of '+all.length+' tasks done'},
     {l:'Urgency',v:Math.round(urgencyRate*100),t:urgDone.length+' of '+urgent.length+' urgent handled'},
@@ -1971,11 +1993,12 @@ async function renderStats(){
     {l:'Time Accuracy',v:Math.round(timeAcc*100),t:loggedH.toFixed(1)+'h logged vs '+schedH.toFixed(1)+'h planned'},
   ].forEach(({l,v,t})=>{
     const row=document.createElement('div');
-    row.innerHTML='<div style="display:flex;justify-content:space-between;font-family:var(--fm);font-size:9px;margin-bottom:2px"><span style="color:var(--grey)">'+l+'</span><span style="color:'+(v>=70?'var(--green)':v>=50?'var(--amber)':'var(--red)')+'">'+v+'%</span></div>';
-    const bt=document.createElement('div');bt.style.cssText='height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden';
-    const bf=document.createElement('div');bf.style.cssText='height:100%;border-radius:2px;background:'+(v>=70?'var(--green)':v>=50?'var(--amber)':'var(--red)')+';width:0;transition:width .8s cubic-bezier(.4,0,.2,1)';
+    const col=v>=70?'var(--green)':v>=50?'var(--amber)':'var(--red)';
+    row.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-family:var(--fm);font-size:10px;color:var(--grey)">'+l+'</span><span style="font-family:var(--fh);font-size:14px;font-weight:800;color:'+col+'">'+v+'%</span></div>';
+    const bt=document.createElement('div');bt.style.cssText='height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden';
+    const bf=document.createElement('div');bf.style.cssText='height:100%;border-radius:3px;background:'+col+';width:0;transition:width .8s cubic-bezier(.4,0,.2,1)';
     bt.appendChild(bf);row.appendChild(bt);setTimeout(()=>bf.style.width=v+'%',150);
-    const tt=document.createElement('div');tt.style.cssText='font-family:var(--fm);font-size:8px;color:var(--grey2);margin-top:1px';tt.textContent=t;row.appendChild(tt);
+    const tt=document.createElement('div');tt.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);margin-top:3px';tt.textContent=t;row.appendChild(tt);
     breakdown.appendChild(row);
   });
   effContent.appendChild(breakdown);
@@ -1987,7 +2010,7 @@ async function renderStats(){
   // SECTION 2 — TASK STATUS BREAKDOWN
   // ════════════════════════════════════════════════════════════
   const statusContent=document.createElement('div');
-  const statusGrid=document.createElement('div');statusGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px';
+  const statusGrid=document.createElement('div');statusGrid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px';
   [
     {num:all.length,    lbl:'Total Tasks',  col:'var(--white)',  note:'All loaded today',                fn:()=>{gTab('tasks');setChip('all');}},
     {num:done.length,   lbl:'Completed',    col:'var(--green)',  note:done.length?fmtT(done.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0)*3600,0))+' worked':'No hours logged', fn:()=>{gTab('tasks');setChip('done');}},
@@ -2010,7 +2033,7 @@ async function renderStats(){
   // SECTION 3 — HOURS & TIME
   // ════════════════════════════════════════════════════════════
   const hoursContent=document.createElement('div');
-  const hoursGrid=document.createElement('div');hoursGrid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px';
+  const hoursGrid=document.createElement('div');hoursGrid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px';
   [
     {num:loggedH.toFixed(1)+'h',lbl:'Hours Logged',col:'var(--gold)',  note:'Manually recorded work'},
     {num:timerH.toFixed(1)+'h', lbl:'Timer Tracked',col:'var(--amber)', note:running.length+' timer'+(running.length!==1?'s':'')+' running now'},
@@ -2045,7 +2068,7 @@ async function renderStats(){
   // SECTION 4 — PRIORITY BREAKDOWN
   // ════════════════════════════════════════════════════════════
   const priContent=document.createElement('div');
-  const priGrid=document.createElement('div');priGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px';
+  const priGrid=document.createElement('div');priGrid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px';
   ['urgent','high','medium','low'].forEach(p=>{
     const pm=PRI[p]||{c:'#666',l:p};
     const total=all.filter(t=>t.priority===p).length;
@@ -2082,11 +2105,11 @@ async function renderStats(){
     const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;padding:5px 8px;border-radius:6px;transition:background .15s';
     row.addEventListener('mouseover',()=>row.style.background='rgba(255,255,255,.04)');
     row.addEventListener('mouseout',()=>row.style.background='');
-    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:9px;color:'+tm.c+';width:72px;flex-shrink:0;text-transform:uppercase;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';lbl.textContent=tm.l;row.appendChild(lbl);
-    const track=document.createElement('div');track.style.cssText='flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden';
+    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:10px;color:'+tm.c+';width:80px;flex-shrink:0;text-transform:uppercase;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600';lbl.textContent=tm.l;row.appendChild(lbl);
+    const track=document.createElement('div');track.style.cssText='flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden';
     const fill=document.createElement('div');fill.style.cssText='height:100%;border-radius:4px;background:'+tm.c+';width:0;transition:width .6s cubic-bezier(.4,0,.2,1)';
     track.appendChild(fill);setTimeout(()=>fill.style.width=Math.round(n/maxCat*100)+'%',200);row.appendChild(track);
-    const meta=document.createElement('div');meta.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);min-width:80px;text-align:right;flex-shrink:0';
+    const meta=document.createElement('div');meta.style.cssText='font-family:var(--fm);font-size:10px;color:var(--grey2);min-width:90px;text-align:right;flex-shrink:0';
     meta.innerHTML='<span style="color:'+tm.c+'">'+n+' total</span> · <span style="color:var(--green)">'+dn+' done</span>'+(od?' · <span style="color:var(--red)">'+od+' late</span>':'');row.appendChild(meta);
     row.addEventListener('click',()=>{gTab('tasks');document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on',b.dataset.f===tag));G.filter=tag;render();toast('Showing '+tm.l);});
     catContent.appendChild(row);
@@ -2159,8 +2182,8 @@ async function renderStats(){
   const pdf=document.createElement('div');pdf.className='an-card';
   const pdfBtn=document.createElement('button');pdfBtn.style.cssText='width:100%;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--grey);font-family:var(--fm);font-size:10px;padding:10px;border-radius:7px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:all .2s';
   pdfBtn.textContent='⬇ Download Today’s Report (PDF)';pdfBtn.addEventListener('click',exportDonePDF);
-  pdfBtn.addEventListener('mouseover',()=>{pdfBtn.style.borderColor='var(--red)';pdfBtn.style.color='var(--red)';});
-  pdfBtn.addEventListener('mouseout',()=>{pdfBtn.style.borderColor='rgba(255,255,255,.1)';pdfBtn.style.color='var(--grey)';});
+  pdfBtn.addEventListener('mouseover',()=>{pdfBtn.style.borderColor='var(--red)';pdfBtn.style.background='rgba(230,51,41,.12)';});
+  pdfBtn.addEventListener('mouseout',()=>{pdfBtn.style.borderColor='rgba(230,51,41,.2)';pdfBtn.style.background='rgba(230,51,41,.06)';});
   pdf.appendChild(pdfBtn);wrap.appendChild(pdf);
 }
 
