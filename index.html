@@ -1049,14 +1049,19 @@ async function fetchUserRole() {
     const r = await fetch(`${SUPA}/rest/v1/profiles?id=eq.${SB.uid()}&select=role,viewer_owner_id`, {
       headers: { 'apikey': ANON, 'Authorization': 'Bearer ' + SB.tok() }
     });
-    if (!r.ok) return;
+    if (!r.ok) { G.role='owner'; return; } // default to owner on failure
     const data = await r.json();
     if (data?.[0]) {
       G.role = data[0].role || 'owner';
       G.viewerOwnerId = data[0].viewer_owner_id || null;
+    } else {
+      G.role = 'owner'; // no profile row = owner
     }
     applyViewerMode();
-  } catch(e) { console.warn('Role fetch failed:', e); }
+  } catch(e) { 
+    G.role = 'owner'; // default to owner on any error
+    console.warn('Role fetch (non-fatal):', e); 
+  }
 }
 
 function applyViewerMode() {
@@ -1152,9 +1157,6 @@ async function boot(){
   const uname=(u?.email||'').split('@')[0]||'Sign Out';
   ['hdr-user','hdr-user-m'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=uname;});
   const su2=document.getElementById('sidebar-user');if(su2)su2.textContent=uname;
-  // Fetch role from profiles
-  await fetchUserRole();
-
   // defaults
   const n=new Date();
   document.getElementById('add-date').value=today();
@@ -1172,6 +1174,7 @@ async function boot(){
     await rolloverDailyTasks();
   } // check if daily tasks need to roll over
   tick(); render(); renderNotifs();
+  fetchUserRole(); // run after app is visible
 
   // start timer loop
   startTickLoop();
