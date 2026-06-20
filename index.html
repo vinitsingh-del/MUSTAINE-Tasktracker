@@ -737,7 +737,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     
     <div class="od-banner" id="od-banner"></div>
 
-    <div class="sec"><div class="sec-title">Active</div></div>
+    <div id="active-sec-hdr" class="sec" style="display:none"><div class="sec-title" id="active-sec-title">Active</div></div>
     <div class="card-list" id="active-list"></div>
 
     <div id="done-wrap">
@@ -838,7 +838,7 @@ const G = {
   tasks:[], notifs:[], filter:'all', df:'today',
   showDone:false, openId:null, delArm:{}, reminded:new Set(),
   editingRemark:null, tick:null,
-  statFilter: 'all',
+  statFilter: '',
   role: 'owner', // 'owner' | 'viewer'
   viewerOwnerId: null,
 };
@@ -1431,12 +1431,15 @@ function getActive(){
 // ═══════════════════════════════════════════════════════════════
 function setStatFilter(sf){
   // Toggle: clicking same chip resets to 'all'
-  G.statFilter = (G.statFilter===sf && sf!=='all') ? 'all' : sf;
+  // clicking active chip = '' (normal view), Total = 'all', others toggle
+  if(sf==='active')      G.statFilter = G.statFilter===''   ? 'active' : '';
+  else if(sf==='all')    G.statFilter = G.statFilter==='all' ? ''       : 'all';
+  else                   G.statFilter = G.statFilter===sf    ? ''       : sf;
   // Update chip highlight
   ['ds-total','ds-done','ds-active','ds-od'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove('active-chip');
   });
-  const map={all:'ds-total',done:'ds-done',active:'ds-active',overdue:'ds-od'};
+  const map={'all':'ds-total','done':'ds-done','active':'ds-active','overdue':'ds-od'};
   const active=document.getElementById(map[G.statFilter]);
   if(active) active.classList.add('active-chip');
   goTab('tasks');
@@ -1518,10 +1521,14 @@ function render(){
   al.innerHTML='';
   if(dl) dl.innerHTML='';
   if(bl) bl.innerHTML='';
+  // Active section header: show only in default/active mode
+  const actHdr = document.getElementById('active-sec-hdr');
+  const actTitle = document.getElementById('active-sec-title');
 
   if(G.statFilter==='done'){
     // ── Done filter: show all done/closed tasks in main list ──
     const list = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t)).sort(byTime);
+    if(actHdr) actHdr.style.display='none';
     if(dh) dh.style.display='none';
     if(sdb) sdb.style.display='none';
     if(bh) bh.style.display='none';
@@ -1534,6 +1541,7 @@ function render(){
   } else if(G.statFilter==='overdue'){
     // ── Overdue filter: show all overdue tasks in main list ──
     const list = allTasks.filter(t=>isOD(t) && tagOk(t)).sort(byTime);
+    if(actHdr) actHdr.style.display='none';
     if(dh) dh.style.display='none';
     if(sdb) sdb.style.display='none';
     if(bh) bh.style.display='none';
@@ -1549,6 +1557,7 @@ function render(){
     const done    = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t)).sort(byTime);
     const blocked = allTasks.filter(t=>t.stage==='blocked' && tagOk(t));
     const combined = [...active, ...blocked, ...done];
+    if(actHdr) actHdr.style.display='none';
     if(dh) dh.style.display='none';
     if(sdb) sdb.style.display='none';
     if(bh) bh.style.display='none';
@@ -1574,9 +1583,10 @@ function render(){
     }
 
   } else {
-    // ── DEFAULT (no chip active): normal view ──
-    // Active in main list, done collapsed below, blocked at bottom
+    // ── DEFAULT: normal view — active in main, done collapsed, blocked below ──
     const active = allTasks.filter(t=>!['done','blocked','closed'].includes(t.stage) && tagOk(t)).sort(byTime);
+    if(actHdr){ actHdr.style.display = active.length ? 'flex' : 'none'; }
+    if(actTitle) actTitle.textContent = 'Active (' + active.length + ')';
 
     // Render active tasks (grouped by date in multi-day mode)
     if(!active.length){
