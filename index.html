@@ -673,6 +673,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
       <div id="load-msg" style="display:none" class="load-msg"></div>
     </div>
 
+    <div id="viewer-banner" style="display:none;background:rgba(200,168,75,.08);border-bottom:1px solid rgba(200,168,75,.2);padding:8px 14px;font-family:var(--font-m);font-size:10px;color:var(--gold);letter-spacing:.08em;text-align:center;flex-shrink:0">
+      VIEW ONLY ACCESS — Vinit Singh's Tasks — No actions permitted
+    </div>
     <div class="add-box">
       <div class="add-row">
         <input class="add-inp" id="add-title" placeholder="Add a task..." maxlength="140">
@@ -832,8 +835,11 @@ const G = {
   tasks:[], notifs:[], filter:'all', df:'today',
   showDone:false, openId:null, delArm:{}, reminded:new Set(),
   editingRemark:null, tick:null,
-  statFilter: 'all', // 'all' | 'done' | 'active' | 'overdue'
+  statFilter: 'all',
+  role: 'owner', // 'owner' | 'viewer'
+  viewerOwnerId: null,
 };
+const isViewer = () => G.role === 'viewer';
 
 // ═══════════════════════════════════════════════════════════════
 // SUPABASE
@@ -1028,6 +1034,43 @@ function showApp(){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ROLE DETECTION
+// ═══════════════════════════════════════════════════════════════
+async function fetchUserRole() {
+  try {
+    await SB.refresh();
+    const r = await fetch(`${SUPA}/rest/v1/profiles?id=eq.${SB.uid()}&select=role,viewer_owner_id`, {
+      headers: { 'apikey': ANON, 'Authorization': 'Bearer ' + SB.tok() }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data?.[0]) {
+      G.role = data[0].role || 'owner';
+      G.viewerOwnerId = data[0].viewer_owner_id || null;
+    }
+    applyViewerMode();
+  } catch(e) { console.warn('Role fetch failed:', e); }
+}
+
+function applyViewerMode() {
+  if (!isViewer()) return;
+  // Show viewer banner
+  const banner = document.getElementById('viewer-banner');
+  if (banner) banner.style.display = '';
+  // Hide add task section
+  const addBox = document.querySelector('.add-box');
+  if (addBox) addBox.style.display = 'none';
+  // Hide toolbar actions (clear done)
+  document.querySelectorAll('.tb-btn:not(.ds-btn)').forEach(b => b.style.display = 'none');
+  // Update header user display
+  ['hdr-user','hdr-user-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = 'Viewer'; el.style.color = 'var(--gold)'; el.onclick = null; el.style.cursor = 'default'; }
+  });
+}
+
+// Viewer-safe task loader: loads owner's tasks (RLS handles the filtering)
+// ═══════════════════════════════════════════════════════════════
 // DAILY RECURRENCE ROLLOVER
 // ═══════════════════════════════════════════════════════════════
 async function rolloverDailyTasks() {
@@ -1102,6 +1145,8 @@ async function boot(){
   const uname=(u?.email||'').split('@')[0]||'Sign Out';
   ['hdr-user','hdr-user-m'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=uname;});
   const su2=document.getElementById('sidebar-user');if(su2)su2.textContent=uname;
+  // Fetch role from profiles
+  await fetchUserRole();
 
   // defaults
   const n=new Date();
@@ -1115,8 +1160,10 @@ async function boot(){
   showApp();
   await loadTasks();
   await loadNotifs();
-  await maybeSeed();
-  await rolloverDailyTasks(); // check if daily tasks need to roll over
+  if(!isViewer()){
+    await maybeSeed();
+    await rolloverDailyTasks();
+  } // check if daily tasks need to roll over
   tick(); render(); renderNotifs();
 
   // start timer loop
@@ -1175,6 +1222,7 @@ async function maybeSeed(){
 // TASK ACTIONS
 // ═══════════════════════════════════════════════════════════════
 async function addTask(){
+  if(isViewer()){toast('View only access','warn');return;}
   const inp=document.getElementById('add-title');
   const title=inp.value.trim();
   if(!title){inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),400);inp.focus();return;}
@@ -1204,6 +1252,7 @@ async function addTask(){
 }
 
 async function patch(id,changes,logMsg){
+  if(isViewer()){toast('View only access','warn');return;}
   const task=G.tasks.find(t=>t.id===id);if(!task)return;
   const updated={...task,...changes};
   if(logMsg) updated.activity=[...(task.activity||[]),{ts:now(),text:logMsg}];
@@ -1217,6 +1266,7 @@ async function patch(id,changes,logMsg){
 
 async function delTask(e,id){
   e.stopPropagation();
+  if(isViewer()){toast('View only access','warn');return;}
   const btn=document.getElementById('del-'+id);
   if(G.delArm[id]){
     clearTimeout(G.delArm[id]);delete G.delArm[id];
@@ -1505,8 +1555,8 @@ function mkCard(task){
         </div>
       </div>
       <div class="card-acts">
-        <button class="card-del" id="del-${task.id}" onclick="delTask(event,'${task.id}')">x</button>
-        <button class="card-blk" onclick="toggleBlock(event,'${task.id}')">${task.stage==='blocked'?'unblock':'block'}</button>
+        ${!isViewer()?`<button class="card-del" id="del-${task.id}" onclick="delTask(event,'${task.id}')">x</button>
+        <button class="card-blk" onclick="toggleBlock(event,'${task.id}')">${task.stage==='blocked'?'unblock':'block'}</button>`:''}
       </div>
     </div>
     ${running||elapsed>0?`<div class="card-timer"><span class="ct-disp${running?' run':''}" id="ct-timer-${task.id}">${fmtT(elapsed)}</span>${running?`<button class="ct-stop" onclick="stopTimer('${task.id}');event.stopPropagation()">Stop</button>`:''}</div>`:''}
@@ -1556,12 +1606,13 @@ function renderDrawer(task,atts){
       <input class="dr-inp" id="dr-title" value="${esc(task.title)}" maxlength="140" onchange="drPatch('title',this.value)">
     </div>
 
-    <div class="qa-row">
-      ${!isDone&&!isClosed?`<button class="qa qa-done" onclick="quickDone('${task.id}')">Mark Done</button>`:''}
-      ${!isClosed?`<button class="qa qa-close" onclick="quickClose('${task.id}')">Close Task</button>`:''}
-      ${isDone||isClosed?`<button class="qa qa-reopen" onclick="quickReopen('${task.id}')">Reopen</button>`:''}
-      ${isPast&&!isDone&&!isClosed?`<button class="qa qa-overdue" onclick="markOD('${task.id}')">Mark Overdue</button>`:''}
-    </div>
+    ${(()=>{if(isViewer())return '';const btns=[];
+      if(!isDone&&!isClosed)btns.push(`<button class="qa qa-done" onclick="quickDone('${task.id}')">Mark Done</button>`);
+      if(!isClosed)btns.push(`<button class="qa qa-close" onclick="quickClose('${task.id}')">Close Task</button>`);
+      if(isDone||isClosed)btns.push(`<button class="qa qa-reopen" onclick="quickReopen('${task.id}')">Reopen</button>`);
+      if(isPast&&!isDone&&!isClosed)btns.push(`<button class="qa qa-overdue" onclick="markOD('${task.id}')">Mark Overdue</button>`);
+      return btns.length?`<div class="qa-row">${btns.join('')}</div>`:'';
+    })()}
 
     <div class="dr-2col">
       <div>
@@ -1607,7 +1658,7 @@ function renderDrawer(task,atts){
         ${elapsed>0?`<div class="timer-total">${fmtT(elapsed)} total (${(elapsed/3600).toFixed(2)}h)</div>`:'<div class="timer-total">No time tracked</div>'}
         <div class="timer-btns">
           ${running?`<button class="t-stop" onclick="stopTimer('${task.id}')">Stop Timer</button>`:''}
-          ${!running&&!['done','closed'].includes(task.stage)?`<button class="t-start" onclick="startTimer('${task.id}')">Start Timer</button>`:''}
+          ${!isViewer()&&!running&&!['done','closed'].includes(task.stage)?`<button class="t-start" onclick="startTimer('${task.id}')">Start Timer</button>`:''}
         </div>
       </div>
     </div>
@@ -1636,10 +1687,10 @@ function renderDrawer(task,atts){
             </div>
           `}
         </div>`).join('')}
-      <div class="remark-add" style="margin-top:6px">
+      ${isViewer()?'':`<div class="remark-add" style="margin-top:6px">
         <textarea class="remark-ta" id="r-inp" rows="2" placeholder="Add a note, decision, update, or blocker..." onkeydown="rKey(event)"></textarea>
         <button class="remark-add-btn" onclick="addRemark()">Add</button>
-      </div>
+      </div>`}
     </div>
 
     <div>
@@ -1648,10 +1699,10 @@ function renderDrawer(task,atts){
       <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">
         ${atts.map(a=>`<div class="att-item"><div style="flex:1;min-width:0"><div class="att-name">${esc(a.name)}</div><div class="att-size">${fmtSz(a.size)}</div></div><button class="att-dl" onclick="dlAtt('${a.storage_path||a.path||''}','${esc(a.name)}')">Download</button><button class="att-del" onclick="delAtt('${a.id}','${a.storage_path||a.path||''}')">x</button></div>`).join('')}
       </div>
-      <div class="att-drop" id="att-drop" ondragover="dOn(event)" ondragleave="dOff()" ondrop="dDrop(event)">
+      ${isViewer()?'':`<div class="att-drop" id="att-drop" ondragover="dOn(event)" ondragleave="dOff()" ondrop="dDrop(event)">
         <input type="file" multiple onchange="dPick(this)" onclick="event.stopPropagation()">
         <div class="att-drop-txt">Drop files or tap to upload (max 5MB)</div>
-      </div>
+      </div>`}
       <div id="att-warn" class="att-warn" style="display:none"></div>
     </div>
 
