@@ -442,12 +442,22 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
         </div>
         <div class="add-times">
           <input class="add-t" type="time" id="add-time">
-          <input class="add-t" type="date" id="add-date">
+          <input class="add-t" type="date" id="add-date" title="Due date">
           <select class="add-sel" id="add-recur">
             <option value="none">One-time</option>
             <option value="daily">Daily</option>
             <option value="recurring">Recurring</option>
           </select>
+        </div>
+        <div class="add-times" style="margin-top:7px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Start Date</div>
+            <input class="add-t" type="date" id="add-start-date">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Finish Date</div>
+            <input class="add-t" type="date" id="add-finish-date">
+          </div>
         </div>
       </div>
       <div class="toolbar">
@@ -556,7 +566,7 @@ const tEl=t=>{let s=t.timer_total_seconds||0;if(tRun(t))s+=Math.floor((Date.now(
 const fmtT=s=>{const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?h+'h '+String(m).padStart(2,'0')+'m':String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');};
 
 /* ── NORM ── */
-const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none'});
+const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,start_date:t.start_date||null,finish_date:t.finish_date||null,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none'});
 
 /* ── SUPABASE ── */
 const SB=(()=>{
@@ -582,7 +592,7 @@ const SB=(()=>{
     if(!r.ok){const m=(Array.isArray(d)?d[0]?.message:null)||d?.message||d?.error||r.statusText;throw new Error(m);}
     return d;
   }
-  const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',...(t.created_at?{created_at:t.created_at}:{})});
+  const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,...(t.created_at?{created_at:t.created_at}:{})});
   async function signIn(e,p){const d=await api('POST','/auth/v1/token',{email:e,password:p},{grant_type:'password'});if(d?.access_token)save(d);return d;}
   async function signUp(e,p,n){const d=await api('POST','/auth/v1/signup',{email:e,password:p,options:{data:{full_name:n}}});if(d?.access_token)save(d);return d;}
   async function signOut(){try{await api('POST','/auth/v1/logout',{});}catch{}clear();}
@@ -848,6 +858,8 @@ function mkCard(task){
   if(od){const oc=document.createElement('span');oc.className='chip';oc.style.cssText='color:var(--red);border-color:rgba(230,51,41,.25);background:rgba(230,51,41,.08)';oc.textContent='OVERDUE';chips.appendChild(oc);}
   if(tTxt){const tc=document.createElement('span');tc.className=tCls;tc.textContent=tTxt;chips.appendChild(tc);}
   if(task.task_date&&task.task_date!==today()&&G.df!=='today'){const dc=document.createElement('span');dc.className='ctime';dc.style.color='var(--amber)';dc.textContent=task.task_date;chips.appendChild(dc);}
+  if(task.start_date){const sc=document.createElement('span');sc.className='ctime';sc.style.color='var(--grey)';sc.textContent='Start: '+task.start_date;chips.appendChild(sc);}
+  if(task.finish_date){const fc=document.createElement('span');fc.className='ctime';fc.style.color=task.finish_date<today()?'var(--red)':task.finish_date===today()?'var(--amber)':'var(--green)';fc.textContent='Due: '+task.finish_date;chips.appendChild(fc);}
   body.appendChild(chips);
 
   // Counts
@@ -898,7 +910,7 @@ async function addTask(){
   const inp=document.getElementById('add-title');
   const title=(inp.value||'').replace(/\s+/g,' ').trim();
   if(title.length<1){inp.style.borderColor='var(--red)';inp.focus();toast('Enter a task title','warn');return;}
-  const task={id:uid(),title,tag:document.getElementById('add-tag').value||'personal',priority:document.getElementById('add-pri').value||'medium',task_time:document.getElementById('add-time').value||null,task_date:document.getElementById('add-date').value||today(),stage:'todo',done:false,created_at:new Date().toISOString(),recurrence:document.getElementById('add-recur')?.value||'none',remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null};
+  const task={id:uid(),title,tag:document.getElementById('add-tag').value||'personal',priority:document.getElementById('add-pri').value||'medium',task_time:document.getElementById('add-time').value||null,task_date:document.getElementById('add-date').value||today(),start_date:document.getElementById('add-start-date').value||null,finish_date:document.getElementById('add-finish-date').value||null,stage:'todo',done:false,created_at:new Date().toISOString(),recurrence:document.getElementById('add-recur')?.value||'none',remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null};
   const btn=document.querySelector('.add-go');if(btn){btn.disabled=true;btn.textContent='...';}
   setSyncing(true);
   try{await SB.upsert(task);try{await SB.addNotif({task_id:task.id,title:'Task Created',body:title,type:'system'});}catch{}await loadTasks();render();inp.value='';inp.style.borderColor='';toast('Task created');}
@@ -1096,15 +1108,30 @@ function renderDrawer(task,atts){
   });
   body.appendChild(r1);
 
-  // Time + Date
+  // Time + Due Date
   const r2=document.createElement('div');r2.className='dr-2col';
   ['task_time','task_date'].forEach((field,fi)=>{
-    const d=document.createElement('div');d.innerHTML='<div class="dr-lbl">'+(fi===0?'Time':'Date')+'</div>';
+    const d=document.createElement('div');d.innerHTML='<div class="dr-lbl">'+(fi===0?'Time':'Due Date')+'</div>';
     const inp=document.createElement('input');inp.className='dr-t';inp.type=fi===0?'time':'date';inp.value=(fi===0?task.task_time||task.time:task.task_date||task.date)||'';
     if(!V())inp.addEventListener('change',()=>patch(id,{[field]:inp.value||null},field+' changed'));
     else inp.disabled=true;d.appendChild(inp);r2.appendChild(d);
   });
   body.appendChild(r2);
+
+  // Start Date + Finish Date
+  const r3=document.createElement('div');r3.className='dr-2col';
+  [['start_date','Start Date'],['finish_date','Finish Date']].forEach(([field,label])=>{
+    const d=document.createElement('div');d.innerHTML='<div class="dr-lbl">'+label+'</div>';
+    const inp=document.createElement('input');inp.className='dr-t';inp.type='date';inp.value=task[field]||'';
+    if(!V())inp.addEventListener('change',()=>patch(id,{[field]:inp.value||null},label+' set to '+(inp.value||'none')));
+    else inp.disabled=true;
+    // Visual indicator for finish date
+    if(field==='finish_date'&&task.finish_date){
+      inp.style.color=task.finish_date<today()?'var(--red)':task.finish_date===today()?'var(--amber)':'var(--green)';
+    }
+    d.appendChild(inp);r3.appendChild(d);
+  });
+  body.appendChild(r3);
 
   // Pipeline
   const pDiv=document.createElement('div');pDiv.innerHTML='<div class="dr-lbl">Pipeline</div>';
