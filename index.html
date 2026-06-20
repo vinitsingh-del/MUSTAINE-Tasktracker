@@ -420,6 +420,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
           <button class="stat-chip red" id="chip-od" onclick="setChip('overdue')">Overdue <b id="st-od">0</b></button>
         </div>
         <div class="load-msg" id="load-msg"></div>
+      <div id="hours-meter" style="margin-top:8px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Today utilised</span>
+          <span style="font-family:var(--fm);font-size:9px;color:var(--gold)" id="hours-label">0h / 24h</span>
+        </div>
+        <div style="height:5px;background:var(--b2);border-radius:3px;overflow:hidden">
+          <div id="hours-bar" style="height:100%;border-radius:3px;transition:width .6s;width:0%"></div>
+        </div>
+        <div id="load-level" style="display:none;margin-top:5px;font-family:var(--fm);font-size:10px;padding:5px 9px;border-radius:6px;border:1px solid"></div>
+      </div>
       </div>
       <div class="add-box" id="add-box">
         <div class="add-row">
@@ -457,6 +467,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
           <div style="display:flex;flex-direction:column;gap:3px">
             <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Finish Date</div>
             <input class="add-t" type="date" id="add-finish-date">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Est. Hours</div>
+            <input class="add-t" type="number" id="add-hours" min="0" max="24" step="0.5" placeholder="0" style="width:100%">
+          </div>
+        </div>
+        <div class="add-times" style="margin-top:7px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Next Action</div>
+            <input class="add-t" type="date" id="add-next-action">
           </div>
         </div>
       </div>
@@ -578,7 +598,7 @@ const calDuration=t=>{
 };
 
 /* ── NORM ── */
-const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,start_date:t.start_date||null,finish_date:t.finish_date||null,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none'});
+const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none'});
 
 /* ── SUPABASE ── */
 const SB=(()=>{
@@ -604,7 +624,7 @@ const SB=(()=>{
     if(!r.ok){const m=(Array.isArray(d)?d[0]?.message:null)||d?.message||d?.error||r.statusText;throw new Error(m);}
     return d;
   }
-  const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,...(t.created_at?{created_at:t.created_at}:{})});
+  const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,...(t.created_at?{created_at:t.created_at}:{})});
   async function signIn(e,p){const d=await api('POST','/auth/v1/token',{email:e,password:p},{grant_type:'password'});if(d?.access_token)save(d);return d;}
   async function signUp(e,p,n){const d=await api('POST','/auth/v1/signup',{email:e,password:p,options:{data:{full_name:n}}});if(d?.access_token)save(d);return d;}
   async function signOut(){try{await api('POST','/auth/v1/logout',{});}catch{}clear();}
@@ -657,6 +677,62 @@ function showAuth(){document.getElementById('ls').style.display='none';document.
 function showApp(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='none';document.getElementById('app').style.display='flex';}
 
 /* ── BOOT ── */
+/* ── NEXT WORKING DAY (skip Sunday) ── */
+function nextWorkDay(fromDate){
+  const d=new Date(fromDate+'T10:00:00');
+  d.setDate(d.getDate()+1);
+  if(d.getDay()===0)d.setDate(d.getDate()+1); // skip Sunday
+  return d.toISOString().slice(0,10);
+}
+
+/* ── DAILY RECURRING ROLLOVER ── */
+async function rolloverDailyTasks(){
+  const T=today();
+  // Skip if today is Sunday (day 0 = sunday)
+  if(new Date().getDay()===0){console.log('Sunday — no rollover');return;}
+  const rollKey='rolled_'+T+'_'+(SB.uid()||'');
+  if(localStorage.getItem(rollKey))return; // already ran today
+
+  try{
+    // Find tasks that are: recurrence=daily, stage=done, task_date=yesterday or earlier
+    const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+    const yStr=yesterday.toISOString().slice(0,10);
+    const raw=await SB.getRange(yStr,yStr);
+    const doneDailies=(raw||[]).map(norm).filter(t=>t.recurrence==='daily'&&(t.stage==='done'||t.stage==='closed'));
+    if(!doneDailies.length){localStorage.setItem(rollKey,'1');return;}
+
+    // Check which ones DON'T already exist today
+    const todayRaw=await SB.getTasks(T);
+    const todayTitles=new Set((todayRaw||[]).map(t=>t.title.toLowerCase()));
+
+    let created=0;
+    for(const t of doneDailies){
+      if(todayTitles.has(t.title.toLowerCase()))continue;
+      const nxtDay=nextWorkDay(yStr);
+      const newTask={
+        id:uid(),title:t.title,tag:t.tag,priority:t.priority,
+        task_time:'10:00',// reset to 10 AM
+        task_date:T,
+        next_action_date:nxtDay,
+        start_date:T,finish_date:null,
+        stage:'todo',done:false,
+        recurrence:'daily',
+        scheduled_hours:t.scheduled_hours||0,
+        remarks:'[]',
+        activity:JSON.stringify([{ts:now(),text:'Auto-reopened (daily recurring) at 10 AM'}]),
+        timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null,
+        created_at:new Date().toISOString(),
+      };
+      try{await SB.upsert(newTask);created++;}catch(e){console.warn('Rollover error:',e);}
+    }
+    localStorage.setItem(rollKey,'1');
+    if(created>0){toast(created+' daily task'+(created>1?'s':'')+' reopened for today');await loadTasks();render();}
+  }catch(e){
+    console.warn('Rollover (non-fatal):',e);
+    localStorage.setItem(rollKey,'1');
+  }
+}
+
 async function boot(){
   document.getElementById('ls').style.display='flex';
   document.getElementById('as').style.display='none';
@@ -677,6 +753,7 @@ async function boot(){
   tick();
   startTick();
   SB.getRole().then(()=>{if(V())applyViewer();});
+  rolloverDailyTasks(); // reopen daily tasks if needed (skips Sunday)
   setInterval(tick,30000);
   setInterval(async()=>{if(!document.hidden){await loadTasks();render();}},90000);
   document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await loadTasks();render();}});
@@ -738,6 +815,28 @@ function render(){
     else if(n>6){lm.className='load-msg lm-hi';lm.textContent=n+' tasks. Heavy day.';}
     else lm.className='load-msg';
   }
+  // Hours utilisation meter
+  const todayTasks=G.tasks.filter(t=>(t.task_date||t.date||T)===T);
+  const totalSchHours=todayTasks.reduce((s,t)=>s+(parseFloat(t.scheduled_hours)||0),0);
+  const trackedHours=todayTasks.reduce((s,t)=>s+tEl(t)/3600,0);
+  const usedHours=Math.max(totalSchHours,trackedHours);
+  const hm=document.getElementById('hours-meter');
+  const hl=document.getElementById('hours-label');
+  const hb=document.getElementById('hours-bar');
+  const ll=document.getElementById('load-level');
+  if(hm&&(totalSchHours>0||trackedHours>0)){
+    hm.style.display='';
+    const pct=Math.min(100,Math.round(usedHours/24*100));
+    if(hl)hl.textContent=(usedHours>0?usedHours.toFixed(1):'0')+'h / 24h';
+    if(hb){hb.style.width=pct+'%';hb.style.background=pct>85?'linear-gradient(90deg,var(--amber),var(--red))':pct>60?'linear-gradient(90deg,var(--green),var(--amber))':'linear-gradient(90deg,var(--green),var(--gold))';}
+    if(ll){
+      const free=24-usedHours;
+      if(pct>=85){ll.style.display='block';ll.style.cssText='margin-top:5px;font-family:var(--fm);font-size:10px;padding:5px 9px;border-radius:6px;border:1px solid rgba(230,51,41,.3);background:rgba(230,51,41,.06);color:var(--red)';ll.textContent='Only '+free.toFixed(1)+'h free today. Maxed.';}
+      else if(pct>=60){ll.style.display='block';ll.style.cssText='margin-top:5px;font-family:var(--fm);font-size:10px;padding:5px 9px;border-radius:6px;border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.06);color:var(--amber)';ll.textContent=free.toFixed(1)+'h free. Heavy load.';}
+      else if(pct>=30){ll.style.display='block';ll.style.cssText='margin-top:5px;font-family:var(--fm);font-size:10px;padding:5px 9px;border-radius:6px;border:1px solid rgba(34,197,94,.2);background:rgba(34,197,94,.06);color:var(--green)';ll.textContent=free.toFixed(1)+'h free. Manageable.';}
+      else ll.style.display='none';
+    }
+  } else if(hm) hm.style.display='none';
 
   // ── FILTER TAB COUNTS ──
   document.querySelectorAll('.ftab[data-f]').forEach(b=>{
@@ -882,6 +981,8 @@ function mkCard(task){
   // Calendar total duration (start_date → finish_date or now)
   const cdur=calDuration(task);
   if(cdur){const s=document.createElement('span');s.className='cc';s.title='Calendar duration (start to '+(task.finish_date?'finish':'now')+')';s.style.color='var(--grey)';s.textContent='Duration: '+cdur;counts.appendChild(s);}
+  if(task.next_action_date){const na=document.createElement('span');na.className='cc';const nap=task.next_action_date;na.style.color=nap<today()?'var(--red)':nap===today()?'var(--amber)':'var(--grey)';na.textContent='Next: '+nap;counts.appendChild(na);}
+  if(task.scheduled_hours>0){const sh=document.createElement('span');sh.className='cc';sh.style.color='var(--blue,#3b82f6)';sh.textContent=task.scheduled_hours+'h est';counts.appendChild(sh);}
   body.appendChild(counts);
 
   // Actions
@@ -925,7 +1026,7 @@ async function addTask(){
   const inp=document.getElementById('add-title');
   const title=(inp.value||'').replace(/\s+/g,' ').trim();
   if(title.length<1){inp.style.borderColor='var(--red)';inp.focus();toast('Enter a task title','warn');return;}
-  const task={id:uid(),title,tag:document.getElementById('add-tag').value||'personal',priority:document.getElementById('add-pri').value||'medium',task_time:document.getElementById('add-time').value||null,task_date:document.getElementById('add-date').value||today(),start_date:document.getElementById('add-start-date').value||null,finish_date:document.getElementById('add-finish-date').value||null,stage:'todo',done:false,created_at:new Date().toISOString(),recurrence:document.getElementById('add-recur')?.value||'none',remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null};
+  const task={id:uid(),title,tag:document.getElementById('add-tag').value||'personal',priority:document.getElementById('add-pri').value||'medium',task_time:document.getElementById('add-time').value||null,task_date:document.getElementById('add-date').value||today(),start_date:document.getElementById('add-start-date').value||null,finish_date:document.getElementById('add-finish-date').value||null,scheduled_hours:parseFloat(document.getElementById('add-hours')?.value)||0,next_action_date:document.getElementById('add-next-action')?.value||null,stage:'todo',done:false,created_at:new Date().toISOString(),recurrence:document.getElementById('add-recur')?.value||'none',remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null};
   const btn=document.querySelector('.add-go');if(btn){btn.disabled=true;btn.textContent='...';}
   setSyncing(true);
   try{await SB.upsert(task);try{await SB.addNotif({task_id:task.id,title:'Task Created',body:title,type:'system'});}catch{}await loadTasks();render();inp.value='';inp.style.borderColor='';toast('Task created');}
@@ -1138,15 +1239,27 @@ function renderDrawer(task,atts){
   [['start_date','Start Date'],['finish_date','Finish Date']].forEach(([field,label])=>{
     const d=document.createElement('div');d.innerHTML='<div class="dr-lbl">'+label+'</div>';
     const inp=document.createElement('input');inp.className='dr-t';inp.type='date';inp.value=task[field]||'';
-    if(!V())inp.addEventListener('change',()=>patch(id,{[field]:inp.value||null},label+' set to '+(inp.value||'none')));
+    if(!V())inp.addEventListener('change',()=>patch(id,{[field]:inp.value||null},label+' set'));
     else inp.disabled=true;
-    // Visual indicator for finish date
-    if(field==='finish_date'&&task.finish_date){
-      inp.style.color=task.finish_date<today()?'var(--red)':task.finish_date===today()?'var(--amber)':'var(--green)';
-    }
+    if(field==='finish_date'&&task.finish_date){inp.style.color=task.finish_date<today()?'var(--red)':task.finish_date===today()?'var(--amber)':'var(--green)';}
     d.appendChild(inp);r3.appendChild(d);
   });
   body.appendChild(r3);
+
+  // Next Action Date + Estimated Hours
+  const r4=document.createElement('div');r4.className='dr-2col';
+  const nad=document.createElement('div');nad.innerHTML='<div class="dr-lbl">Next Action Date</div>';
+  const naInp=document.createElement('input');naInp.className='dr-t';naInp.type='date';naInp.value=task.next_action_date||'';
+  if(task.next_action_date){naInp.style.color=task.next_action_date<today()?'var(--red)':task.next_action_date===today()?'var(--amber)':'var(--white)';}
+  if(!V())naInp.addEventListener('change',()=>patch(id,{next_action_date:naInp.value||null},'Next action: '+(naInp.value||'cleared')));
+  else naInp.disabled=true;
+  nad.appendChild(naInp);r4.appendChild(nad);
+  const ehd=document.createElement('div');ehd.innerHTML='<div class="dr-lbl">Est. Hours</div>';
+  const ehInp=document.createElement('input');ehInp.className='dr-t';ehInp.type='number';ehInp.min='0';ehInp.max='24';ehInp.step='0.5';ehInp.value=task.scheduled_hours||'';ehInp.placeholder='0';
+  if(!V())ehInp.addEventListener('change',()=>patch(id,{scheduled_hours:parseFloat(ehInp.value)||0},'Est hours: '+(ehInp.value||'0')));
+  else ehInp.disabled=true;
+  ehd.appendChild(ehInp);r4.appendChild(ehd);
+  body.appendChild(r4);
 
   // Pipeline
   const pDiv=document.createElement('div');pDiv.innerHTML='<div class="dr-lbl">Pipeline</div>';
