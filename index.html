@@ -784,7 +784,17 @@ const isOD=t=>{
   return false;
 };
 const tRun=t=>!!(t.timer_started_at&&!t.timer_stopped_at);
-const tEl=t=>{let s=t.timer_total_seconds||0;if(tRun(t))s+=Math.floor((Date.now()-new Date(t.timer_started_at).getTime())/1000);return s;};
+const tEl=t=>{
+  let s=t.timer_total_seconds||0;
+  if(tRun(t)){
+    const started=new Date(t.timer_started_at).getTime();
+    // If timer started on a previous day, only count from today midnight
+    const todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
+    const countFrom=Math.max(started,todayMidnight.getTime());
+    s+=Math.floor((Date.now()-countFrom)/1000);
+  }
+  return s;
+};
 const fmtT=s=>{const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?h+'h '+String(m).padStart(2,'0')+'m':String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');};
 // Calendar duration: from start_date to finish_date (or now if active)
 const calDuration=t=>{
@@ -897,6 +907,33 @@ function nextWorkDay(fromDate){
 }
 
 /* ── DAILY RECURRING ROLLOVER ── */
+/* ── AUTO-STOP STALE TIMERS (started before today) ── */
+async function autoStopStaleTimes(){
+  const todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
+  const staleTasks=G.tasks.filter(t=>{
+    if(!tRun(t))return false;
+    return new Date(t.timer_started_at).getTime()<todayMidnight.getTime();
+  });
+  if(!staleTasks.length)return;
+  console.log('Auto-stopping',staleTasks.length,'stale timers from previous days');
+  for(const t of staleTasks){
+    // Cap elapsed to end of start day (11:59:59 of the day the timer started)
+    const dayEnd=new Date(t.timer_started_at);
+    dayEnd.setHours(23,59,59,999);
+    const elapsed=Math.floor((dayEnd.getTime()-new Date(t.timer_started_at).getTime())/1000);
+    const total=Math.max(0,(t.timer_total_seconds||0)+elapsed);
+    try{
+      await patch(t.id,{
+        timer_stopped_at:dayEnd.toISOString(),
+        timer_total_seconds:total,
+        hours_worked:Math.max(t.hours_worked||0,Math.round(total/360)/10),
+      },'Timer auto-stopped at midnight (was running from previous day)');
+      toast('Timer auto-stopped: '+t.title.slice(0,30)+'...','warn');
+    }catch(e){console.warn('Auto-stop error:',e);}
+  }
+  if(staleTasks.length)render();
+}
+
 async function rolloverDailyTasks(){
   const T=today();
   // Skip if today is Sunday (day 0 = sunday)
@@ -967,6 +1004,8 @@ async function boot(){
   render();
   tick();
   startTick();
+  // Auto-stop timers left running from previous days
+  autoStopStaleTimes();
   SB.getRole().then(()=>{if(V())applyViewer();});
   rolloverDailyTasks(); // reopen daily tasks if needed (skips Sunday)
   setInterval(tick,30000);
@@ -1051,8 +1090,9 @@ function render(){
   // Hours utilisation meter
   const todayTasks=G.tasks.filter(t=>(t.task_date||t.date||T)===T);
   const totalSchHours=todayTasks.reduce((s,t)=>s+(parseFloat(t.scheduled_hours)||0),0);
-  const trackedHours=todayTasks.reduce((s,t)=>s+tEl(t)/3600,0);
-  const usedHours=Math.max(totalSchHours,trackedHours);
+  // tEl() now returns today-only hours for running timers
+  const trackedHours=Math.min(24,todayTasks.reduce((s,t)=>s+tEl(t)/3600,0));
+  const usedHours=Math.min(24,Math.max(totalSchHours,trackedHours));
   const hm=document.getElementById('hours-meter');
   const hl=document.getElementById('hours-label');
   const hb=document.getElementById('hours-bar');
@@ -1661,7 +1701,9 @@ async function renderStats(){
   const od=all.filter(isOD);
   const blocked=all.filter(t=>t.stage==='blocked');
   const pct=all.length?Math.round(done.length/all.length*100):0;
+  // tEl() already caps to today-only for running timers
   const timerH=all.reduce((s,t)=>s+tEl(t)/3600,0);
+  const runningCount=all.filter(tRun).length;
   const loggedH=all.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0),0);
   const schH=all.filter(t=>!['done','closed'].includes(t.stage)).reduce((s,t)=>s+(parseFloat(t.scheduled_hours)||0),0);
   wrap.innerHTML='';
@@ -1684,10 +1726,13 @@ async function renderStats(){
   });
   sc.appendChild(hRow);
   // Utilized bar
-  const utilPct=Math.min(100,Math.round(Math.max(loggedH,timerH)/24*100));
+  // Cap at 24h — simultaneous timers should not add beyond 24h
+  const effectiveH=Math.min(24,Math.max(loggedH,timerH));
+  const utilPct=Math.min(100,Math.round(effectiveH/24*100));
   const barWrap=document.createElement('div');barWrap.style.cssText='margin-top:10px';
-  barWrap.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em">Utilised today</span><span style="font-family:var(--fm);font-size:9px;color:var(--gold)">'+Math.max(loggedH,timerH).toFixed(1)+'h / 24h</span></div>'
-    +'<div style="height:5px;background:var(--b2);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;width:'+utilPct+'%;background:'+( utilPct>85?'linear-gradient(90deg,var(--amber),var(--red))':'linear-gradient(90deg,var(--green),var(--gold))')+'"></div></div>';
+  const simultWarn=runningCount>1?'<div style="font-family:var(--fm);font-size:9px;color:var(--amber);margin-top:3px">⚠ '+runningCount+' timers running simultaneously — only one should run at a time</div>':'';
+  barWrap.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em">Utilised today</span><span style="font-family:var(--fm);font-size:9px;color:var(--gold)">'+effectiveH.toFixed(1)+'h / 24h</span></div>'
+    +'<div style="height:5px;background:var(--b2);border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;width:'+utilPct+'%;background:'+( utilPct>85?'linear-gradient(90deg,var(--amber),var(--red))':'linear-gradient(90deg,var(--green),var(--gold))')+'"></div></div>'+simultWarn;
   sc.appendChild(barWrap);
   // Quick action badges
   const badges=document.createElement('div');badges.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:10px';
@@ -1745,6 +1790,68 @@ async function renderStats(){
     });
     wrap.appendChild(sc2);
   }
+
+  // ── USAGE HISTORY (day-wise, clickable) ──
+  const histCard=document.createElement('div');histCard.className='an-card';
+  histCard.innerHTML='<div class="an-title">7-Day Usage History — click a day to view</div>';
+  // Build day-wise data from all loaded tasks
+  const dayMap={};
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);const dStr=d.toISOString().slice(0,10);
+    dayMap[dStr]={h:0,tasks:0,done:0};
+  }
+  // Also include tasks from last week
+  try{
+    const d7=new Date();d7.setDate(d7.getDate()-7);
+    const rawHist=await SB.getRange(d7.toISOString().slice(0,10),T);
+    (rawHist||[]).map(norm).forEach(t=>{
+      const d=t.task_date||t.date||T;
+      if(!dayMap[d])return;
+      dayMap[d].tasks++;
+      if(t.stage==='done'||t.stage==='closed')dayMap[d].done++;
+      // Timer hours for that day (use timer_total_seconds, not live elapsed)
+      const timerSec=t.timer_total_seconds||0;
+      dayMap[d].h+=timerSec/3600;
+    });
+  }catch(e){console.warn('History fetch error:',e);}
+  const days=Object.keys(dayMap).sort();
+  const maxH=Math.max(...days.map(d=>dayMap[d].h),1);
+  const histGrid=document.createElement('div');histGrid.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:80px;margin-bottom:8px';
+  days.forEach(d=>{
+    const {h,tasks,done}=dayMap[d];const isToday=d===T;
+    const barPct=Math.min(100,Math.round(h/maxH*100));
+    const col=isToday?'var(--red)':h>8?'var(--amber)':h>4?'var(--gold)':'var(--grey2)';
+    const colWrap=document.createElement('div');colWrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;height:100%;justify-content:flex-end';
+    colWrap.title=d+': '+h.toFixed(1)+'h, '+done+'/'+tasks+' done';
+    const bar=document.createElement('div');bar.style.cssText='width:100%;border-radius:4px 4px 0 0;min-height:3px;background:'+col+(isToday?';animation:pulse 2s infinite':'');
+    bar.style.height=Math.max(3,barPct)+'%';
+    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:8px;color:'+(isToday?'var(--red)':'var(--grey2)')+';text-align:center;white-space:nowrap';
+    const dayNames=['Su','Mo','Tu','We','Th','Fr','Sa'];lbl.textContent=isToday?'Today':dayNames[new Date(d+'T12:00:00').getDay()];
+    colWrap.appendChild(bar);colWrap.appendChild(lbl);
+    // Click to switch to that day's tasks
+    colWrap.addEventListener('click',async()=>{
+      gTab('tasks');
+      G.df=isToday?'today':'all';
+      document.querySelectorAll('[data-df]').forEach(b=>b.classList.toggle('on',b.dataset.df===(isToday?'today':'all')));
+      // Filter to that specific date
+      G.dateFilter=d;
+      setSyncing(true);
+      const raw=isToday?await SB.getTasks(d):await SB.getRange(d,d);
+      G.tasks=(raw||[]).map(norm);setSyncing(false);
+      render();
+      toast('Showing '+d+(isToday?' (today)':''));
+    });
+    histGrid.appendChild(colWrap);
+  });
+  histCard.appendChild(histGrid);
+  // Hour totals row
+  const totRow=document.createElement('div');totRow.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:4px';
+  days.forEach(d=>{const {h,done,tasks}=dayMap[d];const isToday=d===T;
+    const lbl=document.createElement('div');lbl.style.cssText='font-family:var(--fm);font-size:8px;color:'+(isToday?'var(--red)':'var(--grey2)')+';text-align:center';
+    lbl.textContent=h>0?h.toFixed(1)+'h':'—';totRow.appendChild(lbl);
+  });
+  histCard.appendChild(totRow);
+  wrap.appendChild(histCard);
 
   // ── RULES VIOLATIONS ──
   const violations=[];G.tasks.forEach(t=>{checkTaskRules(t).forEach(v=>violations.push({...v,task:t}));});
@@ -1993,6 +2100,14 @@ function tick(){
   const sd=document.getElementById('sb-date');if(sd)sd.textContent=ds;
   const pct=Math.min(100,Math.max(0,(n.getHours()*60+n.getMinutes()-540)/720*100));
   ['burn-m','burn-d'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.width=pct+'%';});
+  // Midnight check: stop running timers at 12:00 AM
+  if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<35){
+    const runningNow=G.tasks.filter(tRun);
+    if(runningNow.length){
+      console.log('Midnight: auto-stopping',runningNow.length,'running timers');
+      autoStopStaleTimes();
+    }
+  }
   // Fire overdue alerts (non-blocking, fire-and-forget)
   if(G.tasks.length){
     const newOD=G.tasks.filter(t=>isOD(t)&&!G.reminded.has(t.id));
