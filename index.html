@@ -1637,7 +1637,7 @@ function render(){
     const n=todayActive.length;
     if(n===0)      {lmsg.className='load-msg lm-ok'; lmsg.textContent='All done. Clean day.';}
     else if(n<=3)  {lmsg.className='load-msg lm-ok'; lmsg.textContent=`${n} tasks. Light load.`;}
-    else if(n<=6)  {lmsg.className='load-msg lm-mid';lmsg.textContent=`${n} tasks, ${timed.length}h scheduled. Moderate.`;}
+    else if(n<=6)  {lmsg.className='load-msg lm-mid';lmsg.textContent=`${n} tasks${totalMins>0?', '+schLabel+' scheduled':''}. Moderate.`;}
     else if(n<=9)  {lmsg.className='load-msg lm-hi'; lmsg.textContent=`${n} tasks. Heavy day.`;}
     else           {lmsg.className='load-msg lm-max';lmsg.textContent=`${n} tasks. Maxed. Prioritise ruthlessly.`;}
   } else if(lbar&&lmsg){ lbar.style.display='none'; lmsg.style.display='none'; }
