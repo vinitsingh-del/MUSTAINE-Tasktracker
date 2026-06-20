@@ -880,13 +880,19 @@ const isOD=t=>{
 };
 const tRun=t=>!!(t.timer_started_at&&!t.timer_stopped_at);
 const tEl=t=>{
+  // Base: already-logged seconds from previous timer sessions
   let s=t.timer_total_seconds||0;
   if(tRun(t)){
     const started=new Date(t.timer_started_at).getTime();
-    // If timer started on a previous day, only count from today midnight
     const todayMidnight=new Date();todayMidnight.setHours(0,0,0,0);
-    const countFrom=Math.max(started,todayMidnight.getTime());
-    s+=Math.floor((Date.now()-countFrom)/1000);
+    if(started>=todayMidnight.getTime()){
+      // Timer started today — count full elapsed
+      s+=Math.floor((Date.now()-started)/1000);
+    } else {
+      // Timer started before today — count from midnight (today's contribution only)
+      // This prevents cross-day accumulation while still showing the timer as active
+      s+=Math.floor((Date.now()-todayMidnight.getTime())/1000);
+    }
   }
   return s;
 };
@@ -1304,6 +1310,7 @@ function mkCard(task){
     if(!isDone&&!isBlocked&&off!==null){if(off>5){tCls='ctime od';tTxt+=' - overdue';}else if(off>-20)tCls='ctime soon';}
   }
   const rc=(task.remarks||[]).length,ac=(task.attachments||[]).length;
+  const timer_total_seconds=task.timer_total_seconds||0;
 
   // Card
   const card=document.createElement('div');
@@ -1360,7 +1367,7 @@ function mkCard(task){
   if(rc){const s=document.createElement('span');s.className='cc';s.textContent=rc+' note'+(rc>1?'s':'');counts.appendChild(s);}
   if(isDone&&task.hours_worked>0){const hw=document.createElement('span');hw.className='cc';hw.style.color='var(--green)';hw.textContent=task.hours_worked+'h logged';counts.appendChild(hw);}
   if(ac){const s=document.createElement('span');s.className='cc';s.textContent=ac+' file'+(ac>1?'s':'');counts.appendChild(s);}
-  if(elapsed>0){const s=document.createElement('span');s.className='cc';s.id='ct-timer-'+id;s.style.color=running?'var(--red)':'var(--gold)';s.textContent=fmtT(elapsed);counts.appendChild(s);}
+  if(running||elapsed>0){const s=document.createElement('span');s.className='cc';s.id='ct-timer-'+id;s.style.color=running?'var(--red)':'var(--gold)';s.textContent=running?'⏱ '+fmtT(elapsed):fmtT(elapsed);counts.appendChild(s);}
   // Calendar total duration (start_date → finish_date or now)
   const cdur=calDuration(task);
   if(cdur){const s=document.createElement('span');s.className='cc';s.title='Calendar duration (start to '+(task.finish_date?'finish':'now')+')';s.style.color='var(--grey)';s.textContent='Duration: '+cdur;counts.appendChild(s);}
@@ -1381,7 +1388,8 @@ function mkCard(task){
   card.appendChild(inner);
 
   // Timer strip
-  if(running||elapsed>0){
+  // Show timer strip whenever running OR has logged time
+  if(running||(elapsed>0&&timer_total_seconds>0)){
     const strip=document.createElement('div');strip.className='card-timer';
     const disp=document.createElement('span');disp.className='ct-disp'+(running?' run':'');disp.id='ct-timer-'+id;disp.textContent=fmtT(elapsed);strip.appendChild(disp);
     if(running&&!V()){const stop=document.createElement('button');stop.className='ct-stop';stop.textContent='Stop';stop.addEventListener('click',e=>{e.stopPropagation();stopTimer(id);});strip.appendChild(stop);}
