@@ -564,6 +564,18 @@ const isOD=t=>{
 const tRun=t=>!!(t.timer_started_at&&!t.timer_stopped_at);
 const tEl=t=>{let s=t.timer_total_seconds||0;if(tRun(t))s+=Math.floor((Date.now()-new Date(t.timer_started_at).getTime())/1000);return s;};
 const fmtT=s=>{const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?h+'h '+String(m).padStart(2,'0')+'m':String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');};
+// Calendar duration: from start_date to finish_date (or now if active)
+const calDuration=t=>{
+  if(!t.start_date) return null;
+  const start=new Date(t.start_date+'T00:00:00');
+  const end=t.finish_date?new Date(t.finish_date+'T23:59:59'):new Date();
+  const diffMs=end-start;
+  if(diffMs<=0) return null;
+  const totalH=Math.floor(diffMs/3600000);
+  const days=Math.floor(totalH/24),hrs=totalH%24;
+  if(days>0) return days+'d '+(hrs>0?hrs+'h':'');
+  return totalH+'h';
+};
 
 /* ── NORM ── */
 const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,start_date:t.start_date||null,finish_date:t.finish_date||null,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none'});
@@ -867,6 +879,9 @@ function mkCard(task){
   if(rc){const s=document.createElement('span');s.className='cc';s.textContent=rc+' note'+(rc>1?'s':'');counts.appendChild(s);}
   if(ac){const s=document.createElement('span');s.className='cc';s.textContent=ac+' file'+(ac>1?'s':'');counts.appendChild(s);}
   if(elapsed>0){const s=document.createElement('span');s.className='cc';s.id='ct-timer-'+id;s.style.color=running?'var(--red)':'var(--gold)';s.textContent=fmtT(elapsed);counts.appendChild(s);}
+  // Calendar total duration (start_date → finish_date or now)
+  const cdur=calDuration(task);
+  if(cdur){const s=document.createElement('span');s.className='cc';s.title='Calendar duration (start to '+(task.finish_date?'finish':'now')+')';s.style.color='var(--grey)';s.textContent='Duration: '+cdur;counts.appendChild(s);}
   body.appendChild(counts);
 
   // Actions
@@ -1028,7 +1043,7 @@ async function renderStats(){
        '<div><div style="font-family:var(--fh);font-size:36px;font-weight:900;color:'+( pct>=75?'var(--green)':pct>=40?'var(--amber)':'var(--red)')+';line-height:1">'+pct+'%</div><div style="font-family:var(--fm);font-size:9px;color:var(--grey);margin-top:2px">DONE</div></div>'].join('')
     +'</div><div style="display:flex;gap:7px;flex-wrap:wrap">'
     +(od.length?'<span style="font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(230,51,41,.1);border:1px solid rgba(230,51,41,.3);color:var(--red)">'+od.length+' overdue</span>':'')
-    +(tracked>0?'<span style="font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.2);color:var(--gold)">'+fmtT(tracked)+' tracked</span>':'')
+    +(tracked>0?'<span style="font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.2);color:var(--gold)">'+fmtT(tracked)+' tracked</span>':'')+(()=>{const td=all.filter(t=>t.start_date);return td.length?'<span style="font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa">'+td.length+' task'+(td.length>1?'s':'')+' with duration</span>':'';})()
     +(blocked.length?'<span style="font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--s3);border:1px solid var(--b3);color:var(--grey)">'+blocked.length+' blocked</span>':'')
     +'</div>';
   wrap.appendChild(sc);
@@ -1148,10 +1163,17 @@ function renderDrawer(task,atts){
   pDiv.appendChild(stepper);body.appendChild(pDiv);
 
   // Timer
-  const tCard=document.createElement('div');tCard.innerHTML='<div class="dr-lbl">Time Tracker</div>';
+  const cdurVal=calDuration(task);
+  const tCard=document.createElement('div');tCard.innerHTML='<div class="dr-lbl">Time</div>';
   const tc=document.createElement('div');tc.className='timer-card';
-  const tn=document.createElement('div');tn.className='timer-num'+(running?' run':'');tn.id='dr-timer';tn.textContent=fmtT(elapsed);tc.appendChild(tn);
-  const tl=document.createElement('div');tl.className='timer-lbl';tl.textContent=running?'Running':'Total tracked';tc.appendChild(tl);
+  // Calendar duration (big display if start_date set)
+  if(cdurVal){
+    const cd=document.createElement('div');cd.style.cssText='text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--b2)';
+    cd.innerHTML='<div style="font-family:var(--fh);font-size:36px;font-weight:900;color:var(--gold);line-height:1">'+cdurVal+'</div><div style="font-family:var(--fm);font-size:9px;letter-spacing:.18em;color:var(--grey2);text-transform:uppercase;margin-top:3px">Total Time ('+task.start_date+' to '+(task.finish_date||'now')+')</div>';
+    tc.appendChild(cd);
+  }
+  const tn=document.createElement('div');tn.className='timer-num'+(running?' run':'');tn.id='dr-timer';tn.textContent=fmtT(elapsed);tn.style.fontSize='32px';tc.appendChild(tn);
+  const tl=document.createElement('div');tl.className='timer-lbl';tl.textContent=running?'Timer running':'Tracked time';tc.appendChild(tl);
   if(!V()){
     const tb=document.createElement('button');
     if(running){tb.className='t-stop';tb.textContent='Stop Timer';tb.addEventListener('click',()=>stopTimer(id));}
