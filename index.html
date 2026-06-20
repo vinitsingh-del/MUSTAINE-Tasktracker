@@ -816,6 +816,7 @@ async function loadTasks(){
     else{const d=new Date();d.setDate(d.getDate()-90);raw=await SB.getRange(d.toISOString().slice(0,10),today());}
     G.tasks=(raw||[]).map(norm);
     setSyncing(false);
+    setTimeout(updateFilterCounts,0);
   }catch(e){setSyncing(false,true);toast('Sync failed: '+e.message,'err');}
 }
 async function loadNotifs(){try{G.notifs=await SB.getNotifs();notifBadge();}catch{}}
@@ -991,7 +992,30 @@ function startTickLoop(){
 // ═══════════════════════════════════════════════════════════════
 // FILTER / SORT
 // ═══════════════════════════════════════════════════════════════
-function setF(el){document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));el.classList.add('on');G.filter=el.dataset.f;render();}
+function setF(el){
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  G.filter=el.dataset.f;
+  render();
+  // Update filter tab counts
+  updateFilterCounts();
+}
+function updateFilterCounts(){
+  document.querySelectorAll('.ftab[data-f]').forEach(btn=>{
+    const f=btn.dataset.f;
+    if(f==='all'){
+      const n=G.tasks.filter(t=>!['done','closed'].includes(t.stage)).length;
+      btn.textContent=`All${n>0?' ('+n+')':''}`;
+    } else {
+      const n=G.tasks.filter(t=>t.tag===f&&!['done','closed'].includes(t.stage)).length;
+      // Show count only if >0
+      const base={sales:'Sales',revenue:'Revenue',client:'Client',kam:'KAM',design:'Design',ops:'Ops','follow-up':'Follow-up',control:'Control',management:'Management'}[f]||f;
+      btn.textContent=n>0?`${base} (${n})`:base;
+      // Dim tabs with no tasks
+      btn.style.opacity=n===0&&G.tasks.length>0?'0.38':'1';
+    }
+  });
+}
 async function setDF(df){
   G.df=df;
   document.querySelectorAll('[data-df]').forEach(b=>b.classList.toggle('on',b.dataset.df===df));
@@ -1077,6 +1101,8 @@ function render(){
   else if(G.showDone){dh.style.display='flex';sdb.style.display='none';df.forEach(t=>dl.appendChild(mkCard(t)));}
   else{dh.style.display='none';sdb.style.display='';sdb.textContent=`Show ${df.length} completed`;}
 
+  // update filter tab counts
+  setTimeout(updateFilterCounts, 0);
   // blocked
   const bfl=G.filter==='all'?blocked:blocked.filter(t=>t.tag===G.filter);
   document.getElementById('blocked-hdr').style.display=bfl.length?'flex':'none';
@@ -1350,61 +1376,235 @@ async function markAllRead(){
 // ANALYTICS
 // ═══════════════════════════════════════════════════════════════
 async function renderStats(){
-  const all=G.tasks,done=all.filter(t=>t.stage==='done'),active=all.filter(t=>!['done','blocked','closed'].includes(t.stage));
-  const od=all.filter(isOD),blocked=all.filter(t=>t.stage==='blocked');
+  const all=G.tasks;
+  const done=all.filter(t=>t.stage==='done');
+  const active=all.filter(t=>!['done','blocked','closed'].includes(t.stage));
+  const od=all.filter(isOD);
+  const blocked=all.filter(t=>t.stage==='blocked');
+  const closed=all.filter(t=>t.stage==='closed');
   const total=all.length||1;
   const tracked=all.reduce((s,t)=>s+tElapsed(t),0);
-
-  const wrap=document.getElementById('an-wrap');wrap.innerHTML='';
-
-  // glance
-  const gc=document.createElement('div');gc.className='an-card';
-  gc.innerHTML=`<div class="an-title">Today at a Glance</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div><div class="an-big">${done.length}</div><div class="an-sub">tasks done</div></div>
-      <div><div class="an-big" style="color:var(--gold)">${fmtT(tracked)}</div><div class="an-sub">tracked today</div></div>
-    </div>
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-      <span style="font-family:var(--font-m);font-size:10px;color:var(--amber)">${active.length} active</span>
-      <span style="font-family:var(--font-m);font-size:10px;color:var(--red)">${od.length} overdue</span>
-      <span style="font-family:var(--font-m);font-size:10px;color:var(--grey)">${blocked.length} blocked</span>
-    </div>`;
-  wrap.appendChild(gc);
-
-  // donut
-  const dc=document.createElement('div');dc.className='an-card';
-  const segs=[{label:'Done',val:done.length,col:'#22c55e'},{label:'Active',val:active.length,col:'#c8a84b'},{label:'Blocked',val:blocked.length,col:'#e63329'}].filter(s=>s.val>0);
-  const r=36,cx=44,cy=44,sw=14,circ=2*Math.PI*r;let off=0;
-  let svg=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1c1c1c" stroke-width="${sw}"/>`;
-  segs.forEach(s=>{const d=(s.val/total)*circ;svg+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.col}" stroke-width="${sw}" stroke-dasharray="${d} ${circ-d}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;off+=d;});
   const pct=Math.round(done.length/total*100);
-  svg+=`<text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle" font-size="15" font-weight="900" fill="#f0f0f0" font-family="Barlow Condensed">${pct}%</text>`;
-  dc.innerHTML=`<div class="an-title">Completion Rate</div><div class="donut-wrap"><svg width="88" height="88" viewBox="0 0 88 88">${svg}</svg><div>${segs.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.col}"></div><span class="dl-lbl">${s.label}</span><span class="dl-val">${s.val}</span></div>`).join('')}</div></div>`;
+
+  const wrap=document.getElementById('an-wrap');
+  wrap.innerHTML='';
+
+  // ── HEADER SCORECARD ──────────────────────────────────────────
+  const sc=document.createElement('div');sc.className='an-card';
+  sc.innerHTML=`
+    <div class="an-title">Today's Scorecard</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+      <div style="text-align:center">
+        <div style="font-family:var(--font-h);font-size:40px;font-weight:900;color:var(--green);line-height:1">${done.length}</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Done</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--font-h);font-size:40px;font-weight:900;color:var(--gold);line-height:1">${fmtT(tracked)}</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Tracked</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:var(--font-h);font-size:40px;font-weight:900;color:${pct>=75?'var(--green)':pct>=40?'var(--amber)':'var(--red)'};line-height:1">${pct}%</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Complete</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-family:var(--font-m);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--amber)">${active.length} active</span>
+      ${od.length?`<span style="font-family:var(--font-m);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(230,51,41,.1);border:1px solid rgba(230,51,41,.3);color:var(--red);animation:pulse 1.5s infinite">${od.length} overdue</span>`:''}
+      ${blocked.length?`<span style="font-family:var(--font-m);font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(100,100,100,.1);border:1px solid var(--b3);color:var(--grey)">${blocked.length} blocked</span>`:''}
+    </div>`;
+  wrap.appendChild(sc);
+
+  // ── OVERDUE — ACTION REQUIRED ────────────────────────────────
+  if(od.length>0){
+    const oc=document.createElement('div');
+    oc.className='an-card';
+    oc.style.cssText='border-color:rgba(230,51,41,.35);background:rgba(230,51,41,.05)';
+    oc.innerHTML=`
+      <div class="an-title" style="color:var(--red)">Action Required — Overdue (${od.length})</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        ${od.map(t=>{
+          const tm=TAG[t.tag]||{label:t.tag,col:'#666'};
+          const off=minOff(t.task_time||t.time);
+          const hrsLate=off?Math.floor(off/60):0, minsLate=off?off%60:0;
+          const lateStr=hrsLate>0?`${hrsLate}h ${minsLate}m late`:`${minsLate}m late`;
+          return `<div style="background:var(--s2);border-radius:7px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="goTab('tasks');setTimeout(()=>openDrawer('${t.id}'),200)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px">${esc(t.title)}</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span style="font-family:var(--font-m);font-size:9px;padding:2px 7px;border-radius:4px;color:${tm.col};border:1px solid ${tm.col}25;background:${tm.col}12">${tm.label}</span>
+                <span style="font-family:var(--font-m);font-size:9px;color:var(--red)">${lateStr}</span>
+              </div>
+            </div>
+            <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.06em;text-transform:uppercase">Open</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    wrap.appendChild(oc);
+  }
+
+  // ── MISSED / NOT DONE TODAY ───────────────────────────────────
+  const notDone=active.filter(t=>{ const tm=t.task_time||t.time; if(!tm) return false; const[h,m]=tm.split(':').map(Number); const taskMin=h*60+m; const nowMin=new Date().getHours()*60+new Date().getMinutes(); return taskMin<nowMin && !isOD(t); });
+  if(notDone.length>0){
+    const mc=document.createElement('div');mc.className='an-card';
+    mc.style.cssText='border-color:rgba(245,158,11,.3)';
+    mc.innerHTML=`
+      <div class="an-title" style="color:var(--amber)">Behind Schedule (${notDone.length})</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${notDone.map(t=>{
+          const tm=TAG[t.tag]||{label:t.tag,col:'#666'};
+          const[h,m]=(t.task_time||t.time||'0:0').split(':').map(Number),ap=h>=12?'pm':'am',hr=h%12||12;
+          return `<div style="background:var(--s2);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="goTab('tasks');setTimeout(()=>openDrawer('${t.id}'),200)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">${esc(t.title)}</div>
+              <div style="display:flex;gap:6px">
+                <span style="font-family:var(--font-m);font-size:9px;color:${tm.col}">${tm.label}</span>
+                <span style="font-family:var(--font-m);font-size:9px;color:var(--amber)">Scheduled ${hr}:${String(m).padStart(2,'0')} ${ap}</span>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    wrap.appendChild(mc);
+  }
+
+  // ── COMPLETION DONUT ─────────────────────────────────────────
+  const dc=document.createElement('div');dc.className='an-card';
+  const segs=[
+    {label:'Done',val:done.length,col:'#22c55e'},
+    {label:'Active',val:active.length,col:'#c8a84b'},
+    {label:'Overdue',val:od.length,col:'#e63329'},
+    {label:'Blocked',val:blocked.length,col:'#555'},
+  ].filter(s=>s.val>0);
+  const r=36,cx=44,cy=44,sw=14,circ=2*Math.PI*r;let cOff=0;
+  let svgInner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1c1c1c" stroke-width="${sw}"/>`;
+  segs.forEach(s=>{const d=(s.val/total)*circ;svgInner+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.col}" stroke-width="${sw}" stroke-dasharray="${d} ${circ-d}" stroke-dashoffset="${-cOff}" transform="rotate(-90 ${cx} ${cy})"/>`;cOff+=d;});
+  svgInner+=`<text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle" font-size="15" font-weight="900" fill="#f0f0f0" font-family="Barlow Condensed">${pct}%</text>`;
+  dc.innerHTML=`
+    <div class="an-title">Stage Breakdown</div>
+    <div class="donut-wrap">
+      <svg width="88" height="88" viewBox="0 0 88 88">${svgInner}</svg>
+      <div>${segs.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.col}"></div><span class="dl-lbl">${s.label}</span><span class="dl-val">${s.val}</span></div>`).join('')}</div>
+    </div>`;
   wrap.appendChild(dc);
 
-  // bar
-  const bc=document.createElement('div');bc.className='an-card';
-  const maxN=Math.max(...Object.keys(TAG).map(tag=>all.filter(t=>t.tag===tag).length),1);
-  bc.innerHTML=`<div class="an-title">By Category</div>${Object.entries(TAG).filter(([tag])=>all.some(t=>t.tag===tag)).map(([tag,tm])=>{
-    const n=all.filter(t=>t.tag===tag).length,dn=all.filter(t=>t.tag===tag&&t.stage==='done').length;
-    return `<div class="bc-row"><div class="bc-lbl">${tm.label}</div><div class="bc-track"><div class="bc-fill" style="width:${Math.round(n/maxN*100)}%;background:${tm.col}"></div></div><div class="bc-val" style="color:${tm.col}">${dn}/${n}</div></div>`;
-  }).join('')}`;
-  wrap.appendChild(bc);
+  // ── TIME TRACKED PER CATEGORY ────────────────────────────────
+  const timedTasks=all.filter(t=>tElapsed(t)>0);
+  if(timedTasks.length>0){
+    const tc=document.createElement('div');tc.className='an-card';
+    const tagTimes={};
+    timedTasks.forEach(t=>{tagTimes[t.tag]=(tagTimes[t.tag]||0)+tElapsed(t);});
+    const maxSecs=Math.max(...Object.values(tagTimes),1);
+    tc.innerHTML=`
+      <div class="an-title">Time by Category</div>
+      ${Object.entries(tagTimes).sort((a,b)=>b[1]-a[1]).map(([tag,secs])=>{
+        const tm=TAG[tag]||{label:tag,col:'#666'};
+        return `<div class="bc-row">
+          <div class="bc-lbl">${tm.label}</div>
+          <div class="bc-track"><div class="bc-fill" style="width:${Math.round(secs/maxSecs*100)}%;background:${tm.col}"></div></div>
+          <div class="bc-val" style="color:${tm.col};font-size:10px">${fmtT(secs)}</div>
+        </div>`;
+      }).join('')}`;
+    wrap.appendChild(tc);
+  }
 
-  // sparkline
-  const sc=document.createElement('div');sc.className='an-card';
-  const data=[];
+  // ── BY CATEGORY TASK COUNT ───────────────────────────────────
+  const catTagged=all.filter(t=>t.tag&&all.some(x=>x.tag===t.tag));
+  if(catTagged.length>0){
+    const bc2=document.createElement('div');bc2.className='an-card';
+    const maxN=Math.max(...Object.keys(TAG).map(tag=>all.filter(t=>t.tag===tag).length),1);
+    const catRows=Object.entries(TAG).filter(([tag])=>all.some(t=>t.tag===tag)).map(([tag,tm])=>{
+      const n=all.filter(t=>t.tag===tag).length;
+      const dn=all.filter(t=>t.tag===tag&&t.stage==='done').length;
+      const odN=all.filter(t=>t.tag===tag&&isOD(t)).length;
+      return `<div class="bc-row">
+        <div class="bc-lbl" style="color:${tm.col}">${tm.label}</div>
+        <div class="bc-track"><div class="bc-fill" style="width:${Math.round(n/maxN*100)}%;background:${tm.col}"></div></div>
+        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+          <span style="font-family:var(--font-m);font-size:9px;color:${tm.col}">${dn}/${n}</span>
+          ${odN?`<span style="font-family:var(--font-m);font-size:9px;color:var(--red)">+${odN} late</span>`:''}
+        </div>
+      </div>`;
+    });
+    bc2.innerHTML=`<div class="an-title">Tasks by Category</div>${catRows.join('')}`;
+    wrap.appendChild(bc2);
+  }
+
+  // ── PRIORITY BREAKDOWN ───────────────────────────────────────
+  const priData=[
+    {k:'urgent',label:'Urgent',col:'#e63329'},
+    {k:'high',label:'High',col:'#f59e0b'},
+    {k:'medium',label:'Medium',col:'#c8a84b'},
+    {k:'low',label:'Low',col:'#555'},
+  ].map(p=>({...p,total:all.filter(t=>t.priority===p.k).length,done:all.filter(t=>t.priority===p.k&&t.stage==='done').length,od:all.filter(t=>t.priority===p.k&&isOD(t)).length}))
+   .filter(p=>p.total>0);
+  if(priData.length>0){
+    const pc=document.createElement('div');pc.className='an-card';
+    pc.innerHTML=`
+      <div class="an-title">By Priority</div>
+      ${priData.map(p=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${p.col};flex-shrink:0"></div>
+          <div style="font-family:var(--font-m);font-size:10px;color:var(--grey);flex:1;text-transform:uppercase;letter-spacing:.06em">${p.label}</div>
+          <div style="display:flex;gap:8px;font-family:var(--font-m);font-size:10px">
+            <span style="color:var(--green)">${p.done} done</span>
+            <span style="color:var(--grey)">${p.total-p.done} left</span>
+            ${p.od?`<span style="color:var(--red)">${p.od} late</span>`:''}
+          </div>
+        </div>
+        <div style="height:4px;background:var(--b2);border-radius:2px;margin-bottom:10px;overflow:hidden">
+          <div style="height:100%;border-radius:2px;background:${p.col};width:${p.total?Math.round(p.done/p.total*100):0}%;transition:width .5s"></div>
+        </div>`).join('')}`;
+    wrap.appendChild(pc);
+  }
+
+  // ── 7-DAY TREND ─────────────────────────────────────────────
+  const tsc=document.createElement('div');tsc.className='an-card';
+  const tdata=[];
   for(let i=6;i>=0;i--){
     const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);
     let dt=k===today()?G.tasks:[];
     if(k!==today()){try{dt=(await SB.getRange(k,k)).map(norm);}catch{dt=[];}}
-    const tt=dt.length,dn=dt.filter(t=>t.stage==='done').length;
-    data.push({k,lbl:d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,2),pct:tt?Math.round(dn/tt*100):0,dn,tt});
+    const tt=dt.length,dn=dt.filter(t=>t.stage==='done').length,odD=dt.filter(isOD).length;
+    tdata.push({k,lbl:d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,2),pct:tt?Math.round(dn/tt*100):0,dn,tt,od:odD});
   }
-  const mp=Math.max(...data.map(d=>d.pct),1);
-  sc.innerHTML=`<div class="an-title">7-Day Trend</div><div class="spark">${data.map(d=>`<div class="spark-bar" style="height:${Math.max(3,d.pct/mp*44)}px;background:${d.k===today()?'var(--red)':'var(--b3)'}" title="${d.lbl}: ${d.dn}/${d.tt}"></div>`).join('')}</div><div class="spark-lbls">${data.map(d=>`<div class="spark-lbl" style="color:${d.k===today()?'var(--gold)':'var(--grey2)'}">${d.lbl}</div>`).join('')}</div>`;
-  wrap.appendChild(sc);
+  const mp=Math.max(...tdata.map(d=>d.pct),1);
+  tsc.innerHTML=`
+    <div class="an-title">7-Day Completion Trend</div>
+    <div class="spark" style="align-items:flex-end;gap:5px">
+      ${tdata.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+        <div style="font-family:var(--font-m);font-size:8px;color:${d.pct>0?'var(--grey)':'var(--grey2)'}">${d.pct?d.pct+'%':''}</div>
+        <div style="width:100%;border-radius:3px 3px 0 0;min-height:3px;background:${d.k===today()?'var(--red)':d.pct>0?'var(--b3)':'var(--b2)'};height:${Math.max(3,d.pct/mp*44)}px;transition:height .5s"></div>
+      </div>`).join('')}
+    </div>
+    <div class="spark-lbls" style="margin-top:5px">
+      ${tdata.map(d=>`<div class="spark-lbl" style="color:${d.k===today()?'var(--gold)':'var(--grey2)'}">${d.lbl}</div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-family:var(--font-m);font-size:10px;color:var(--grey)">
+      ${tdata.filter(d=>d.tt>0).length===0?'No task history yet.':`Avg completion: ${Math.round(tdata.filter(d=>d.tt>0).reduce((s,d)=>s+d.pct,0)/Math.max(tdata.filter(d=>d.tt>0).length,1))}% over ${tdata.filter(d=>d.tt>0).length} active days`}
+    </div>`;
+  wrap.appendChild(tsc);
+
+  // ── ACTIONS NEEDED SUMMARY ──────────────────────────────────
+  const needs=[];
+  if(od.length) needs.push(`${od.length} overdue task${od.length>1?'s':''} need immediate attention`);
+  if(blocked.length) needs.push(`${blocked.length} blocked task${blocked.length>1?'s':''} — remove blockers`);
+  const urgentActive=active.filter(t=>t.priority==='urgent'&&!isOD(t));
+  if(urgentActive.length) needs.push(`${urgentActive.length} urgent task${urgentActive.length>1?'s':''} pending`);
+  if(active.length===0&&done.length===all.length&&all.length>0) needs.push('All tasks complete. Excellent work.');
+
+  if(needs.length){
+    const nc=document.createElement('div');nc.className='an-card';
+    nc.style.cssText='border-color:rgba(200,168,75,.2);background:rgba(200,168,75,.03)';
+    nc.innerHTML=`
+      <div class="an-title" style="color:var(--gold)">Focus Areas</div>
+      ${needs.map(n=>`<div style="display:flex;gap:9px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--b1)">
+        <div style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:6px"></div>
+        <div style="font-family:var(--font-m);font-size:11px;color:var(--white);line-height:1.5">${n}</div>
+      </div>`).join('')}`;
+    wrap.appendChild(nc);
+  }
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 // TAB NAV
