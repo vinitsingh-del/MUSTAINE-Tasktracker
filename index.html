@@ -137,6 +137,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .add-inp:focus{border-color:var(--red)}
 .add-inp::placeholder{color:var(--grey2)}
 .add-inp.shake{animation:shake .3s}
+.field-err{font-family:var(--font-m);font-size:10px;color:var(--red);margin-top:4px;letter-spacing:.04em}
 @keyframes shake{0%,100%{transform:translateX(0)}30%{transform:translateX(-5px)}70%{transform:translateX(5px)}}
 .add-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 18px;font-family:var(--font-h);font-size:16px;font-weight:800;letter-spacing:.1em;cursor:pointer;white-space:nowrap}
 .add-btn:active{opacity:.8}
@@ -703,12 +704,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
         </select>
       </div>
       <div class="add-row2">
-        <input class="add-time" type="time" id="add-time">
-        <input class="add-time" type="date" id="add-date">
-        <select class="add-sel" id="add-recur" style="font-size:10px;flex:1">
+        <input class="add-time" type="time" id="add-time" title="Scheduled time">
+        <input class="add-time" type="date" id="add-date" title="Due date">
+        <select class="add-sel" id="add-recur" style="font-size:10px;flex:1" title="Repeat type">
           <option value="none">One-time</option>
-          <option value="daily">Daily Recurring</option>
+          <option value="daily">Daily</option>
+          <option value="recurring">Recurring</option>
         </select>
+        <input class="add-time" type="number" id="add-mins" min="0" max="1440" placeholder="Mins" title="Scheduled duration in minutes" style="width:64px;flex:0 0 64px">
       </div>
     </div>
 
@@ -808,26 +811,42 @@ const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════
+// PRD-aligned enums
 const TAG = {
-  sales:{label:'Sales',col:'#22c55e'}, revenue:{label:'Revenue',col:'#3b82f6'},
-  client:{label:'Client',col:'#c8a84b'}, kam:{label:'KAM',col:'#ec4899'},
-  design:{label:'Design',col:'#f59e0b'}, ops:{label:'Ops',col:'#06b6d4'},
-  'follow-up':{label:'Follow-up',col:'#e63329'}, control:{label:'Control',col:'#a855f7'},
-  management:{label:'Management',col:'#14b8a6'}, personal:{label:'Personal',col:'#666'},
-  daily:      { label: 'Daily Work',  col: '#f97316' },
+  sales:      {label:'Sales',       col:'#22c55e'},
+  revenue:    {label:'Revenue',     col:'#3b82f6'},
+  client:     {label:'Client',      col:'#c8a84b'},
+  kam:        {label:'KAM',         col:'#ec4899'},
+  design:     {label:'Design',      col:'#f59e0b'},
+  ops:        {label:'Ops',         col:'#06b6d4'},
+  'follow-up':{label:'Follow-up',   col:'#e63329'},
+  control:    {label:'Control',     col:'#a855f7'},
+  management: {label:'Management',  col:'#14b8a6'},
+  personal:   {label:'Personal',    col:'#666'},
+  daily:      {label:'Daily Work',  col:'#f97316'},
 };
+// PRD priority: UI order = medium/urgent/high/low; sort order = urgent/high/medium/low
 const PRI = {
-  urgent:{col:'#e63329',label:'Urgent'}, high:{col:'#f59e0b',label:'High'},
-  medium:{col:'#c8a84b',label:'Medium'}, low:{col:'#444',label:'Low'},
+  urgent:{col:'#e63329',label:'Urgent',rank:0},
+  high:  {col:'#f59e0b',label:'High',  rank:1},
+  medium:{col:'#c8a84b',label:'Medium',rank:2},
+  low:   {col:'#444',   label:'Low',   rank:3},
 };
+// PRD status: Active, Completed, Hidden, Blocked  (mapped to: todo/in_progress/review → active; done/closed → completed; blocked; hidden)
 const STG = {
-  todo:{label:'Todo',icon:'o',col:'#555'}, in_progress:{label:'In Progress',icon:'/',col:'#c8a84b'},
-  review:{label:'Review',icon:'~',col:'#f59e0b'}, done:{label:'Done',icon:'+',col:'#22c55e'},
-  blocked:{label:'Blocked',icon:'x',col:'#e63329'}, closed:{label:'Closed',icon:'-',col:'#444'},
+  todo:        {label:'Active',      icon:'o', col:'#555',    status:'active'},
+  in_progress: {label:'In Progress', icon:'/', col:'#c8a84b', status:'active'},
+  review:      {label:'Review',      icon:'~', col:'#f59e0b', status:'active'},
+  done:        {label:'Completed',   icon:'+', col:'#22c55e', status:'completed'},
+  blocked:     {label:'Blocked',     icon:'x', col:'#e63329', status:'blocked'},
+  closed:      {label:'Completed',   icon:'-', col:'#444',    status:'completed'},
 };
+// PRD repeat types
+const REPEAT = {none:'One-time', daily:'Daily', recurring:'Recurring'};
 const VALID_TAGS = Object.keys(TAG);
-const VALID_RECURRENCE = ['none','daily'];
+const VALID_RECURRENCE = ['none','daily','recurring'];
 const VALID_STAGES = Object.keys(STG);
+const VALID_PRIORITIES = ['urgent','high','medium','low'];
 const MAX_FILE = 5*1024*1024;
 const WARN_FILE = 2*1024*1024;
 
@@ -906,6 +925,8 @@ const SB = (() => {
       timer_stopped_at:t.timer_stopped_at||null,
       timer_total_seconds:t.timer_total_seconds||0,
       recurrence: VALID_RECURRENCE.includes(t.recurrence) ? t.recurrence : 'none',
+      scheduled_minutes: Math.min(1440, Math.max(0, parseInt(t.scheduled_minutes)||0)),
+      is_alert_enabled: t.is_alert_enabled !== false,
       ...(t.created_at?{created_at:t.created_at}:{}),
     };
   }
@@ -952,7 +973,18 @@ const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 const fmtTs = ts => new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
 const fmtSz = b => b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';
 const minOff = t => {if(!t)return null;const[h,m]=t.split(':').map(Number),n=new Date(),d=new Date(n);d.setHours(h,m,0,0);return Math.floor((n-d)/60000);};
-const isOD  = t => { if(!t||t.done||['done','blocked','closed'].includes(t.stage)) return false; const tm=t.task_time||t.time||''; if(!tm) return false; const o=minOff(tm); return o!==null&&o>5; };
+const isOD = t => {
+  if(!t||t.done||['done','blocked','closed'].includes(t.stage)) return false;
+  const d = t.task_date||t.date||'';
+  // PRD §24.4: overdue = active AND due_date < today_local_date
+  if(d && d < today()) return true;
+  // Also overdue if due today but past scheduled time by >5 min
+  if(d === today()){
+    const tm = t.task_time||t.time||'';
+    if(tm){ const o=minOff(tm); return o!==null && o>5; }
+  }
+  return false;
+};
 const pj    = (s,fb) => {try{return JSON.parse(s);}catch{return fb;}};
 
 function norm(t){
@@ -1232,33 +1264,137 @@ async function maybeSeed(){
 // TASK ACTIONS
 // ═══════════════════════════════════════════════════════════════
 async function addTask(){
-  if(isViewer()){toast('View only access','warn');return;}
-  const inp=document.getElementById('add-title');
-  const title=inp.value.trim();
-  if(!title){inp.classList.add('shake');setTimeout(()=>inp.classList.remove('shake'),400);inp.focus();return;}
-  if(G.tasks.find(t=>t.title.toLowerCase()===title.toLowerCase())) toast('Similar task exists today','warn');
-  const n=new Date().toISOString();
-  const t={
-    id:uid6(),title,
-    tag:document.getElementById('add-tag').value,
-    priority:document.getElementById('add-pri').value,
-    task_time:document.getElementById('add-time').value||null,
-    task_date:document.getElementById('add-date').value||today(),
-    stage:'todo',done:false,created_at:n,
-    recurrence:document.getElementById('add-recur')?.value||'none',
-    remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),
-    timer_total_seconds:0,
-    timer_started_at:null, // timer starts when user explicitly starts it
-    timer_stopped_at:null,
+  if(isViewer()){toast('You do not have permission to create tasks','warn');return;}
+
+  const inp   = document.getElementById('add-title');
+  const rawTitle = inp.value;
+  const title = rawTitle.replace(/\s+/g,' ').trim();
+
+  // ── PRD §22: strict validation ──────────────────────────────────
+  // 22.2 Only spaces
+  if(!title){
+    showFieldError(inp,'Please enter a valid task title.');
+    inp.classList.add('shake'); setTimeout(()=>inp.classList.remove('shake'),400); inp.focus(); return;
+  }
+  // 22.3 Too short
+  if(title.length < 3){
+    showFieldError(inp,'Task title must be at least 3 characters.'); inp.focus(); return;
+  }
+  // 22.4 Too long
+  if(title.length > 120){
+    showFieldError(inp,'Task title cannot be more than 120 characters.'); inp.focus(); return;
+  }
+  // 22.5 HTML/script
+  if(/<[a-z][\s\S]*>/i.test(rawTitle)){
+    showFieldError(inp,'Task title contains unsupported characters.'); inp.focus(); return;
+  }
+  clearFieldError(inp);
+
+  const dueDate  = document.getElementById('add-date').value;
+  const dueTime  = document.getElementById('add-time').value || null;
+  const dateInp  = document.getElementById('add-date');
+
+  // 22.13 Due date missing
+  if(!dueDate){
+    showFieldError(dateInp,'Please select a valid due date.'); return;
+  }
+  // 22.14 Due date in past (PRD §17.6 — allow past for manual logging)
+  // We ALLOW past dates (user may log past work) but show a warning
+  if(dueDate < today()){
+    if(!window._pastDateConfirmed){
+      window._pastDateConfirmed = true;
+      toast('Note: due date is in the past — saving as past task','warn');
+    }
+  } else { window._pastDateConfirmed = false; }
+
+  // 22.16 Today date with past time
+  if(dueDate === today() && dueTime){
+    const [h,m] = dueTime.split(':').map(Number);
+    const n2 = new Date(); const taskMin = h*60+m; const nowMin = n2.getHours()*60+n2.getMinutes();
+    if(taskMin < nowMin - 5){
+      // allow but mark as immediately overdue — PRD alternative: "allow but instantly overdue"
+      toast('Due time is earlier than now — task will show as overdue','warn');
+    }
+  }
+  clearFieldError(dateInp);
+
+  // category/priority/repeat with PRD defaults
+  const tag      = document.getElementById('add-tag').value  || 'daily';
+  const priority = document.getElementById('add-pri').value  || 'medium';
+  const recur    = document.getElementById('add-recur')?.value || 'none';
+
+  if(!VALID_TAGS.includes(tag))     { toast('Please select a valid category.','err'); return; }
+  if(!VALID_PRIORITIES.includes(priority)) { toast('Please select a valid priority.','err'); return; }
+  if(!VALID_RECURRENCE.includes(recur))    { toast('Please select a valid repeat type.','err'); return; }
+
+  // 22.31 Warn on near-duplicate
+  const dup = G.tasks.find(t => t.title.toLowerCase()===title.toLowerCase() &&
+    (t.task_date||t.date)===dueDate && t.tag===tag && !['done','closed'].includes(t.stage));
+  if(dup) toast('A similar active task already exists.','warn');
+
+  // Build task
+  const n = new Date().toISOString();
+  const task = {
+    id: uid6(), title,
+    tag, priority,
+    task_time: dueTime,
+    task_date: dueDate,
+    stage: 'todo', done: false, created_at: n,
+    recurrence: recur,
+    remarks: '[]',
+    activity: JSON.stringify([{ts:now(), text:'Task created'}]),
+    timer_total_seconds: 0,
+    timer_started_at: null,
+    timer_stopped_at: null,
+    is_alert_enabled: true,
+    scheduled_minutes: Math.min(1440, Math.max(0, parseInt(document.getElementById('add-mins')?.value||'0')||0)),
   };
+
+  // Disable button during submission (22.29 prevent double-click)
+  const addBtn = document.querySelector('.add-btn');
+  if(addBtn){ addBtn.disabled=true; addBtn.textContent='Adding...'; }
+
   setSyncing(true);
   try{
-    await SB.upsert(t);
-    try{await SB.addNotif({task_id:t.id,title:'Task Created',body:title,type:'system'});}catch{}
-    await loadTasks();render();
-    inp.value='';inp.focus();
-    toast('Task added, timer started');
-  }catch(e){setSyncing(false,true);toast('Save failed: '+e.message,'err');}
+    await SB.upsert(task);
+
+    // Create alerts per PRD §14
+    if(task.is_alert_enabled){
+      const alertsToCreate = [];
+      if(dueDate === today())          alertsToCreate.push({type:'due_today',title:'Due Today',   body:title});
+      if(dueDate < today())            alertsToCreate.push({type:'overdue',  title:'Overdue Task', body:title});
+      if(priority === 'urgent')        alertsToCreate.push({type:'urgent',   title:'Urgent Task',  body:title});
+      for(const a of alertsToCreate){
+        try{ await SB.addNotif({task_id:task.id, title:a.title, body:a.body, type:a.type}); }catch{}
+      }
+      await loadNotifs(); notifBadge();
+    }
+
+    await loadTasks(); render();
+    inp.value=''; inp.focus();
+    toast('Task created successfully.','ok');
+    return task;
+  }catch(e){
+    setSyncing(false,true);
+    toast('Task could not be created. Please try again.','err');
+    console.error('Task create error:',e);
+  }finally{
+    if(addBtn){ addBtn.disabled=false; addBtn.textContent='ADD'; }
+  }
+}
+
+// Field error helpers
+function showFieldError(inp, msg){
+  inp.style.borderColor='var(--red)';
+  let err = inp.parentElement.querySelector('.field-err');
+  if(!err){ err=document.createElement('div'); err.className='field-err'; inp.parentElement.appendChild(err); }
+  err.textContent = msg;
+  inp.classList.add('shake'); setTimeout(()=>inp.classList.remove('shake'),400);
+}
+function clearFieldError(inp){
+  inp.style.borderColor='';
+  const err = inp.parentElement?.querySelector('.field-err');
+  if(err) err.remove();
 }
 
 async function patch(id,changes,logMsg){
@@ -1487,30 +1623,44 @@ function render(){
   }
 
   // ── 5. LOAD BAR ───────────────────────────────────────────────────
-  const timed  = chipAct.filter(t=>t.task_time||t.time);
+  // PRD §24.5 — Scheduled Today = sum of scheduled_minutes for active tasks due today
+  const todayActive = chipSrc.filter(t=>!['done','closed','blocked'].includes(t.stage)&&(t.task_date||t.date||todayStr)===todayStr);
+  const totalMins = todayActive.reduce((s,t)=>s+(parseInt(t.scheduled_minutes)||0),0);
+  const schH = Math.floor(totalMins/60), schM = totalMins%60;
+  const schLabel = totalMins===0 ? '0h' : schH>0&&schM>0 ? schH+'h '+schM+'m' : schH>0 ? schH+'h' : schM+'m';
   const lbar   = el('load-bar'), lmsg = el('load-msg');
-  if(todayTasks.length && lbar && lmsg){
+  if(chipSrc.length && lbar && lmsg){
     lbar.style.display='';lmsg.style.display='';
-    const pct=Math.min(100,Math.round(timed.length/16*100));
+    const pct=Math.min(100,Math.round(totalMins/960*100)); // 960min = 16h day
     el('lb-fill').style.width=pct+'%';
-    el('lb-val').textContent=timed.length+'h scheduled';
-    const n=chipAct.length;
+    el('lb-val').textContent='Scheduled today '+schLabel;
+    const n=todayActive.length;
     if(n===0)      {lmsg.className='load-msg lm-ok'; lmsg.textContent='All done. Clean day.';}
     else if(n<=3)  {lmsg.className='load-msg lm-ok'; lmsg.textContent=`${n} tasks. Light load.`;}
     else if(n<=6)  {lmsg.className='load-msg lm-mid';lmsg.textContent=`${n} tasks, ${timed.length}h scheduled. Moderate.`;}
     else if(n<=9)  {lmsg.className='load-msg lm-hi'; lmsg.textContent=`${n} tasks. Heavy day.`;}
     else           {lmsg.className='load-msg lm-max';lmsg.textContent=`${n} tasks. Maxed. Prioritise ruthlessly.`;}
-  } else if(lbar&&lmsg){ lbar.style.display='none';lmsg.style.display='none'; }
+  } else if(lbar&&lmsg){ lbar.style.display='none'; lmsg.style.display='none'; }
 
   // ── 6. TASK LISTS ────────────────────────────────────────────────
   // statFilter controls what shows. Tag filter applies everywhere.
   const tagOk = tagOkAll; // already defined above
 
-  // Sort helper: by time then created_at
+  // PRD §27 sort: overdue → urgent → high → due_date → created_at
+  const priRank = t => (PRI[t.priority]?.rank ?? 2);
   const byTime = (a,b) => {
+    // overdue first
+    const aOD=isOD(a)?0:1, bOD=isOD(b)?0:1;
+    if(aOD!==bOD) return aOD-bOD;
+    // then priority rank
+    const pr=priRank(a)-priRank(b); if(pr!==0) return pr;
+    // then scheduled time
     const at=a.task_time||a.time, bt=b.task_time||b.time;
     if(at&&bt) return at<bt?-1:1;
     if(at&&!bt) return -1; if(!at&&bt) return 1;
+    // then due date
+    const da=a.task_date||a.date||'', db=b.task_date||b.date||'';
+    if(da&&db&&da!==db) return da<db?-1:1;
     return new Date(a.created_at)-new Date(b.created_at);
   };
 
