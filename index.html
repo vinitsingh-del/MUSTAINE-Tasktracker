@@ -1253,7 +1253,7 @@ async function addTask(){
     recurrence:document.getElementById('add-recur')?.value||'none',
     remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),
     timer_total_seconds:0,
-    timer_started_at:new Date().toISOString(), // auto-start
+    timer_started_at:null, // timer starts when user explicitly starts it
     timer_stopped_at:null,
   };
   setSyncing(true);
@@ -1392,13 +1392,15 @@ function setF(el){
   updateFilterCounts();
 }
 function updateFilterCounts(){
+  const todayStr=today();
+  const src=G.df==='today'?G.tasks:G.tasks.filter(t=>(t.task_date||t.date||todayStr)===todayStr);
   document.querySelectorAll('.ftab[data-f]').forEach(btn=>{
     const f=btn.dataset.f;
     if(f==='all'){
-      const n=G.tasks.filter(t=>!['done','closed'].includes(t.stage)).length;
+      const n=src.filter(t=>!['done','closed'].includes(t.stage)).length;
       btn.textContent=`All${n>0?' ('+n+')':''}`;
     } else {
-      const n=G.tasks.filter(t=>t.tag===f&&!['done','closed'].includes(t.stage)).length;
+      const n=src.filter(t=>t.tag===f&&!['done','closed'].includes(t.stage)).length;
       // Show count only if >0
       const base={sales:'Sales',revenue:'Revenue',client:'Client',kam:'KAM',design:'Design',ops:'Ops','follow-up':'Follow-up',control:'Control',management:'Management'}[f]||f;
       btn.textContent=n>0?`${base} (${n})`:base;
@@ -1436,15 +1438,15 @@ function getActive(){
 // STAT FILTER
 // ═══════════════════════════════════════════════════════════════
 function setStatFilter(sf){
-  G.statFilter = sf;
+  // Toggle: clicking same chip resets to 'all'
+  G.statFilter = (G.statFilter===sf && sf!=='all') ? 'all' : sf;
   // Update chip highlight
   ['ds-total','ds-done','ds-active','ds-od'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove('active-chip');
   });
   const map={all:'ds-total',done:'ds-done',active:'ds-active',overdue:'ds-od'};
-  const active=document.getElementById(map[sf]);
+  const active=document.getElementById(map[G.statFilter]);
   if(active) active.classList.add('active-chip');
-  // If not on tasks tab, switch to it
   goTab('tasks');
   render();
 }
@@ -1453,88 +1455,131 @@ function setStatFilter(sf){
 // RENDER
 // ═══════════════════════════════════════════════════════════════
 function render(){
-  const all=G.tasks, done=all.filter(t=>t.stage==='done'), blocked=all.filter(t=>t.stage==='blocked');
-  const active=all.filter(t=>!['done','blocked','closed'].includes(t.stage)), od=all.filter(isOD);
+  if(!G.tasks) return;
 
-  // stats
-  // Stats chips: always show TODAY's data for accuracy
-  const todayTasks = G.df==='today' ? G.tasks : G.tasks.filter(t=>(t.task_date||t.date)===today());
-  const todayDone = todayTasks.filter(t=>t.stage==='done');
-  const todayActive = todayTasks.filter(t=>!['done','blocked','closed'].includes(t.stage));
-  const todayOd = todayTasks.filter(isOD);
-  document.getElementById('st-tot').textContent=todayTasks.length;
-  document.getElementById('st-done').textContent=todayDone.length;
-  document.getElementById('st-active').textContent=todayActive.length;
-  document.getElementById('st-od').textContent=todayOd.length;
-  // Sidebar stats
-  const sbt=document.getElementById('sb-total');if(sbt)sbt.textContent=todayTasks.length;
-  const sbd=document.getElementById('sb-done');if(sbd)sbd.textContent=todayDone.length;
-  const sbo=document.getElementById('sb-od');if(sbo)sbo.textContent=todayOd.length;
+  // ── 1. SOURCE TRUTH: always today for chips/stats, G.tasks for list ─
+  const todayStr = today();
+  const todayTasks = G.tasks.filter(t=>(t.task_date||t.date||todayStr)===todayStr);
+  const allTasks   = G.tasks; // may include past dates if df=week/all
 
-  // overdue banner
-  const ob=document.getElementById('od-banner');
-  if(od.length){ob.className='od-banner on';ob.textContent=`${od.length} overdue task${od.length>1?'s':''}`;}
-  else ob.className='od-banner';
+  // ── 2. CATEGORISE today's tasks (for stat chips) ──────────────────
+  const todayDone    = todayTasks.filter(t=>t.stage==='done'||t.stage==='closed');
+  const todayBlocked = todayTasks.filter(t=>t.stage==='blocked');
+  const todayActive  = todayTasks.filter(t=>!['done','closed','blocked'].includes(t.stage));
+  const todayOD      = todayActive.filter(isOD); // overdue = active + past scheduled time
 
-  // load bar
-  const timed=active.filter(t=>t.task_time||t.time);
-  const lbar=document.getElementById('load-bar'),lmsg=document.getElementById('load-msg');
-  if(all.length){
-    lbar.style.display='';
-    const pct=Math.min(100,Math.round(timed.length/16*100));
-    document.getElementById('lb-fill').style.width=pct+'%';
-    document.getElementById('lb-val').textContent=timed.length+'h scheduled';
-    lmsg.style.display='';
-    const n=active.length;
-    if(n===0){lmsg.className='load-msg lm-ok';lmsg.textContent='All tasks done. Clean day.';}
-    else if(n<=3){lmsg.className='load-msg lm-ok';lmsg.textContent=`${n} tasks, light load.`;}
-    else if(n<=6){lmsg.className='load-msg lm-mid';lmsg.textContent=`${n} tasks, ${timed.length}h scheduled. Moderate day.`;}
-    else if(n<=9){lmsg.className='load-msg lm-hi';lmsg.textContent=`${n} tasks. Heavy day, consider deferring.`;}
-    else{lmsg.className='load-msg lm-max';lmsg.textContent=`${n} tasks. Maxed out. Prioritise ruthlessly.`;}
-  }else{lbar.style.display='none';lmsg.style.display='none';}
+  // ── 3. UPDATE STAT CHIPS (always today) ───────────────────────────
+  const el = id => document.getElementById(id);
+  el('st-tot')?.textContent !== undefined && (el('st-tot').textContent = todayTasks.length);
+  el('st-done')?.textContent !== undefined && (el('st-done').textContent = todayDone.length);
+  el('st-active')?.textContent !== undefined && (el('st-active').textContent = todayActive.length);
+  el('st-od')?.textContent !== undefined && (el('st-od').textContent = todayOD.length);
+  if(el('sb-total')) el('sb-total').textContent = todayTasks.length;
+  if(el('sb-done'))  el('sb-done').textContent  = todayDone.length;
+  if(el('sb-od'))    el('sb-od').textContent    = todayOD.length;
 
-  // active list — respects statFilter
-  const al=document.getElementById('active-list'); al.innerHTML='';
-  let fa;
-  if(G.statFilter==='done'){
-    fa=G.tasks.filter(t=>t.stage==='done'&&(G.filter==='all'||t.tag===G.filter));
-  }else if(G.statFilter==='overdue'){
-    fa=G.tasks.filter(t=>isOD(t)&&(G.filter==='all'||t.tag===G.filter));
-  }else{
-    fa=getActive();
+  // ── 4. OVERDUE BANNER ─────────────────────────────────────────────
+  const ob = el('od-banner');
+  if(ob) {
+    if(todayOD.length){ob.className='od-banner on';ob.textContent=`${todayOD.length} overdue task${todayOD.length>1?'s':''}`;}
+    else ob.className='od-banner';
   }
-  const showingFiltered=(G.statFilter==='done'||G.statFilter==='overdue');
-  if(!fa.length){
-    const emptyMsg=G.statFilter==='done'?'No completed tasks yet':G.statFilter==='overdue'?'No overdue tasks':'No active tasks'+(G.filter!=='all'?` in ${G.filter} category`:'');
-    al.innerHTML=`<div class="empty"><div class="empty-ico">[ NO TASKS ]</div><div class="empty-txt">${emptyMsg}</div></div>`;
-  }else if(G.df!=='today'&&!showingFiltered){
-    // group by date
-    const grps={};fa.forEach(t=>{const d=t.task_date||t.date||today();if(!grps[d])grps[d]=[];grps[d].push(t);});
-    Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
-      const isPast=d<today();const div=document.createElement('div');
-      div.className='date-grp'+(isPast?' past':'');
-      div.textContent=(d===today()?'Today':d)+(isPast?' — PAST':'');
-      al.appendChild(div);grps[d].forEach(t=>al.appendChild(mkCard(t)));
+
+  // ── 5. LOAD BAR ───────────────────────────────────────────────────
+  const timed  = todayActive.filter(t=>t.task_time||t.time);
+  const lbar   = el('load-bar'), lmsg = el('load-msg');
+  if(todayTasks.length && lbar && lmsg){
+    lbar.style.display='';lmsg.style.display='';
+    const pct=Math.min(100,Math.round(timed.length/16*100));
+    el('lb-fill').style.width=pct+'%';
+    el('lb-val').textContent=timed.length+'h scheduled';
+    const n=todayActive.length;
+    if(n===0)      {lmsg.className='load-msg lm-ok'; lmsg.textContent='All done. Clean day.';}
+    else if(n<=3)  {lmsg.className='load-msg lm-ok'; lmsg.textContent=`${n} tasks. Light load.`;}
+    else if(n<=6)  {lmsg.className='load-msg lm-mid';lmsg.textContent=`${n} tasks, ${timed.length}h scheduled. Moderate.`;}
+    else if(n<=9)  {lmsg.className='load-msg lm-hi'; lmsg.textContent=`${n} tasks. Heavy day.`;}
+    else           {lmsg.className='load-msg lm-max';lmsg.textContent=`${n} tasks. Maxed. Prioritise ruthlessly.`;}
+  } else if(lbar&&lmsg){ lbar.style.display='none';lmsg.style.display='none'; }
+
+  // ── 6. ACTIVE LIST ────────────────────────────────────────────────
+  // statFilter overrides what shows in the main list
+  // tag filter (G.filter) applies on top of statFilter
+  const tagOk = t => G.filter==='all' || t.tag===G.filter;
+  let mainList = [];
+  let showingStatFilter = false;
+
+  if(G.statFilter==='done'){
+    mainList = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t));
+    showingStatFilter = true;
+  } else if(G.statFilter==='overdue'){
+    mainList = allTasks.filter(t=>isOD(t) && tagOk(t));
+    showingStatFilter = true;
+  } else {
+    // normal: active tasks (not done, not blocked, not closed)
+    mainList = allTasks.filter(t=>!['done','blocked','closed'].includes(t.stage) && tagOk(t));
+    // sort: by scheduled time asc, then by created_at
+    mainList.sort((a,b)=>{
+      const at=a.task_time||a.time, bt=b.task_time||b.time;
+      if(at&&bt) return at<bt?-1:1;
+      if(at&&!bt) return -1;
+      if(!at&&bt) return 1;
+      return new Date(a.created_at)-new Date(b.created_at);
     });
-  }else{fa.forEach(t=>al.appendChild(mkCard(t)));}
+  }
 
-  // done
-  const dl=document.getElementById('done-list'),dh=document.getElementById('done-hdr');
-  const sdb=document.getElementById('show-done-btn');
-  const df=showingFiltered?[]:(G.filter==='all'?done:done.filter(t=>t.tag===G.filter));
-  dl.innerHTML='';
-  if(!df.length){dh.style.display='none';sdb.style.display='none';}
-  else if(G.showDone){dh.style.display='flex';sdb.style.display='none';df.forEach(t=>dl.appendChild(mkCard(t)));}
-  else{dh.style.display='none';sdb.style.display='';sdb.textContent=`Show ${df.length} completed`;}
+  const al = el('active-list'); al.innerHTML='';
+  if(!mainList.length){
+    const msg = G.statFilter==='done'    ? 'No completed tasks'
+               :G.statFilter==='overdue' ? 'No overdue tasks'
+               :G.statFilter==='active'  ? 'No active tasks'
+               :`No tasks${G.filter!=='all'?' in '+G.filter:''}`;
+    al.innerHTML=`<div class="empty"><div class="empty-ico">[ ]</div><div class="empty-txt">${msg}</div></div>`;
+  } else if(G.df!=='today' && !showingStatFilter){
+    // Group by date when showing multi-day view
+    const grps={};
+    mainList.forEach(t=>{const d=t.task_date||t.date||todayStr;if(!grps[d])grps[d]=[];grps[d].push(t);});
+    Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
+      const isPast=d<todayStr;
+      const div=document.createElement('div');
+      div.className='date-grp'+(isPast?' past':'');
+      div.textContent=(d===todayStr?'Today':d)+(isPast?' — PAST':'');
+      al.appendChild(div);
+      grps[d].forEach(t=>al.appendChild(mkCard(t)));
+    });
+  } else {
+    mainList.forEach(t=>al.appendChild(mkCard(t)));
+  }
 
-  // update filter tab counts
+  // ── 7. DONE SECTION (only when not statFiltering) ────────────────
+  const dl  = el('done-list');
+  const dh  = el('done-hdr');
+  const sdb = el('show-done-btn');
+  if(dl && dh && sdb){
+    const doneFilt = showingStatFilter ? []
+      : allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t));
+    dl.innerHTML='';
+    if(!doneFilt.length){
+      dh.style.display='none'; sdb.style.display='none';
+    } else if(G.showDone){
+      dh.style.display='flex'; sdb.style.display='none';
+      doneFilt.forEach(t=>dl.appendChild(mkCard(t)));
+    } else {
+      dh.style.display='none'; sdb.style.display='';
+      sdb.textContent=`Show ${doneFilt.length} completed`;
+    }
+  }
+
+  // ── 8. BLOCKED SECTION ────────────────────────────────────────────
+  const blockedFilt = showingStatFilter ? []
+    : allTasks.filter(t=>t.stage==='blocked' && tagOk(t));
+  const bh = el('blocked-hdr'), bl = el('blocked-list');
+  if(bh) bh.style.display = blockedFilt.length ? 'flex' : 'none';
+  if(bl){ bl.innerHTML=''; blockedFilt.forEach(t=>bl.appendChild(mkCard(t))); }
+
+  // ── 9. FILTER TAB COUNTS ──────────────────────────────────────────
   setTimeout(updateFilterCounts, 0);
-  // blocked
-  // When statFilter shows done or overdue: hide done/blocked sections (already shown above)
-  const bfl=showingFiltered?[]:G.filter==='all'?blocked:blocked.filter(t=>t.tag===G.filter);
-  document.getElementById('blocked-hdr').style.display=bfl.length?'flex':'none';
-  const bl=document.getElementById('blocked-list');bl.innerHTML='';bfl.forEach(t=>bl.appendChild(mkCard(t)));
 }
+
 
 function mkCard(task){
   const tm=TAG[task.tag]||{label:task.tag,col:'#666'};
