@@ -31,7 +31,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* LOADING */
 #ls{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
-.ls-logo{font-family:var(--font-h);font-size:64px;font-weight:900;letter-spacing:.08em;color:var(--red);animation:redGlow 2s infinite}
+.ls-logo{font-family:var(--font-h);font-size:48px;font-weight:900;letter-spacing:.08em;color:var(--red);animation:redGlow 2s infinite}
 .ls-sub{font-family:var(--font-m);font-size:10px;letter-spacing:.3em;color:var(--grey);text-transform:uppercase}
 .ls-bar{width:160px;height:2px;background:var(--b2);border-radius:1px;overflow:hidden}
 .ls-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));animation:slideIn 1.4s ease-out forwards}
@@ -40,7 +40,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* AUTH */
 #as{position:fixed;inset:0;background:var(--bg);z-index:900;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .aw{width:100%;max-width:360px}
-.a-logo{font-family:var(--font-h);font-size:56px;font-weight:900;letter-spacing:.08em;color:var(--red);text-align:center;animation:redGlow 3s infinite}
+.a-logo{font-family:var(--font-h);font-size:42px;font-weight:900;letter-spacing:.08em;color:var(--red);text-align:center;animation:redGlow 3s infinite}
 .a-tag{font-family:var(--font-m);font-size:9px;letter-spacing:.28em;color:var(--grey2);text-align:center;text-transform:uppercase;margin-bottom:28px}
 .a-box{background:var(--s1);border:1px solid var(--b2);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:14px}
 .a-tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--bg);border-radius:6px;padding:3px}
@@ -48,10 +48,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .a-tab.on{background:var(--red);color:#fff}
 .a-field{display:flex;flex-direction:column;gap:5px}
 .a-field label{font-family:var(--font-m);font-size:9px;letter-spacing:.2em;color:var(--grey2);text-transform:uppercase}
-.a-inp{background:var(--s2);border:1px solid var(--b3);color:var(--white);font-family:var(--font-b);font-size:15px;padding:12px 14px;border-radius:8px;outline:none;width:100%;-webkit-appearance:none;transition:border-color .2s}
+.a-inp{background:var(--s2);border:1px solid var(--b3);color:var(--white);font-family:var(--font-b);font-size:14px;padding:10px 12px;border-radius:8px;outline:none;width:100%;-webkit-appearance:none;transition:border-color .2s}
 .a-inp:focus{border-color:var(--red)}
 .a-inp::placeholder{color:var(--grey2)}
-.a-btn{position:relative;overflow:hidden;background:var(--red);color:#fff;border:none;border-radius:8px;padding:14px;font-family:var(--font-h);font-size:18px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;width:100%}
+.a-btn{position:relative;overflow:hidden;background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px;font-family:var(--font-h);font-size:16px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;width:100%}
 .a-btn::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);animation:shine 2.5s infinite}
 .a-btn:active{opacity:.8}
 .a-btn:disabled{opacity:.4;cursor:not-allowed}
@@ -69,8 +69,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 #app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
 
 /* HEADER */
-.hdr{flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--b1);padding:12px 16px 10px;display:flex;align-items:center;gap:10px}
-.hdr-logo{font-family:var(--font-h);font-size:26px;font-weight:900;letter-spacing:.1em;color:var(--red);line-height:1;flex:1}
+.hdr{flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--b1);padding:9px 14px 8px;display:flex;align-items:center;gap:10px}
+.hdr-logo{font-family:var(--font-h);font-size:22px;font-weight:900;letter-spacing:.1em;color:var(--red);line-height:1;flex:1}
 .hdr-clock{font-family:var(--font-m);font-size:11px;color:var(--gold);letter-spacing:.06em}
 .hdr-notif{position:relative;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--b2)}
 .hdr-notif:active{background:var(--s2)}
@@ -86,7 +86,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* NAV */
 .nav{flex-shrink:0;display:flex;border-bottom:1px solid var(--b1)}
-.ntab{flex:1;padding:12px 4px;font-family:var(--font-h);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;position:relative;min-height:46px;-webkit-tap-highlight-color:rgba(230,51,41,.15)}
+.ntab{flex:1;padding:9px 4px;font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;position:relative;min-height:40px;-webkit-tap-highlight-color:rgba(230,51,41,.15)}
 .ntab.on{color:var(--red);border-bottom-color:var(--red)}
 .ntab-dot{position:absolute;top:8px;right:calc(50% - 14px);width:6px;height:6px;background:var(--red);border-radius:50%;display:none;animation:pulse 1.5s infinite}
 .ntab-dot.on{display:block}
@@ -99,10 +99,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .view-scroll::-webkit-scrollbar{display:none}
 
 /* DAY STRIP */
-.day-strip{padding:14px 16px 10px;background:var(--s1);border-bottom:1px solid var(--b1)}
+.day-strip{padding:10px 14px 8px;background:var(--s1);border-bottom:1px solid var(--b1)}
 .day-date{font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
 .day-stats{display:flex;gap:6px;flex-wrap:wrap}
 .ds{font-family:var(--font-m);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--s2);border:1px solid var(--b2);color:var(--grey)}
+.ds-btn{cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:rgba(230,51,41,.12)}
+.ds-btn:active{transform:scale(.96)}
+.ds-btn.active-chip{background:var(--s3);border-color:var(--gold);color:var(--white)}
+.ds-btn.red.active-chip{border-color:var(--red);color:var(--red)}
 .ds b{color:var(--white)}
 .ds.red b{color:var(--red)}
 .load-bar{margin-top:8px}
@@ -119,9 +123,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .lm-max{background:rgba(230,51,41,.1);border-color:rgba(230,51,41,.4);color:var(--red);animation:pulse 2s infinite}
 
 /* ADD TASK */
-.add-box{padding:12px 14px;border-bottom:1px solid var(--b1);background:var(--bg)}
+.add-box{padding:9px 12px;border-bottom:1px solid var(--b1);background:var(--bg)}
 .add-row{display:flex;gap:8px}
-.add-inp{flex:1;background:var(--s1);border:1px solid var(--b2);color:var(--white);font-family:var(--font-b);font-size:15px;padding:11px 13px;border-radius:8px;outline:none;-webkit-appearance:none;transition:border-color .2s}
+.add-inp{flex:1;background:var(--s1);border:1px solid var(--b2);color:var(--white);font-family:var(--font-b);font-size:14px;padding:9px 12px;border-radius:8px;outline:none;-webkit-appearance:none;transition:border-color .2s}
 .add-inp:focus{border-color:var(--red)}
 .add-inp::placeholder{color:var(--grey2)}
 .add-inp.shake{animation:shake .3s}
@@ -136,7 +140,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .add-time:focus{border-color:var(--red);color:var(--white)}
 
 /* TOOLBAR */
-.toolbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--b1);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;border-bottom:1px solid var(--b1);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .toolbar::-webkit-scrollbar{display:none}
 .tb-btn{font-family:var(--font-m);font-size:10px;padding:8px 12px;border-radius:5px;border:1px solid var(--b2);background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;flex-shrink:0;letter-spacing:.05em;transition:all .15s;-webkit-tap-highlight-color:rgba(230,51,41,.15);min-height:36px}
 .tb-btn.on{color:var(--white);border-color:var(--gold)}
@@ -150,7 +154,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* FILTERS */
 .filters{display:flex;overflow-x:auto;border-bottom:1px solid var(--b1);-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
 .filters::-webkit-scrollbar{display:none}
-.ftab{font-family:var(--font-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:11px 14px;border:none;background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0;transition:all .2s;-webkit-tap-highlight-color:rgba(230,51,41,.15);min-height:44px;display:flex;align-items:center}
+.ftab{font-family:var(--font-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border:none;background:transparent;color:var(--grey);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0;transition:all .2s;-webkit-tap-highlight-color:rgba(230,51,41,.15);min-height:40px;display:flex;align-items:center}
 .ftab.on{color:var(--white);border-bottom-color:var(--gold)}
 
 /* OVERDUE BANNER */
@@ -158,7 +162,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .od-banner.on{display:block}
 
 /* SECTION HEADER */
-.sec{padding:10px 14px 5px;display:flex;align-items:center;justify-content:space-between}
+.sec{padding:7px 12px 4px;display:flex;align-items:center;justify-content:space-between}
 .sec-title{font-family:var(--font-h);font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--grey2);text-transform:uppercase}
 .sec-btn{font-family:var(--font-m);font-size:10px;color:var(--gold);cursor:pointer;background:none;border:none;letter-spacing:.05em}
 
@@ -173,7 +177,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .card-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--b3);flex-shrink:0;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .2s}
 .card.done .card-check{background:var(--green);border-color:var(--green);color:#fff}
 .card-body{flex:1;min-width:0}
-.card-title{font-size:14px;font-weight:500;color:var(--white);line-height:1.35;margin-bottom:7px;word-break:break-word}
+.card-title{font-size:13px;font-weight:500;color:var(--white);line-height:1.35;margin-bottom:5px;word-break:break-word}
 .card.done .card-title{text-decoration:line-through;color:var(--grey)}
 .card-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .chip{font-family:var(--font-m);font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid;white-space:nowrap;cursor:pointer}
@@ -213,12 +217,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 #drawer.on{transform:translateY(0)}
 .dr-drag{width:38px;height:4px;background:var(--b3);border-radius:2px;margin:10px auto 0;flex-shrink:0}
 .dr-top{padding:12px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;flex-shrink:0}
-.dr-title{font-family:var(--font-h);font-size:20px;font-weight:800;letter-spacing:.06em;flex:1}
+.dr-title{font-family:var(--font-h);font-size:17px;font-weight:800;letter-spacing:.06em;flex:1}
 .dr-x{background:none;border:none;color:var(--grey);font-size:24px;cursor:pointer;line-height:1;padding:2px 4px}
 .dr-scroll{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;padding-bottom:24px}
 .dr-scroll::-webkit-scrollbar{display:none}
 .dr-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:.2em;color:var(--grey2);text-transform:uppercase;margin-bottom:5px}
-.dr-inp{background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--font-b);font-size:15px;padding:11px 12px;border-radius:8px;outline:none;width:100%;-webkit-appearance:none}
+.dr-inp{background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--font-b);font-size:13px;padding:9px 11px;border-radius:8px;outline:none;width:100%;-webkit-appearance:none}
 .dr-inp:focus{border-color:var(--red)}
 .dr-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .dr-sel{background:var(--s2);border:1px solid var(--b2);color:var(--white);font-family:var(--font-m);font-size:11px;padding:10px 11px;border-radius:8px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;width:100%}
@@ -247,7 +251,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .snode.active .slabel{color:var(--white)}
 /* timer */
 .timer-card{background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center}
-.timer-num{font-family:var(--font-h);font-size:48px;font-weight:900;letter-spacing:.04em;color:var(--gold);line-height:1}
+.timer-num{font-family:var(--font-h);font-size:38px;font-weight:900;letter-spacing:.04em;color:var(--gold);line-height:1}
 .timer-num.run{color:var(--red);animation:redGlow 2s infinite}
 .timer-lbl{font-family:var(--font-m);font-size:9px;letter-spacing:.18em;color:var(--grey2);text-transform:uppercase}
 .timer-total{font-family:var(--font-m);font-size:10px;color:var(--grey);text-align:center}
@@ -318,7 +322,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .an-wrap{padding:0 12px 24px}
 .an-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:14px;margin-bottom:10px;animation:fadeUp .3s ease both}
 .an-title{font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.16em;color:var(--grey);text-transform:uppercase;margin-bottom:12px}
-.an-big{font-family:var(--font-h);font-size:52px;font-weight:900;color:var(--red);line-height:1}
+.an-big{font-family:var(--font-h);font-size:40px;font-weight:900;color:var(--red);line-height:1}
 .an-sub{font-family:var(--font-m);font-size:10px;color:var(--grey);margin-top:2px}
 .donut-wrap{display:flex;align-items:center;gap:14px}
 .dl-item{display:flex;align-items:center;gap:7px;margin-bottom:5px}
@@ -354,7 +358,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   /* Auth: centred card, reasonable max-width */
   #as { padding: 40px 24px; }
   .aw { max-width: 400px; }
-  .a-logo { font-size: 64px; }
+  .a-logo { font-size: 48px; }
 
   /* ── APP SHELL ── */
   #app {
@@ -384,7 +388,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     border-right: none;
     border-bottom: 1px solid var(--b1);
   }
-  .hdr-logo { font-size: 32px; }
+  .hdr-logo { font-size: 26px; }
   .hdr-right {
     display: flex;
     align-items: center;
@@ -542,7 +546,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
   /* Loading screen */
   #ls { gap: 24px; }
-  .ls-logo { font-size: 80px; }
+  .ls-logo { font-size: 60px; }
 }
 
 /* Very wide screens: even more contained */
@@ -615,9 +619,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   <div class="sidebar-footer">
     <div class="sidebar-date" id="sidebar-date"></div>
     <div class="sidebar-stats">
-      <div class="ds">Total <b id="sb-total">—</b></div>
-      <div class="ds">Done <b id="sb-done">—</b></div>
-      <div class="ds red">Late <b id="sb-od">—</b></div>
+      <button class="ds ds-btn" onclick="setStatFilter('all')"    style="font-size:10px">Total <b id="sb-total">—</b></button>
+      <button class="ds ds-btn" onclick="setStatFilter('done')"   style="font-size:10px">Done <b id="sb-done">—</b></button>
+      <button class="ds ds-btn red" onclick="setStatFilter('overdue')" style="font-size:10px">Late <b id="sb-od">—</b></button>
     </div>
     <button class="sidebar-user" id="sidebar-user" onclick="doLogout()">Sign Out</button>
   </div>
@@ -631,10 +635,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
     <div class="day-strip">
       <div class="day-date" id="day-date">—</div>
       <div class="day-stats">
-        <div class="ds">Total <b id="st-tot">0</b></div>
-        <div class="ds">Done <b id="st-done">0</b></div>
-        <div class="ds">Active <b id="st-active">0</b></div>
-        <div class="ds red">Overdue <b id="st-od">0</b></div>
+        <button class="ds ds-btn" id="ds-total"   onclick="setStatFilter('all')"    title="Show all tasks">Total <b id="st-tot">0</b></button>
+        <button class="ds ds-btn" id="ds-done"    onclick="setStatFilter('done')"   title="Show completed">Done <b id="st-done">0</b></button>
+        <button class="ds ds-btn" id="ds-active"  onclick="setStatFilter('active')" title="Show active">Active <b id="st-active">0</b></button>
+        <button class="ds ds-btn red" id="ds-od"  onclick="setStatFilter('overdue')" title="Show overdue">Overdue <b id="st-od">0</b></button>
       </div>
       <div id="load-bar" style="display:none" class="load-bar">
         <div class="lb-row"><span class="lb-lbl">Scheduled today</span><span class="lb-val" id="lb-val">0h</span></div>
@@ -802,6 +806,7 @@ const G = {
   tasks:[], notifs:[], filter:'all', df:'today',
   showDone:false, openId:null, delArm:{}, reminded:new Set(),
   editingRemark:null, tick:null,
+  statFilter: 'all', // 'all' | 'done' | 'active' | 'overdue'
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -1336,6 +1341,23 @@ function getActive(){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// STAT FILTER
+// ═══════════════════════════════════════════════════════════════
+function setStatFilter(sf){
+  G.statFilter = sf;
+  // Update chip highlight
+  ['ds-total','ds-done','ds-active','ds-od'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.classList.remove('active-chip');
+  });
+  const map={all:'ds-total',done:'ds-done',active:'ds-active',overdue:'ds-od'};
+  const active=document.getElementById(map[sf]);
+  if(active) active.classList.add('active-chip');
+  // If not on tasks tab, switch to it
+  goTab('tasks');
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════
 function render(){
@@ -1374,12 +1396,21 @@ function render(){
     else{lmsg.className='load-msg lm-max';lmsg.textContent=`${n} tasks. Maxed out. Prioritise ruthlessly.`;}
   }else{lbar.style.display='none';lmsg.style.display='none';}
 
-  // active list
+  // active list — respects statFilter
   const al=document.getElementById('active-list'); al.innerHTML='';
-  const fa=getActive();
+  let fa;
+  if(G.statFilter==='done'){
+    fa=G.tasks.filter(t=>t.stage==='done'&&(G.filter==='all'||t.tag===G.filter));
+  }else if(G.statFilter==='overdue'){
+    fa=G.tasks.filter(t=>isOD(t)&&(G.filter==='all'||t.tag===G.filter));
+  }else{
+    fa=getActive();
+  }
+  const showingFiltered=(G.statFilter==='done'||G.statFilter==='overdue');
   if(!fa.length){
-    al.innerHTML=`<div class="empty"><div class="empty-ico">[ NO TASKS ]</div><div class="empty-txt">Add a task above${G.filter!=='all'?` in ${G.filter} category`:''}</div></div>`;
-  }else if(G.df!=='today'){
+    const emptyMsg=G.statFilter==='done'?'No completed tasks yet':G.statFilter==='overdue'?'No overdue tasks':'No active tasks'+(G.filter!=='all'?` in ${G.filter} category`:'');
+    al.innerHTML=`<div class="empty"><div class="empty-ico">[ NO TASKS ]</div><div class="empty-txt">${emptyMsg}</div></div>`;
+  }else if(G.df!=='today'&&!showingFiltered){
     // group by date
     const grps={};fa.forEach(t=>{const d=t.task_date||t.date||today();if(!grps[d])grps[d]=[];grps[d].push(t);});
     Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
@@ -1393,7 +1424,7 @@ function render(){
   // done
   const dl=document.getElementById('done-list'),dh=document.getElementById('done-hdr');
   const sdb=document.getElementById('show-done-btn');
-  const df=G.filter==='all'?done:done.filter(t=>t.tag===G.filter);
+  const df=showingFiltered?[]:(G.filter==='all'?done:done.filter(t=>t.tag===G.filter));
   dl.innerHTML='';
   if(!df.length){dh.style.display='none';sdb.style.display='none';}
   else if(G.showDone){dh.style.display='flex';sdb.style.display='none';df.forEach(t=>dl.appendChild(mkCard(t)));}
@@ -1402,7 +1433,8 @@ function render(){
   // update filter tab counts
   setTimeout(updateFilterCounts, 0);
   // blocked
-  const bfl=G.filter==='all'?blocked:blocked.filter(t=>t.tag===G.filter);
+  // When statFilter shows done or overdue: hide done/blocked sections (already shown above)
+  const bfl=showingFiltered?[]:G.filter==='all'?blocked:blocked.filter(t=>t.tag===G.filter);
   document.getElementById('blocked-hdr').style.display=bfl.length?'flex':'none';
   const bl=document.getElementById('blocked-list');bl.innerHTML='';bfl.forEach(t=>bl.appendChild(mkCard(t)));
 }
@@ -1702,15 +1734,15 @@ async function renderStats(){
     <div class="an-title">Today's Scorecard</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
       <div style="text-align:center">
-        <div style="font-family:var(--font-h);font-size:40px;font-weight:900;color:var(--green);line-height:1">${done.length}</div>
+        <div style="font-family:var(--font-h);font-size:32px;font-weight:900;color:var(--green);line-height:1">${done.length}</div>
         <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Done</div>
       </div>
       <div style="text-align:center">
-        <div style="font-family:var(--font-h);font-size:40px;font-weight:900;color:var(--gold);line-height:1">${fmtT(tracked)}</div>
+        <div style="font-family:var(--font-h);font-size:32px;font-weight:900;color:var(--gold);line-height:1">${fmtT(tracked)}</div>
         <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Tracked</div>
       </div>
       <div style="text-align:center">
-        <div style="font-family:var(--font-h);font-size:40px;font-weight:900;color:${pct>=75?'var(--green)':pct>=40?'var(--amber)':'var(--red)'};line-height:1">${pct}%</div>
+        <div style="font-family:var(--font-h);font-size:32px;font-weight:900;color:${pct>=75?'var(--green)':pct>=40?'var(--amber)':'var(--red)'};line-height:1">${pct}%</div>
         <div style="font-family:var(--font-m);font-size:9px;color:var(--grey);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Complete</div>
       </div>
     </div>
