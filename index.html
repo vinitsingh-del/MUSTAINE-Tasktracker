@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0a0a">
-<title>MUSTAINE</title>
+<title>MUSTAINE · by Vinit · Troopod</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>r.forEach(s=>s.unregister()));}
@@ -25,13 +25,25 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 @keyframes glow{0%,100%{text-shadow:0 0 8px rgba(230,51,41,.5)}50%{text-shadow:0 0 24px rgba(230,51,41,.9)}}
 @keyframes burnFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 
-/* LOADING */
-#ls{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
-.ls-logo{font-family:var(--fh);font-size:52px;font-weight:900;letter-spacing:.08em;color:var(--red);animation:glow 2s infinite}
-.ls-sub{font-family:var(--fm);font-size:10px;letter-spacing:.3em;color:var(--grey);text-transform:uppercase}
-.ls-bar{width:160px;height:2px;background:var(--b2);border-radius:1px;overflow:hidden}
-.ls-prog{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));animation:lp 1.5s ease-out forwards}
+/* LOADING — CINEMATIC */
 @keyframes lp{from{width:0}to{width:100%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes uspFade{0%,100%{opacity:0;transform:translateY(8px)}20%,80%{opacity:1;transform:translateY(0)}}
+@keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
+#ls{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(230,51,41,.07) 0%,transparent 70%);pointer-events:none}
+.ls-inner{display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeInUp .6s ease both}
+.ls-mark{animation:fadeInUp .5s ease both;animation-delay:.1s;opacity:0}
+.ls-logo{font-family:var(--fh);font-size:56px;font-weight:900;letter-spacing:.1em;color:var(--red);animation:glow 2s infinite, fadeInUp .5s ease .2s both}
+.ls-byline{font-family:var(--fm);font-size:10px;letter-spacing:.28em;color:var(--grey2);text-transform:uppercase;animation:fadeInUp .5s ease .35s both;opacity:0}
+.ls-usps{height:28px;display:flex;align-items:center;justify-content:center;margin:4px 0;overflow:hidden;position:relative;min-width:260px}
+.ls-usp{position:absolute;font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:.22em;color:var(--white);opacity:0;text-transform:uppercase;white-space:nowrap}
+#usp0{animation:uspFade 1.2s ease .5s both}
+#usp1{animation:uspFade 1.2s ease 1.7s both}
+#usp2{animation:uspFade 1.4s ease 2.9s both;color:var(--gold)}
+.ls-bar{width:200px;height:2px;background:var(--b2);border-radius:1px;overflow:hidden;margin-top:8px;animation:fadeInUp .5s ease .4s both;opacity:0}
+.ls-prog{height:100%;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));background-size:200% 100%;animation:lp 3.8s ease-out forwards,burnFlow 2s linear infinite}
+.ls-hint{font-family:var(--fm);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.12);text-transform:uppercase;animation:fadeInUp .5s ease 3.5s both;opacity:0}
 
 /* AUTH */
 #as{position:fixed;inset:0;background:var(--bg);z-index:90;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
@@ -395,15 +407,42 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 <body>
 
 <div id="ls">
-  <div class="ls-logo">MUSTAINE</div>
-  <div class="ls-sub">Task Tracker · Troopod</div>
-  <div class="ls-bar"><div class="ls-prog"></div></div>
+  <div class="ls-inner">
+    <!-- Logo mark — M icon -->
+    <div class="ls-mark">
+      <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:64px">
+        <rect width="60" height="60" rx="14" fill="#e63329" opacity="0.12"/>
+        <rect x="1" y="1" width="58" height="58" rx="13" stroke="#e63329" stroke-width="1.5" opacity="0.4"/>
+        <text x="30" y="42" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="36" fill="#e63329" letter-spacing="-1">M</text>
+      </svg>
+    </div>
+    <div class="ls-logo">MUSTAINE</div>
+    <div class="ls-byline">by Vinit &middot; Troopod</div>
+    <div class="ls-usps">
+      <div class="ls-usp" id="usp0">YOUR COFOUNDER</div>
+      <div class="ls-usp" id="usp1">YOUR COWORKER</div>
+      <div class="ls-usp" id="usp2">YOUR SAATHI</div>
+    </div>
+    <div class="ls-bar"><div class="ls-prog"></div></div>
+    <div class="ls-hint">Troopod Task OS · Stealth Mode</div>
+    <div style="margin-top:20px;font-family:var(--fm);font-size:9px;letter-spacing:.15em;color:rgba(255,255,255,.18);text-transform:uppercase;cursor:pointer" onclick="document.getElementById('ls').style.display='none';document.getElementById('as').style.display='flex'">tap to skip &rarr;</div>
+  </div>
 </div>
 
 <div id="as">
   <div class="aw">
-    <div class="a-logo">MUSTAINE</div>
-    <div class="a-tag">Troopod Task Tracker</div>
+    <!-- MUSTAINE Logo Mark -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:4px">
+      <div style="position:relative;width:56px;height:56px">
+        <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:56px;height:56px">
+          <rect width="56" height="56" rx="13" fill="rgba(230,51,41,0.10)"/>
+          <rect x="1" y="1" width="54" height="54" rx="12" stroke="rgba(230,51,41,0.45)" stroke-width="1.5"/>
+          <path d="M12 40V16l10 16 6-10 6 10 10-16v24" stroke="#e63329" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="a-logo">MUSTAINE</div>
+    </div>
+    <div class="a-tag" style="margin-bottom:20px">by Vinit &middot; Troopod</div>
     <div class="a-box">
       <div class="a-tabs">
         <button class="a-tab on" onclick="aMode('in')">Sign In</button>
@@ -434,7 +473,17 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   <!-- MOBILE HEADER -->
   <div class="mob-hdr">
     <div class="hdr">
-      <div class="hdr-logo">MUSTAINE</div>
+      <div style="display:flex;align-items:center;gap:7px;flex:1">
+        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;flex-shrink:0">
+          <rect width="28" height="28" rx="6" fill="rgba(230,51,41,0.1)"/>
+          <rect x=".5" y=".5" width="27" height="27" rx="5.5" stroke="rgba(230,51,41,0.4)" stroke-width="1"/>
+          <path d="M5 21V7l5 8.5L14 8l4 7.5L23 7v14" stroke="#e63329" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="hdr-logo" style="line-height:1">MUSTAINE</div>
+          <div style="font-family:var(--fm);font-size:8px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">by Vinit · Troopod</div>
+        </div>
+      </div>
       <div class="hdr-clock" id="hclock">00:00</div>
       <div class="hdr-bell" onclick="gTab('notifs')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -454,7 +503,17 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
   <!-- SIDEBAR (desktop) -->
   <div class="sidebar">
-    <div class="sb-logo">MUSTAINE</div>
+    <div style="padding:18px 18px 10px;display:flex;align-items:center;gap:10px">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;flex-shrink:0">
+        <rect width="36" height="36" rx="8" fill="rgba(230,51,41,0.1)"/>
+        <rect x=".75" y=".75" width="34.5" height="34.5" rx="7.25" stroke="rgba(230,51,41,0.4)" stroke-width="1.5"/>
+        <path d="M7 26V10l6.5 10.5L18 12l4.5 8.5L29 10v16" stroke="#e63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="sb-logo" style="padding:0;font-size:22px;line-height:1">MUSTAINE</div>
+        <div style="font-family:var(--fm);font-size:9px;letter-spacing:.18em;color:var(--grey2);text-transform:uppercase;margin-top:1px">by Vinit · Troopod</div>
+      </div>
+    </div>
     <div class="sb-nav">
       <button class="sb-tab on" id="sb-tasks" onclick="gTab('tasks')">Tasks</button>
       <button class="sb-tab" id="sb-notifs" onclick="gTab('notifs')">Alerts <span id="alert-badge-d" style="display:none;background:var(--red);color:#fff;font-size:8px;border-radius:8px;padding:0 5px;font-family:var(--fm)"></span></button>
@@ -789,7 +848,16 @@ async function doAuth(){
   if(aM==='up'&&!name){aMsg('Enter your name',1);return;}
   const btn=document.getElementById('a-btn');btn.disabled=true;btn.textContent='Please wait...';
   try{
-    if(aM==='up'){const r=await SB.signUp(email,pass,name);if(r?.access_token)await boot();else aMsg('Check email to confirm',0);}
+    if(aM==='up'){
+        const r=await SB.signUp(email,pass,name);
+        if(r?.access_token){
+          await boot();
+        } else if(r?.id||r?.user?.id){
+          aMsg('Account created! Check your email to confirm, then sign in.',0);
+        } else {
+          aMsg('Account created. You can sign in now if email confirmation is disabled.',0);
+        }
+      }
     else{await SB.signIn(email,pass);await boot();}
   }catch(e){let m=e.message||'Error';if(m.includes('Invalid login'))m='Wrong email or password';if(m.includes('confirmed'))m='Confirm your email first';aMsg(m,1);}
   btn.disabled=false;btn.textContent=aM==='up'?'Create Account':'Sign In';
@@ -1880,7 +1948,7 @@ document.getElementById('drawer')?.addEventListener('touchstart',e=>{_dy=e.touch
 document.getElementById('drawer')?.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-_dy>90)closeDrawer();},{passive:true});
 
 /* ── START ── */
-window.addEventListener('load',()=>setTimeout(boot,800));
+window.addEventListener('load',()=>setTimeout(boot,4200)); // wait for USP animations
 </script>
 </body>
 </html>
