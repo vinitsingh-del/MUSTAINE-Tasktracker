@@ -127,18 +127,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .lm-hi{display:block;background:rgba(230,51,41,.06);border-color:rgba(230,51,41,.2);color:var(--red)}
 
 /* ADD BOX */
-.add-box{padding:9px 12px;border-bottom:1px solid var(--b1);background:var(--bg)}
+.add-box{padding:8px 12px 7px;border-bottom:1px solid var(--b1);background:var(--bg)}
 .add-row{display:flex;gap:7px}
-.add-inp{flex:1;background:var(--s1);border:1px solid var(--b2);color:var(--white);font-family:var(--fb);font-size:14px;padding:9px 12px;border-radius:8px;outline:none;-webkit-appearance:none}
+.add-inp{flex:1;background:var(--s1);border:1px solid var(--b2);color:var(--white);font-family:var(--fb);font-size:14px;padding:8px 12px;border-radius:7px;outline:none;-webkit-appearance:none}
 .add-inp:focus{border-color:var(--red)}
 .add-inp::placeholder{color:var(--grey2)}
-.add-go{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 16px;font-family:var(--fh);font-size:15px;font-weight:800;letter-spacing:.1em;cursor:pointer;white-space:nowrap}
+.add-go{background:var(--red);color:#fff;border:none;border-radius:7px;padding:0 16px;font-family:var(--fh);font-size:15px;font-weight:800;letter-spacing:.1em;cursor:pointer;white-space:nowrap;min-height:38px}
 .add-go:active{opacity:.8}
-.add-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
-.add-sel{background:var(--s1);border:1px solid var(--b2);color:var(--grey);font-family:var(--fm);font-size:11px;padding:7px 10px;border-radius:7px;outline:none;-webkit-appearance:none;appearance:none;width:100%;cursor:pointer}
+/* Fields row — mobile: 3-col grid; desktop: single flex row */
+.add-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:6px}
+.add-meta{display:none} /* legacy — removed */
+.add-sel{background:var(--s1);border:1px solid var(--b2);color:var(--grey);font-family:var(--fm);font-size:11px;padding:6px 8px;border-radius:6px;outline:none;-webkit-appearance:none;appearance:none;width:100%;cursor:pointer}
 .add-sel:focus{border-color:var(--red)}
-.add-times{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
-.add-t{background:var(--s1);border:1px solid var(--b2);color:var(--grey);font-family:var(--fm);font-size:11px;padding:7px 10px;border-radius:7px;outline:none;width:100%;-webkit-appearance:none}
+.add-times{display:none} /* legacy — removed */
+.add-t{background:var(--s1);border:1px solid var(--b2);color:var(--grey);font-family:var(--fm);font-size:11px;padding:6px 8px;border-radius:6px;outline:none;width:100%;-webkit-appearance:none}
+.add-t-sm{max-width:70px}
 .add-t:focus{border-color:var(--red)}
 
 /* TOOLBAR */
@@ -426,22 +429,18 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   #hours-meter{margin-top:5px}
   .load-msg{margin-top:5px;font-size:11px}
 
-  /* ── ADD BOX: compact single-line layout on desktop ── */
-  .add-box{padding:8px 20px;border-bottom:1px solid var(--b1)}
+  /* ── ADD BOX: desktop — one compact flex row ── */
+  .add-box{padding:7px 20px 8px}
   .add-row{gap:8px}
-  .add-inp{font-size:14px;padding:9px 14px;border-radius:8px}
-  .add-go{padding:0 22px;font-size:16px;border-radius:8px;min-height:40px}
-
-  /* Desktop add form: new unified grid classes */
-    /* Desktop add form — 5-column full width */
-  /* Row 1: Category | Priority | Time | Date | Recur */
-  .add-meta{grid-template-columns:1.8fr 1.2fr 0.95fr 1.15fr 1fr;gap:8px;margin-top:7px}
-  /* Row 2: Start Date | Finish Date | Est Hours */
-  .add-times{grid-template-columns:1fr 1fr 0.7fr;gap:8px;margin-top:6px}
-  /* Row 3: Next action (single full row) */
-  .add-times + .add-times{grid-template-columns:1.3fr 2.7fr;gap:8px}
-  .add-sel,.add-t{font-size:11px;padding:7px 11px;border-radius:7px}
-  .add-times > div > div:first-child{font-size:8px;letter-spacing:.1em;margin-bottom:2px}
+  .add-inp{font-size:14px;padding:8px 14px}
+  .add-go{padding:0 20px;font-size:15px;min-height:38px}
+  /* All fields in single horizontal flex row */
+  .add-fields{display:flex;flex-wrap:nowrap;gap:6px;margin-top:6px;align-items:center}
+  .add-fields .add-sel{min-width:88px;flex:1.4;max-width:150px}
+  .add-fields #add-tag{min-width:110px;flex:1.8}
+  .add-fields .add-t{min-width:76px;flex:1;max-width:140px}
+  .add-fields .add-t-sm{flex:0 0 55px;max-width:55px}
+  .add-sel,.add-t{font-size:11px;padding:6px 9px;border-radius:6px}
 
   /* ── TOOLBAR: full width, bigger text ── */
   .toolbar{padding:5px 20px;gap:7px}
@@ -684,8 +683,9 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
           <input class="add-inp" id="add-title" placeholder="Add a task..." maxlength="140">
           <button class="add-go" onclick="addTask()">ADD</button>
         </div>
-        <div class="add-meta">
-          <select class="add-sel" id="add-tag">
+        <!-- Compact meta row: all fields inline, no labels -->
+        <div class="add-fields">
+          <select class="add-sel" id="add-tag" title="Category">
             <option value="sales">Sales</option><option value="revenue">Revenue</option>
             <option value="client">Client</option><option value="kam">KAM</option>
             <option value="design">Design</option><option value="ops">Ops</option>
@@ -693,41 +693,23 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
             <option value="management">Management</option><option value="daily">Daily Work</option>
             <option value="personal">Personal</option>
           </select>
-          <select class="add-sel" id="add-pri">
+          <select class="add-sel" id="add-pri" title="Priority">
             <option value="medium">Medium</option><option value="urgent">Urgent</option>
             <option value="high">High</option><option value="low">Low</option>
           </select>
-        </div>
-        <div class="add-times">
-          <input class="add-t" type="time" id="add-time">
+          <input class="add-t" type="time" id="add-time" title="Time">
           <input class="add-t" type="date" id="add-date" title="Due date">
-          <select class="add-sel" id="add-recur">
-            <option value="none">One-time</option>
+          <select class="add-sel" id="add-recur" title="Repeat">
+            <option value="none">Once</option>
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
-            <option value="biweekly">15 Days</option>
+            <option value="biweekly">15d</option>
             <option value="monthly">Monthly</option>
           </select>
-        </div>
-        <div class="add-dates-grid" style="margin-top:6px">
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Start Date</div>
-            <input class="add-t" type="date" id="add-start-date">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Finish Date</div>
-            <input class="add-t" type="date" id="add-finish-date">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Est. Hours</div>
-            <input class="add-t" type="number" id="add-hours" min="0" max="24" step="0.5" placeholder="0" style="width:100%">
-          </div>
-        </div>
-        <div class="add-times" style="margin-top:7px">
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase">Next Action</div>
-            <input class="add-t" type="date" id="add-next-action">
-          </div>
+          <input class="add-t" type="date" id="add-start-date" title="Start date">
+          <input class="add-t" type="date" id="add-finish-date" title="Finish date">
+          <input class="add-t add-t-sm" type="number" id="add-hours" min="0" max="24" step="0.5" placeholder="Hrs" title="Est. hours">
+          <input class="add-t" type="date" id="add-next-action" title="Next action date">
         </div>
       </div>
       <div class="toolbar">
