@@ -570,6 +570,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   .view-head > *, .view-scroll { max-width: 860px; }
 }
 </style>
+<script>
+// Kill any stale service workers and caches immediately
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(r=>r.unregister());});
+}
+if('caches' in window){
+  caches.keys().then(keys=>{keys.forEach(k=>caches.delete(k));});
+}
+</script>
 </head>
 <body>
 
