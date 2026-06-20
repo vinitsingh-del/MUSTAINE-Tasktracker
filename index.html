@@ -1501,80 +1501,125 @@ function render(){
     else           {lmsg.className='load-msg lm-max';lmsg.textContent=`${n} tasks. Maxed. Prioritise ruthlessly.`;}
   } else if(lbar&&lmsg){ lbar.style.display='none';lmsg.style.display='none'; }
 
-  // ── 6. ACTIVE LIST ────────────────────────────────────────────────
-  // statFilter overrides what shows in the main list
-  // tag filter (G.filter) applies on top of statFilter
+  // ── 6. TASK LISTS ────────────────────────────────────────────────
+  // statFilter controls what shows. Tag filter applies everywhere.
   const tagOk = t => G.filter==='all' || t.tag===G.filter;
-  let mainList = [];
-  let showingStatFilter = false;
 
-  if(G.statFilter==='done'){
-    mainList = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t));
-    showingStatFilter = true;
-  } else if(G.statFilter==='overdue'){
-    mainList = allTasks.filter(t=>isOD(t) && tagOk(t));
-    showingStatFilter = true;
-  } else {
-    // normal: active tasks (not done, not blocked, not closed)
-    mainList = allTasks.filter(t=>!['done','blocked','closed'].includes(t.stage) && tagOk(t));
-    // sort: by scheduled time asc, then by created_at
-    mainList.sort((a,b)=>{
-      const at=a.task_time||a.time, bt=b.task_time||b.time;
-      if(at&&bt) return at<bt?-1:1;
-      if(at&&!bt) return -1;
-      if(!at&&bt) return 1;
-      return new Date(a.created_at)-new Date(b.created_at);
-    });
-  }
+  // Sort helper: by time then created_at
+  const byTime = (a,b) => {
+    const at=a.task_time||a.time, bt=b.task_time||b.time;
+    if(at&&bt) return at<bt?-1:1;
+    if(at&&!bt) return -1; if(!at&&bt) return 1;
+    return new Date(a.created_at)-new Date(b.created_at);
+  };
 
-  const al = el('active-list'); al.innerHTML='';
-  if(!mainList.length){
-    const msg = G.statFilter==='done'    ? 'No completed tasks'
-               :G.statFilter==='overdue' ? 'No overdue tasks'
-               :G.statFilter==='active'  ? 'No active tasks'
-               :`No tasks${G.filter!=='all'?' in '+G.filter:''}`;
-    al.innerHTML=`<div class="empty"><div class="empty-ico">[ ]</div><div class="empty-txt">${msg}</div></div>`;
-  } else if(G.df!=='today' && !showingStatFilter){
-    // Group by date when showing multi-day view
-    const grps={};
-    mainList.forEach(t=>{const d=t.task_date||t.date||todayStr;if(!grps[d])grps[d]=[];grps[d].push(t);});
-    Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
-      const isPast=d<todayStr;
-      const div=document.createElement('div');
-      div.className='date-grp'+(isPast?' past':'');
-      div.textContent=(d===todayStr?'Today':d)+(isPast?' — PAST':'');
-      al.appendChild(div);
-      grps[d].forEach(t=>al.appendChild(mkCard(t)));
-    });
-  } else {
-    mainList.forEach(t=>al.appendChild(mkCard(t)));
-  }
-
-  // ── 7. DONE SECTION (only when not statFiltering) ────────────────
+  const al  = el('active-list');
   const dl  = el('done-list');
   const dh  = el('done-hdr');
   const sdb = el('show-done-btn');
-  if(dl && dh && sdb){
-    const doneFilt = showingStatFilter ? []
-      : allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t));
-    dl.innerHTML='';
-    if(!doneFilt.length){
-      dh.style.display='none'; sdb.style.display='none';
-    } else if(G.showDone){
-      dh.style.display='flex'; sdb.style.display='none';
-      doneFilt.forEach(t=>dl.appendChild(mkCard(t)));
-    } else {
-      dh.style.display='none'; sdb.style.display='';
-      sdb.textContent=`Show ${doneFilt.length} completed`;
-    }
-  }
+  const bh  = el('blocked-hdr');
+  const bl  = el('blocked-list');
 
-  // ── 8. BLOCKED SECTION ────────────────────────────────────────────
-  const blockedFilt = showingStatFilter ? []
-    : allTasks.filter(t=>t.stage==='blocked' && tagOk(t));
-  const bh = el('blocked-hdr'), bl = el('blocked-list');
-  if(bh) bh.style.display = blockedFilt.length ? 'flex' : 'none';
-  if(bl){ bl.innerHTML=''; blockedFilt.forEach(t=>bl.appendChild(mkCard(t))); }
+  al.innerHTML='';
+  if(dl) dl.innerHTML='';
+  if(bl) bl.innerHTML='';
+
+  if(G.statFilter==='done'){
+    // ── Done filter: show all done/closed tasks in main list ──
+    const list = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t)).sort(byTime);
+    if(dh) dh.style.display='none';
+    if(sdb) sdb.style.display='none';
+    if(bh) bh.style.display='none';
+    if(!list.length){
+      al.innerHTML=`<div class="empty"><div class="empty-ico">[ ]</div><div class="empty-txt">No completed tasks yet</div></div>`;
+    } else {
+      list.forEach(t=>al.appendChild(mkCard(t)));
+    }
+
+  } else if(G.statFilter==='overdue'){
+    // ── Overdue filter: show all overdue tasks in main list ──
+    const list = allTasks.filter(t=>isOD(t) && tagOk(t)).sort(byTime);
+    if(dh) dh.style.display='none';
+    if(sdb) sdb.style.display='none';
+    if(bh) bh.style.display='none';
+    if(!list.length){
+      al.innerHTML=`<div class="empty"><div class="empty-ico">[ ]</div><div class="empty-txt">No overdue tasks</div></div>`;
+    } else {
+      list.forEach(t=>al.appendChild(mkCard(t)));
+    }
+
+  } else if(G.statFilter==='all'){
+    // ── Total filter: show ALL tasks together, grouped by status ──
+    const active  = allTasks.filter(t=>!['done','closed','blocked'].includes(t.stage) && tagOk(t)).sort(byTime);
+    const done    = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t)).sort(byTime);
+    const blocked = allTasks.filter(t=>t.stage==='blocked' && tagOk(t));
+    const combined = [...active, ...blocked, ...done];
+    if(dh) dh.style.display='none';
+    if(sdb) sdb.style.display='none';
+    if(bh) bh.style.display='none';
+    if(!combined.length){
+      al.innerHTML=`<div class="empty"><div class="empty-ico">[ ]</div><div class="empty-txt">No tasks${G.filter!=='all'?' in '+G.filter:''}</div></div>`;
+    } else {
+      // Add section labels within the list
+      if(active.length){
+        const lbl=document.createElement('div');lbl.className='sec';
+        lbl.innerHTML='<div class="sec-title">Active ('+active.length+')</div>';al.appendChild(lbl);
+        active.forEach(t=>al.appendChild(mkCard(t)));
+      }
+      if(blocked.length){
+        const lbl=document.createElement('div');lbl.className='sec';
+        lbl.innerHTML='<div class="sec-title" style="color:var(--red)">Blocked ('+blocked.length+')</div>';al.appendChild(lbl);
+        blocked.forEach(t=>al.appendChild(mkCard(t)));
+      }
+      if(done.length){
+        const lbl=document.createElement('div');lbl.className='sec';
+        lbl.innerHTML='<div class="sec-title" style="color:var(--green)">Completed ('+done.length+')</div>';al.appendChild(lbl);
+        done.forEach(t=>al.appendChild(mkCard(t)));
+      }
+    }
+
+  } else {
+    // ── DEFAULT (no chip active): normal view ──
+    // Active in main list, done collapsed below, blocked at bottom
+    const active = allTasks.filter(t=>!['done','blocked','closed'].includes(t.stage) && tagOk(t)).sort(byTime);
+
+    // Render active tasks (grouped by date in multi-day mode)
+    if(!active.length){
+      al.innerHTML=`<div class="empty"><div class="empty-ico">[ ]</div><div class="empty-txt">No active tasks${G.filter!=='all'?' in '+G.filter:''}</div></div>`;
+    } else if(G.df!=='today'){
+      const grps={};
+      active.forEach(t=>{const d=t.task_date||t.date||todayStr;if(!grps[d])grps[d]=[];grps[d].push(t);});
+      Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
+        const isPast=d<todayStr;
+        const div=document.createElement('div');
+        div.className='date-grp'+(isPast?' past':'');
+        div.textContent=(d===todayStr?'Today':d)+(isPast?' — PAST':'');
+        al.appendChild(div);
+        grps[d].forEach(t=>al.appendChild(mkCard(t)));
+      });
+    } else {
+      active.forEach(t=>al.appendChild(mkCard(t)));
+    }
+
+    // Done section (collapsible)
+    const doneFilt = allTasks.filter(t=>(t.stage==='done'||t.stage==='closed') && tagOk(t));
+    if(dl && dh && sdb){
+      if(!doneFilt.length){
+        dh.style.display='none'; sdb.style.display='none';
+      } else if(G.showDone){
+        dh.style.display='flex'; sdb.style.display='none';
+        doneFilt.forEach(t=>dl.appendChild(mkCard(t)));
+      } else {
+        dh.style.display='none'; sdb.style.display='block';
+        sdb.textContent=`Show ${doneFilt.length} completed task${doneFilt.length>1?'s':''}`;
+      }
+    }
+
+    // Blocked section
+    const blockedFilt = allTasks.filter(t=>t.stage==='blocked' && tagOk(t));
+    if(bh) bh.style.display = blockedFilt.length ? 'flex' : 'none';
+    if(bl) blockedFilt.forEach(t=>bl.appendChild(mkCard(t)));
+  }
 
   // ── 9. FILTER TAB COUNTS ──────────────────────────────────────────
   setTimeout(updateFilterCounts, 0);
