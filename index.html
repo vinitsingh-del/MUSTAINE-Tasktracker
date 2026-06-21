@@ -20,6 +20,19 @@ if('caches' in window){caches.keys().then(k=>k.forEach(c=>caches.delete(c)));}
   --fh:'Barlow Condensed',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+/* Global animated gradient background */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bg-canvas .orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:.28;animation:orbFloat linear infinite}
+@keyframes orbFloat{
+  0%{transform:translate(0,0) scale(1)}
+  25%{transform:translate(60px,-40px) scale(1.08)}
+  50%{transform:translate(-30px,70px) scale(.94)}
+  75%{transform:translate(50px,30px) scale(1.05)}
+  100%{transform:translate(0,0) scale(1)}
+}
+/* Make sure app, auth, loading sit above canvas */
+#ls,#as,#app{position:fixed;z-index:2}
+#bg-canvas{z-index:0}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes glow{0%,100%{text-shadow:0 0 8px rgba(230,51,41,.5)}50%{text-shadow:0 0 24px rgba(230,51,41,.9)}}
@@ -34,7 +47,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 @keyframes uspGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 20px rgba(200,168,75,.6),0 0 60px rgba(200,168,75,.2)}}
 @keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
 #ls{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
-#ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(230,51,41,.07) 0%,transparent 70%);pointer-events:none}
+#ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(230,51,41,.12) 0%,transparent 65%),radial-gradient(ellipse at 80% 80%,rgba(200,168,75,.07) 0%,transparent 60%);pointer-events:none;animation:orbFloat 12s linear infinite}
 .ls-inner{display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeInUp .6s ease both}
 .ls-mark{animation:fadeInUp .5s ease both;animation-delay:.1s;opacity:0}
 .ls-logo{font-family:var(--fh);font-size:56px;font-weight:900;letter-spacing:.1em;color:var(--red);animation:glow 2s infinite, fadeInUp .5s ease .2s both}
@@ -50,11 +63,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* AUTH */
 #as{position:fixed;inset:0;z-index:90;display:none;overflow:hidden}
-#as.on{display:flex}
+#as.on{display:flex;background:rgba(10,10,10,.85)}
 
 /* Split layout */
 .as-left{
-  display:none;flex:1;background:linear-gradient(135deg,#0d0d0d 0%,#1a0a08 50%,#0d0d0d 100%);
+  display:none;flex:1;
+  background:rgba(8,8,8,.55);
+  backdrop-filter:blur(2px);
   position:relative;overflow:hidden;align-items:center;justify-content:center;flex-direction:column;gap:0;
 }
 .as-right{
@@ -77,7 +92,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .asl-tag{font-family:var(--fm);font-size:10px;letter-spacing:.3em;color:rgba(200,168,75,.6);text-transform:uppercase;margin-top:6px;margin-bottom:40px}
 .asl-features{display:flex;flex-direction:column;gap:16px;max-width:320px}
 .asl-feat{display:flex;align-items:center;gap:14px}
-.asl-feat-icon{width:36px;height:36px;border-radius:8px;background:rgba(230,51,41,.12);border:1px solid rgba(230,51,41,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.asl-feat-icon{width:36px;height:36px;border-radius:8px;background:rgba(230,51,41,.12);border:1px solid rgba(230,51,41,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.asl-feat-icon::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:var(--red);opacity:.9}
+.asl-icon-1::after{background:var(--red)}
+.asl-icon-2::after{background:var(--gold)}
+.asl-icon-3::after{background:var(--green)}
 .asl-feat-text{font-family:var(--fm);font-size:12px;color:rgba(255,255,255,.6);line-height:1.4}
 .asl-feat-title{font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--white);display:block;margin-bottom:2px}
 /* Ambient glow orbs */
@@ -183,7 +202,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .a-magic:hover{border-color:var(--gold);color:var(--gold)}
 
 /* APP */
-#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
+#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:rgba(10,10,10,.88)}
 
 /* MOBILE HEADER */
 .mob-hdr{flex-shrink:0;background:var(--bg)}
@@ -716,6 +735,15 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 </head>
 <body>
 
+<!-- ANIMATED BACKGROUND -->
+<div id="bg-canvas" aria-hidden="true">
+  <div class="orb" style="width:700px;height:700px;background:radial-gradient(circle,rgba(230,51,41,.35),transparent 70%);top:-200px;left:-200px;animation-duration:22s;animation-delay:0s"></div>
+  <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(200,168,75,.25),transparent 70%);top:40%;right:-150px;animation-duration:18s;animation-delay:-6s"></div>
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(230,51,41,.18),transparent 70%);bottom:-200px;left:30%;animation-duration:26s;animation-delay:-12s"></div>
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(200,168,75,.2),transparent 70%);top:20%;left:50%;animation-duration:15s;animation-delay:-4s"></div>
+  <div class="orb" style="width:450px;height:450px;background:radial-gradient(circle,rgba(139,92,246,.12),transparent 70%);bottom:10%;right:10%;animation-duration:20s;animation-delay:-9s"></div>
+</div>
+
 <div id="ls">
   <div class="ls-inner">
     <!-- Logo mark — M icon -->
@@ -748,21 +776,21 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     <div class="asl-tag">by Vinit &middot; Troopod</div>
     <div class="asl-features">
       <div class="asl-feat">
-        <div class="asl-feat-icon">🧠</div>
+        <div class="asl-feat-icon asl-icon-1"></div>
         <div class="asl-feat-text">
           <span class="asl-feat-title">Your Cofounder</span>
           Task intelligence that thinks with you, not for you.
         </div>
       </div>
       <div class="asl-feat">
-        <div class="asl-feat-icon">⚡</div>
+        <div class="asl-feat-icon asl-icon-2"></div>
         <div class="asl-feat-text">
           <span class="asl-feat-title">Your EA</span>
           Auto-recurring tasks, smart scheduling, zero overhead.
         </div>
       </div>
       <div class="asl-feat">
-        <div class="asl-feat-icon">📊</div>
+        <div class="asl-feat-icon asl-icon-3"></div>
         <div class="asl-feat-text">
           <span class="asl-feat-title">Your Team Member</span>
           Real-time stats, efficiency scores, daily PDF reports.
@@ -850,12 +878,12 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
         <!-- Magic link -->
         <div class="a-or"><span>or</span></div>
-        <button class="a-magic" onclick="doMagic()">&#9993; Send Magic Link to Email</button>
+        <button class="a-magic" onclick="doMagic()">Send Magic Link</button>
       </div>
 
       <!-- EMAIL VERIFICATION SCREEN (shown after signup) -->
       <div class="a-verify" id="a-verify">
-        <div class="a-verify-icon">&#128231;</div>
+        <div class="a-verify-icon"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:48px;height:48px;margin:0 auto 12px;display:block"><rect width="48" height="48" rx="12" fill="rgba(200,168,75,.1)"/><rect x=".5" y=".5" width="47" height="47" rx="11.5" stroke="rgba(200,168,75,.3)"/><path d="M10 16h28v20H10V16z" stroke="#c8a84b" stroke-width="1.5" fill="none" stroke-linejoin="round"/><path d="M10 16l14 12L38 16" stroke="#c8a84b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="a-verify-title">Check your email</div>
         <div class="a-verify-msg">
           We sent a confirmation link to
@@ -909,7 +937,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <button class="ntab on" id="nt-tasks-m" onclick="gTab('tasks')">Tasks</button>
       <button class="ntab" id="nt-notifs-m" onclick="gTab('notifs')">Alerts<span id="alert-badge-m" style="display:none;background:var(--red);color:#fff;font-size:8px;border-radius:8px;padding:0 4px;margin-left:3px;font-family:var(--fm)"></span></button>
       <button class="ntab" id="nt-done-m" onclick="gTab('done')">Done</button>
-      <button class="ntab" id="nt-recur-m" onclick="gTab('recur')">🔁 Recurring</button>
+      <button class="ntab" id="nt-recur-m" onclick="gTab('recur')">Recurring</button>
       <button class="ntab" id="nt-rules-m" onclick="gTab('rules')">Rules</button>
       <button class="ntab" id="nt-stats-m" onclick="gTab('stats')">Stats</button>
     </div>
@@ -932,7 +960,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <button class="sb-tab on" id="sb-tasks" onclick="gTab('tasks')">Tasks</button>
       <button class="sb-tab" id="sb-notifs" onclick="gTab('notifs')">Alerts <span id="alert-badge-d" style="display:none;background:var(--red);color:#fff;font-size:8px;border-radius:8px;padding:0 5px;font-family:var(--fm)"></span></button>
       <button class="sb-tab" id="sb-done" onclick="gTab('done')">Done</button>
-      <button class="sb-tab" id="sb-recur" onclick="gTab('recur')">🔁 Recurring</button>
+      <button class="sb-tab" id="sb-recur" onclick="gTab('recur')">Recurring</button>
       <button class="sb-tab" id="sb-rules" onclick="gTab('rules')">Rules</button>
       <button class="sb-tab" id="sb-stats" onclick="gTab('stats')">Stats</button>
     </div>
@@ -1040,7 +1068,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <div class="sync" id="sync"></div>
       </div>
       <div class="timer-active-strip" id="timer-strip" onclick="filterTimerTasks()">
-        &#9650; Running timers active — tap to view
+        Running timers active — tap to view
         <span id="timer-count" style="font-family:var(--fh);font-weight:700;margin-left:4px"></span>
       </div>
       <div class="filters" id="filters">
@@ -1064,8 +1092,8 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <button class="stab" data-stage="in_progress" onclick="setStage(this)">In Progress</button>
         <button class="stab" data-stage="review" onclick="setStage(this)">Review</button>
         <button class="stab" data-stage="blocked" onclick="setStage(this)">Blocked</button>
-        <button class="stab" data-stage="urgent" onclick="setStage(this)" style="color:var(--red)">🔴 Urgent</button>
-        <button class="stab timer-btn" data-stage="timer" onclick="setStage(this)" id="stage-timer-btn" style="display:none">⏱ Timer</button>
+        <button class="stab" data-stage="urgent" onclick="setStage(this)" style="color:var(--red)">Urgent</button>
+        <button class="stab timer-btn" data-stage="timer" onclick="setStage(this)" id="stage-timer-btn" style="display:none">Timer</button>
       </div>
       <div class="sec" id="act-hdr" style="display:none"><div class="sec-title" id="act-title">Active</div></div>
       <div class="card-list" id="active-list" data-cardlist="active"></div>
@@ -1384,75 +1412,94 @@ function aMsg(t,err){
   if(t)e.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function doAuth(){
-  const email=document.getElementById('a-email').value.trim();
-  const pass=document.getElementById('a-pass').value;
+  const email=(document.getElementById('a-email')?.value||'').trim();
+  const pass=document.getElementById('a-pass')?.value||'';
   const name=(document.getElementById('a-name')?.value||'').trim();
   aMsg('',1);aMsg('',0);
 
-  // Validation
+  // Client-side validation
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){aMsg('Enter a valid email address',1);return;}
   if(pass.length<6){aMsg('Password must be at least 6 characters',1);return;}
-  if(aM==='up'&&name.length<2){aMsg('Enter your full name (min 2 characters)',1);return;}
+  if(aM==='up'&&name.length<2){aMsg('Enter your full name',1);return;}
 
   const btn=document.getElementById('a-btn');
   if(btn){btn.disabled=true;btn.textContent='Please wait...';}
 
   try{
     if(aM==='up'){
-      // SIGN UP
-      const r=await SB.signUp(email,pass,name);
-      const uid=r?.id||r?.user?.id||r?.access_token;
-      if(r?.access_token){
-        // Auto-confirmed (email confirmation disabled) — boot directly
+      // ── SIGN UP ──
+      let result;
+      try{result=await SB.signUp(email,pass,name);}
+      catch(signupErr){
+        // Handle "user already exists" gracefully
+        const msg=signupErr.message||'';
+        if(msg.includes('already registered')||msg.includes('already been registered')||msg.includes('User already registered')){
+          aMsg('This email already has an account. Switch to Sign In above.',1);
+          if(btn){btn.disabled=false;btn.textContent='Create Account';}
+          return;
+        }
+        throw signupErr;
+      }
+
+      // Supabase returns different shapes depending on email confirmation setting:
+      // Auto-confirmed: { access_token, user, ... }
+      // Needs confirmation: { id, email, ... } OR { user: { id, email, ... } }
+      const uid=result?.id||result?.user?.id;
+      if(result?.access_token){
+        // Auto-confirmed — go directly into app
         await boot();
         return;
       }
       if(uid){
-        // Account created — try signing in immediately (works if auto-confirmed)
+        // Account created — try immediate sign-in (works if auto-confirmed)
         try{
           await SB.signIn(email,pass);
           await boot();
           return;
-        }catch(signInErr){
-          // Email confirmation required — show verification screen
-          const emailEl=document.getElementById('a-verify-email');
-          if(emailEl)emailEl.textContent=email;
-          const fw=document.getElementById('a-form-wrap');if(fw)fw.style.display='none';
-          const vr=document.getElementById('a-verify');if(vr)vr.className='a-verify on';
+        }catch{
+          // Email confirmation required — show verify screen
+          showVerifyScreen(email);
+          if(btn){btn.disabled=false;btn.textContent='Create Account';}
           return;
         }
       }
-      // Fallback
-      aMsg('Account created! Please sign in.',0);
-      aMode('in');
-      const em=document.getElementById('a-email');if(em)em.value=email;
+      // Unknown response — show verify screen as safe fallback
+      showVerifyScreen(email);
 
-    } else {
-      // SIGN IN
+    }else{
+      // ── SIGN IN ──
       await SB.signIn(email,pass);
       await boot();
     }
 
   }catch(e){
-    const raw=e.message||'';
+    const raw=(e.message||'').toLowerCase();
     let msg='Something went wrong. Please try again.';
-    if(raw.includes('Invalid login')||raw.includes('invalid_credentials')||raw.includes('Invalid email'))
+    if(raw.includes('invalid login')||raw.includes('invalid_credentials')||raw.includes('invalid email or password'))
       msg='Wrong email or password. Please check and try again.';
-    else if(raw.includes('Email not confirmed')||raw.includes('not confirmed'))
-      msg='Email not verified yet. Check your inbox for the confirmation link.';
-    else if(raw.includes('already registered')||raw.includes('already been registered'))
-      msg='An account with this email already exists. Sign in instead.';
+    else if(raw.includes('email not confirmed')||raw.includes('not confirmed'))
+      msg='Email not verified. Check your inbox and click the confirmation link, then try signing in.';
+    else if(raw.includes('already registered'))
+      msg='This email already has an account. Use Sign In instead.';
     else if(raw.includes('rate limit')||raw.includes('too many'))
-      msg='Too many attempts. Please wait a moment and try again.';
-    else if(raw.includes('User already registered'))
-      msg='This email is registered. Try signing in instead.';
-    else if(raw)
-      msg=raw;
+      msg='Too many attempts. Wait 30 seconds and try again.';
+    else if(raw.includes('network')||raw.includes('failed to fetch'))
+      msg='Connection error. Check your internet and try again.';
+    else if(e.message)
+      msg=e.message;
     aMsg(msg,1);
   }
 
   if(btn){btn.disabled=false;btn.textContent=aM==='up'?'Create Account':'Sign In';}
 }
+
+function showVerifyScreen(email){
+  const el=document.getElementById('a-verify-email');if(el)el.textContent=email||'your email';
+  const fw=document.getElementById('a-form-wrap');if(fw)fw.style.display='none';
+  const vr=document.getElementById('a-verify');if(vr)vr.className='a-verify on';
+}
+
+
 async function doMagic(){const e=document.getElementById('a-email').value.trim();if(!e){aMsg('Enter email first',1);return;}try{await SB.magic(e);aMsg('Magic link sent',0);}catch(e){aMsg(e.message,1);}}
 async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();toast('Signed out');}
 
@@ -1836,7 +1883,7 @@ function mkCard(task){
   if(rc){const s=document.createElement('span');s.className='cc';s.textContent=rc+' note'+(rc>1?'s':'');counts.appendChild(s);}
   if(isDone&&task.hours_worked>0){const hw=document.createElement('span');hw.className='cc';hw.style.color='var(--green)';hw.textContent=task.hours_worked+'h logged';counts.appendChild(hw);}
   if(ac){const s=document.createElement('span');s.className='cc';s.textContent=ac+' file'+(ac>1?'s':'');counts.appendChild(s);}
-  if(running||elapsed>0){const s=document.createElement('span');s.className='cc';s.id='ct-timer-'+id;s.style.color=running?'var(--red)':'var(--gold)';s.textContent=running?'⏱ '+fmtT(elapsed):fmtT(elapsed);counts.appendChild(s);}
+  if(running||elapsed>0){const s=document.createElement('span');s.className='cc';s.id='ct-timer-'+id;s.style.color=running?'var(--red)':'var(--gold)';s.textContent=running?''+fmtT(elapsed):fmtT(elapsed);counts.appendChild(s);}
   // Calendar total duration (start_date → finish_date or now)
   const cdur=calDuration(task);
   if(cdur){const s=document.createElement('span');s.className='cc';s.title='Calendar duration (start to '+(task.finish_date?'finish':'now')+')';s.style.color='var(--grey)';s.textContent='Duration: '+cdur;counts.appendChild(s);}
@@ -1918,11 +1965,11 @@ async function renderDoneView(){
     try{const raw=await SB.getTasks(T);allToday=(raw||[]).map(norm);}catch{allToday=G.tasks.filter(t=>(t.task_date||t.date||T)===T);}
     const events=[];
     // Created today
-    allToday.forEach(t=>{events.push({ts:t.created_at,type:'created',icon:'✦',col:'var(--gold)',title:'Created: '+t.title,task:t});});
+    allToday.forEach(t=>{events.push({ts:t.created_at,type:'created',icon:'·',col:'var(--gold)',title:'Created: '+t.title,task:t});});
     // Done/closed today (done_at = today)
     allToday.filter(t=>t.done_at&&t.done_at.slice(0,10)===T).forEach(t=>{events.push({ts:t.done_at,type:'closed',icon:'✓',col:'var(--green)',title:'Closed: '+t.title,task:t});});
     // Activity logs today
-    allToday.forEach(t=>{(t.activity||[]).filter(a=>a.ts&&new Date(a.ts).toISOString().slice(0,10)===T).forEach(a=>{events.push({ts:a.ts,type:'update',icon:'↻',col:'var(--amber)',title:'Updated: '+t.title+' — '+a.text,task:t});});});
+    allToday.forEach(t=>{(t.activity||[]).filter(a=>a.ts&&new Date(a.ts).toISOString().slice(0,10)===T).forEach(a=>{events.push({ts:a.ts,type:'update',icon:'~',col:'var(--amber)',title:'Updated: '+t.title+' — '+a.text,task:t});});});
     events.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
     if(!events.length){wrap.innerHTML='<div class="empty"><div class="empty-ico">[ CLEAR ]</div><div class="empty-txt">No activity today yet</div></div>';return;}
     const hdr=document.createElement('div');hdr.className='sec';const hdrT=document.createElement('div');hdrT.className='sec-title';hdrT.textContent='Today Activity ('+events.length+')';hdr.appendChild(hdrT);wrap.appendChild(hdr);
@@ -2285,7 +2332,7 @@ function renderNotifs(){
   const read=G.notifs.filter(n=>n.read);
 
   // Summary bar
-  const typeMap={due_today:{icon:'📅',c:'#f59e0b',cls:'ni-due',label:'Due Today'},overdue:{icon:'🔴',c:'#e63329',cls:'ni-overdue',label:'Overdue'},urgent:{icon:'⚡',c:'#f97316',cls:'ni-urgent',label:'Urgent'},blocked:{icon:'⛔',c:'#a78bfa',cls:'ni-block',label:'Blocked'},done:{icon:'✅',c:'#22c55e',cls:'ni-done',label:'Done'},system:{icon:'🔔',c:'#60a5fa',cls:'ni-rule',label:'System'},rule:{icon:'📋',c:'#60a5fa',cls:'ni-rule',label:'Rule'}};
+  const typeMap={due_today:{icon:'',c:'#f59e0b',cls:'ni-due',label:'Due Today'},overdue:{icon:'',c:'#e63329',cls:'ni-overdue',label:'Overdue'},urgent:{icon:'',c:'#f97316',cls:'ni-urgent',label:'Urgent'},blocked:{icon:'—',c:'#a78bfa',cls:'ni-block',label:'Blocked'},done:{icon:'✓',c:'#22c55e',cls:'ni-done',label:'Done'},system:{icon:'',c:'#60a5fa',cls:'ni-rule',label:'System'},rule:{icon:'',c:'#60a5fa',cls:'ni-rule',label:'Rule'}};
   if(G.notifs.length){
     const sum=document.createElement('div');sum.className='ni-summary';
     const counts={};G.notifs.filter(n=>!n.read).forEach(n=>{counts[n.type]=(counts[n.type]||0)+1;});
@@ -2469,7 +2516,7 @@ async function renderStats(){
     '<b>Total</b> = all tasks with due/next-action date today. '+
     '<b style="color:var(--green)">Completed</b> = marked done. '+
     '<b style="color:var(--amber)">Active</b> = in progress or todo. '+
-    '<b style="color:var(--red)">Blocked</b> = waiting on external. '+(overdue.length?'<br><b style="color:var(--red)">⚠ '+overdue.length+' tasks are overdue</b> — action needed now.':'')
+    '<b style="color:var(--red)">Blocked</b> = waiting on external. '+(overdue.length?'<br><b style="color:var(--red)">! '+overdue.length+' tasks are overdue</b> — action needed now.':'')
   ));
   wrap.appendChild(card('Task Status','Click any metric to filter',statusContent,'var(--gold)'));
 
@@ -2497,7 +2544,7 @@ async function renderStats(){
   }
   if(running.length>1){
     const warn=document.createElement('div');warn.style.cssText='margin-top:6px;font-family:var(--fm);font-size:9px;color:var(--amber);padding:5px 9px;border-radius:5px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2)';
-    warn.innerHTML='⚠ '+running.length+' timers running simultaneously. <b>Only one should run at a time.</b> Stop others to log accurately.';
+    warn.innerHTML='! '+running.length+' timers running simultaneously. <b>Only one should run at a time.</b> Stop others to log accurately.';
     hoursContent.appendChild(warn);
   }
   hoursContent.appendChild(explainer(
@@ -2611,7 +2658,7 @@ async function renderStats(){
     vex.textContent='These tasks are missing recommended fields. Filling them improves your efficiency score and task tracking accuracy.';vc.appendChild(vex);
     violations.slice(0,8).forEach(({rule,field,sev,task})=>{
       const row=document.createElement('div');row.style.cssText='background:rgba(255,255,255,.03);border-radius:6px;padding:7px 10px;margin-bottom:5px;cursor:pointer;display:flex;align-items:center;gap:8px;border-left:3px solid '+(sev==='error'?'var(--red)':'var(--amber)');
-      const icon=document.createElement('div');icon.style.cssText='font-size:14px;flex-shrink:0';icon.textContent=sev==='error'?'⛔':'⚠';row.appendChild(icon);
+      const icon=document.createElement('div');icon.style.cssText='font-size:14px;flex-shrink:0';icon.textContent=sev==='error'?'—':'!';row.appendChild(icon);
       const info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
       info.innerHTML='<div style="font-family:var(--fm);font-size:9px;color:'+(sev==='error'?'var(--red)':'var(--amber)')+'">'+rule+'</div><div style="font-size:11px;color:var(--grey);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(task.title)+'</div>';
       row.appendChild(info);row.addEventListener('click',()=>openDrawer(task.id));vc.appendChild(row);
@@ -2625,7 +2672,7 @@ async function renderStats(){
   // ════════════════════════════════════════════════════════════
   const pdf=document.createElement('div');pdf.className='an-card';
   const pdfBtn=document.createElement('button');pdfBtn.style.cssText='width:100%;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--grey);font-family:var(--fm);font-size:10px;padding:10px;border-radius:7px;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:all .2s';
-  pdfBtn.textContent='⬇ Download Today’s Report (PDF)';pdfBtn.addEventListener('click',exportDonePDF);
+  pdfBtn.textContent='Download Today’s Report (PDF)';pdfBtn.addEventListener('click',exportDonePDF);
   pdfBtn.addEventListener('mouseover',()=>{pdfBtn.style.borderColor='var(--red)';pdfBtn.style.background='rgba(230,51,41,.12)';});
   pdfBtn.addEventListener('mouseout',()=>{pdfBtn.style.borderColor='rgba(230,51,41,.2)';pdfBtn.style.background='rgba(230,51,41,.06)';});
   pdf.appendChild(pdfBtn);wrap.appendChild(pdf);
