@@ -1372,48 +1372,86 @@ function validatePass(inp){
   inp.className='a-inp'+(score>=3?' valid':v?' invalid':'');
 }
 function showSignIn(){
-  document.getElementById('a-verify').className='a-verify';
-  document.getElementById('a-form-wrap').style.display='';
+  const vr=document.getElementById('a-verify');if(vr)vr.className='a-verify';
+  const fw=document.getElementById('a-form-wrap');if(fw)fw.style.display='';
   aMode('in');
 }
-function aMsg(t,err){const e=document.getElementById(err?'a-err':'a-ok');e.textContent=t;e.className=(err?'a-err':'a-ok')+(t?' on':'');}
+function aMsg(t,err){
+  const e=document.getElementById(err?'a-err':'a-ok');
+  if(!e)return;
+  e.textContent=t;
+  e.className=(err?'a-err':'a-ok')+(t?' on':'');
+  if(t)e.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 async function doAuth(){
   const email=document.getElementById('a-email').value.trim();
   const pass=document.getElementById('a-pass').value;
   const name=(document.getElementById('a-name')?.value||'').trim();
   aMsg('',1);aMsg('',0);
-  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){aMsg('Enter a valid email',1);return;}
-  if(pass.length<6){aMsg('Password must be 6+ characters',1);return;}
-  if(aM==='up'&&!name){aMsg('Enter your name',1);return;}
-  const btn=document.getElementById('a-btn');btn.disabled=true;btn.textContent='Please wait...';
+
+  // Validation
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){aMsg('Enter a valid email address',1);return;}
+  if(pass.length<6){aMsg('Password must be at least 6 characters',1);return;}
+  if(aM==='up'&&name.length<2){aMsg('Enter your full name (min 2 characters)',1);return;}
+
+  const btn=document.getElementById('a-btn');
+  if(btn){btn.disabled=true;btn.textContent='Please wait...';}
+
   try{
     if(aM==='up'){
-        const r=await SB.signUp(email,pass,name);
-        if(r?.access_token){
-          // Auto-confirmed — go straight in
+      // SIGN UP
+      const r=await SB.signUp(email,pass,name);
+      const uid=r?.id||r?.user?.id||r?.access_token;
+      if(r?.access_token){
+        // Auto-confirmed (email confirmation disabled) — boot directly
+        await boot();
+        return;
+      }
+      if(uid){
+        // Account created — try signing in immediately (works if auto-confirmed)
+        try{
+          await SB.signIn(email,pass);
           await boot();
-        } else if(r?.id||r?.user?.id){
-          // Also try signing in immediately (trigger confirmed the account)
-          try{
-            await SB.signIn(email,pass);
-            await boot();
-          }catch{
-            aMsg('Account created! Sign in below.',0);
-            aMode('in');
-            document.getElementById('a-email').value=email;
-          }
-        } else {
-          aMsg('Account created! Sign in below.',0);
-          aMode('in');
-          document.getElementById('a-email').value=email;
+          return;
+        }catch(signInErr){
+          // Email confirmation required — show verification screen
+          const emailEl=document.getElementById('a-verify-email');
+          if(emailEl)emailEl.textContent=email;
+          const fw=document.getElementById('a-form-wrap');if(fw)fw.style.display='none';
+          const vr=document.getElementById('a-verify');if(vr)vr.className='a-verify on';
+          return;
         }
       }
-    else{await SB.signIn(email,pass);await boot();}
-  }catch(e){let m=e.message||'Error';if(m.includes('Invalid login')||m.includes('invalid_credentials'))m='Wrong email or password. Check and try again.';
-      if(m.includes('confirmed'))m='Please check your email for a confirmation link.';
-      if(m.includes('already registered')||m.includes('already been registered'))m='This email already has an account. Sign in instead.';
-      if(m.includes('rate limit'))m='Too many attempts. Wait a moment and try again.';aMsg(m,1);}
-  btn.disabled=false;btn.textContent=aM==='up'?'Create Account':'Sign In';
+      // Fallback
+      aMsg('Account created! Please sign in.',0);
+      aMode('in');
+      const em=document.getElementById('a-email');if(em)em.value=email;
+
+    } else {
+      // SIGN IN
+      await SB.signIn(email,pass);
+      await boot();
+    }
+
+  }catch(e){
+    const raw=e.message||'';
+    let msg='Something went wrong. Please try again.';
+    if(raw.includes('Invalid login')||raw.includes('invalid_credentials')||raw.includes('Invalid email'))
+      msg='Wrong email or password. Please check and try again.';
+    else if(raw.includes('Email not confirmed')||raw.includes('not confirmed'))
+      msg='Email not verified yet. Check your inbox for the confirmation link.';
+    else if(raw.includes('already registered')||raw.includes('already been registered'))
+      msg='An account with this email already exists. Sign in instead.';
+    else if(raw.includes('rate limit')||raw.includes('too many'))
+      msg='Too many attempts. Please wait a moment and try again.';
+    else if(raw.includes('User already registered'))
+      msg='This email is registered. Try signing in instead.';
+    else if(raw)
+      msg=raw;
+    aMsg(msg,1);
+  }
+
+  if(btn){btn.disabled=false;btn.textContent=aM==='up'?'Create Account':'Sign In';}
 }
 async function doMagic(){const e=document.getElementById('a-email').value.trim();if(!e){aMsg('Enter email first',1);return;}try{await SB.magic(e);aMsg('Magic link sent',0);}catch(e){aMsg(e.message,1);}}
 async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();toast('Signed out');}
