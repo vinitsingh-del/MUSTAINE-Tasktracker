@@ -623,7 +623,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .dr-range input:focus{border-color:var(--gold)}
 
 /* RULES SECTION */
-.rule-card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-bottom:8px}
+.rule-card{background:rgba(18,18,22,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px;margin-bottom:8px}
+/* MEETING CARDS */
+.meet-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px 15px;margin-bottom:8px;transition:border-color .2s,background .2s;cursor:default;animation:fadeUp .2s ease both}
+.meet-card:hover{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.06)}
+.meet-card.now{border-color:rgba(255,0,0,.35);background:rgba(255,0,0,.04)}
+.meet-card.soon{border-color:rgba(255,215,0,.25);background:rgba(255,215,0,.03)}
+.meet-card.done{opacity:.45}
+.meet-time{font-family:var(--fh);font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--gold);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.meet-live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;animation:pulse 1.5s infinite}
+.meet-title{font-family:var(--fb);font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px;line-height:1.3}
+.meet-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.meet-chip{font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);letter-spacing:.05em;white-space:nowrap}
+.meet-join{background:var(--green);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .2s}
+.meet-join:hover{opacity:.85}
+.meet-date-grp{font-family:var(--fh);font-size:10px;font-weight:800;letter-spacing:.18em;color:rgba(255,215,0,.6);text-transform:uppercase;padding:10px 2px 5px;margin-top:4px}
 .rule-tag{display:inline-block;font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid;margin-bottom:4px}
 .rule-title{font-size:13px;font-weight:500;margin-bottom:4px}
 .rule-desc{font-family:var(--fm);font-size:11px;color:var(--grey);line-height:1.5}
@@ -1107,6 +1121,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <button class="ntab" id="nt-done-m" onclick="gTab('done')">Done</button>
       <button class="ntab" id="nt-recur-m" onclick="gTab('recur')">Recurring</button>
       <button class="ntab" id="nt-rules-m" onclick="gTab('rules')">Rules</button>
+      <button class="ntab" id="nt-meetings-m" onclick="gTab('meetings')">Meetings</button>
       <button class="ntab" id="nt-stats-m" onclick="gTab('stats')">Stats</button>
     </div>
   </div>
@@ -1130,6 +1145,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <button class="sb-tab" id="sb-done" onclick="gTab('done')">Done</button>
       <button class="sb-tab" id="sb-recur" onclick="gTab('recur')">Recurring</button>
       <button class="sb-tab" id="sb-rules" onclick="gTab('rules')">Rules</button>
+      <button class="sb-tab" id="sb-meetings" onclick="gTab('meetings')">Meetings</button>
       <button class="sb-tab" id="sb-stats" onclick="gTab('stats')">Stats</button>
     </div>
     <div class="sb-footer">
@@ -1324,6 +1340,49 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <div id="recur-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 12px;border-bottom:1px solid var(--b1)"></div>
       <div class="card-list" id="recur-list" style="padding:8px 12px"></div>
       <div style="height:60px"></div>
+    </div>
+
+    <!-- MEETINGS -->
+    <div class="view" id="v-meetings">
+      <div class="sec">
+        <div class="sec-title">Meetings</div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <div id="cal-sync-status" style="font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.06em"></div>
+          <button class="sec-btn" id="cal-sync-btn" onclick="syncCalendar()" style="color:var(--gold);display:none">Sync Now</button>
+        </div>
+      </div>
+
+      <!-- Connect prompt (shown when not connected) -->
+      <div id="cal-connect-wrap" style="padding:20px 16px;display:none">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:28px 24px;text-align:center;max-width:480px;margin:0 auto">
+          <div style="width:52px;height:52px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24" style="color:var(--grey)"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+          <div style="font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:.06em;color:var(--white);margin-bottom:8px">Connect Google Calendar</div>
+          <div style="font-family:var(--fb);font-size:13px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:20px">See your meetings alongside your tasks.<br>Each user connects their own Google account — your data stays yours.</div>
+          <button onclick="connectGoogleCalendar()" style="background:var(--white);color:#1a1a1a;border:none;border-radius:9px;padding:13px 28px;font-family:var(--fh);font-size:16px;font-weight:800;letter-spacing:.08em;cursor:pointer;width:100%;max-width:280px;transition:opacity .2s">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:middle;margin-right:8px;margin-top:-2px" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Connect with Google
+          </button>
+          <div style="font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.2);margin-top:14px;letter-spacing:.06em">Read-only access · Calendar events only · No task creation</div>
+        </div>
+      </div>
+
+      <!-- Meeting tabs (shown when connected) -->
+      <div id="cal-tabs-wrap" style="display:none">
+        <div style="display:flex;gap:5px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06);overflow-x:auto">
+          <button class="dtab on" data-mt="today" onclick="setMeetingTab(this)">Today</button>
+          <button class="dtab" data-mt="tomorrow" onclick="setMeetingTab(this)">Tomorrow</button>
+          <button class="dtab" data-mt="week" onclick="setMeetingTab(this)">This Week</button>
+          <button class="dtab" data-mt="all" onclick="setMeetingTab(this)">Upcoming</button>
+        </div>
+
+        <!-- Stats strip -->
+        <div id="meeting-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06)"></div>
+
+        <!-- Meeting list -->
+        <div id="meeting-list" style="padding:8px 12px 80px"></div>
+      </div>
     </div>
 
     <!-- RULES -->
@@ -1790,6 +1849,8 @@ async function boot(){
     Object.keys(localStorage).filter(k=>k.startsWith('rolled_')&&!k.startsWith('rolled_'+today())).forEach(k=>localStorage.removeItem(k));
   }catch{}
   rolloverDailyTasks(); // reopen recurring tasks for today
+  // Check if calendar token exists and fetch if so
+  setTimeout(()=>{if(getCalToken())fetchCalendarEvents();},2000);
   setInterval(tick,30000);
   setInterval(async()=>{if(!document.hidden){await loadTasks();render();}},90000);
   document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await loadTasks();render();}});
@@ -2389,6 +2450,259 @@ async function renderRecurring(){
   }
 }
 
+/* ── GOOGLE CALENDAR INTEGRATION ── */
+// Google Calendar OAuth — each user connects their own account
+// Uses Google Identity Services (GIS) popup flow — no server needed
+// Tokens stored in localStorage per user session
+
+const GCAL_CLIENT_ID=''; // Set your Google OAuth Client ID here
+const GCAL_SCOPES='https://www.googleapis.com/auth/calendar.readonly';
+let G_meetingTab='today';
+let G_meetings=[];
+let G_calConnected=false;
+
+function getCalToken(){
+  const uid=SB.uid();if(!uid)return null;
+  const key='gcal_token_'+uid;
+  try{const d=JSON.parse(localStorage.getItem(key)||'null');
+    if(d&&d.expiry&&Date.now()<d.expiry)return d.token;
+    localStorage.removeItem(key);}catch{}
+  return null;
+}
+
+function saveCalToken(token,expiresIn){
+  const uid=SB.uid();if(!uid)return;
+  localStorage.setItem('gcal_token_'+uid, JSON.stringify({
+    token, expiry:Date.now()+(expiresIn||3600)*1000
+  }));
+}
+
+function clearCalToken(){
+  const uid=SB.uid();if(!uid)return;
+  localStorage.removeItem('gcal_token_'+uid);
+}
+
+function connectGoogleCalendar(){
+  // If no client ID configured, show setup instructions
+  if(!GCAL_CLIENT_ID){
+    showCalSetupInstructions();return;
+  }
+  // Load GIS script if not loaded
+  if(!window.google?.accounts?.oauth2){
+    const s=document.createElement('script');
+    s.src='https://accounts.google.com/gsi/client';
+    s.onload=()=>startGCalOAuth();
+    document.head.appendChild(s);
+  } else startGCalOAuth();
+}
+
+function startGCalOAuth(){
+  try{
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:GCAL_CLIENT_ID,
+      scope:GCAL_SCOPES,
+      callback:(resp)=>{
+        if(resp.error){toast('Google auth failed: '+resp.error,'err');return;}
+        saveCalToken(resp.access_token,resp.expires_in||3600);
+        G_calConnected=true;
+        fetchCalendarEvents();
+      }
+    });
+    client.requestAccessToken();
+  }catch(e){toast('Google auth error: '+e.message,'err');}
+}
+
+function showCalSetupInstructions(){
+  // Show a helpful modal explaining what they need to do
+  const msg=document.createElement('div');
+  msg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px';
+  msg.innerHTML=`
+    <div style="background:rgba(20,20,24,.95);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;max-width:480px;width:100%">
+      <div style="font-family:var(--fh);font-size:22px;font-weight:800;letter-spacing:.06em;color:var(--white);margin-bottom:8px">Google Calendar Setup</div>
+      <div style="font-family:var(--fb);font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:20px">
+        To connect Google Calendar, a Google OAuth Client ID needs to be configured.
+        This is a one-time setup by the Troopod admin.<br><br>
+        <b style="color:var(--gold)">Steps for admin:</b><br>
+        1. Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold)">Google Cloud Console</a><br>
+        2. Create a project → Enable Google Calendar API<br>
+        3. Create OAuth 2.0 credentials (Web Application)<br>
+        4. Add <code style="color:var(--red)">vinitsingh-del.github.io</code> as authorised origin<br>
+        5. Set the Client ID in the app
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('[style]').remove()" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:8px;padding:11px;font-family:var(--fm);font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:.08em">Close</button>
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px;font-family:var(--fh);font-size:14px;font-weight:800;cursor:pointer;text-decoration:none;text-align:center;letter-spacing:.06em;display:flex;align-items:center;justify-content:center">Open Console</a>
+      </div>
+    </div>`;
+  document.body.appendChild(msg);
+}
+
+async function fetchCalendarEvents(){
+  const token=getCalToken();
+  if(!token){G_calConnected=false;renderMeetings();return;}
+  G_calConnected=true;
+
+  const status=document.getElementById('cal-sync-status');
+  if(status)status.textContent='Syncing...';
+
+  try{
+    const now=new Date();
+    const timeMin=new Date(now);timeMin.setHours(0,0,0,0);
+    const timeMax=new Date(now);timeMax.setDate(timeMax.getDate()+14);
+
+    const url=`https://www.googleapis.com/calendar/v3/calendars/primary/events?`+
+      `timeMin=${encodeURIComponent(timeMin.toISOString())}&`+
+      `timeMax=${encodeURIComponent(timeMax.toISOString())}&`+
+      `singleEvents=true&orderBy=startTime&maxResults=100`;
+
+    const r=await fetch(url,{headers:{Authorization:'Bearer '+token}});
+    if(r.status===401){clearCalToken();G_calConnected=false;renderMeetings();return;}
+    if(!r.ok){toast('Calendar fetch failed: '+r.status,'err');return;}
+
+    const d=await r.json();
+    G_meetings=(d.items||[]).filter(e=>e.status!=='cancelled').map(e=>({
+      id:e.id,
+      title:e.summary||'(No title)',
+      desc:e.description||'',
+      start:e.start?.dateTime||e.start?.date||'',
+      end:e.end?.dateTime||e.end?.date||'',
+      location:e.location||'',
+      meetLink:e.hangoutLink||e.conferenceData?.entryPoints?.[0]?.uri||'',
+      organizer:e.organizer?.email||'',
+      attendees:(e.attendees||[]).map(a=>({email:a.email,name:a.displayName||'',self:!!a.self})),
+      allDay:!e.start?.dateTime,
+      status:e.status||'confirmed',
+    }));
+
+    if(status)status.textContent='Synced '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    renderMeetings();
+    // Auto-refresh every 5 minutes
+    clearTimeout(window._calRefreshTimer);
+    window._calRefreshTimer=setTimeout(fetchCalendarEvents,300000);
+  }catch(e){
+    if(status)status.textContent='Sync error';
+    toast('Calendar error: '+e.message,'err');
+  }
+}
+
+function setMeetingTab(el){
+  document.querySelectorAll('[data-mt]').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');G_meetingTab=el.dataset.mt;
+  renderMeetingsList();
+}
+
+function renderMeetings(){
+  const connect=document.getElementById('cal-connect-wrap');
+  const tabs=document.getElementById('cal-tabs-wrap');
+  const syncBtn=document.getElementById('cal-sync-btn');
+  const token=getCalToken();
+  const connected=G_calConnected||!!token;
+
+  if(!connected){
+    if(connect)connect.style.display='';
+    if(tabs)tabs.style.display='none';
+    if(syncBtn)syncBtn.style.display='none';
+    if(token)fetchCalendarEvents();
+  } else {
+    if(connect)connect.style.display='none';
+    if(tabs)tabs.style.display='';
+    if(syncBtn)syncBtn.style.display='';
+    renderMeetingStats();
+    renderMeetingsList();
+  }
+}
+
+function renderMeetingStats(){
+  const el=document.getElementById('meeting-stats');if(!el)return;
+  const now=new Date();
+  const todayStr=now.toISOString().slice(0,10);
+  const todayMeets=G_meetings.filter(m=>m.start.slice(0,10)===todayStr);
+  const upcoming=G_meetings.filter(m=>new Date(m.start)>now);
+  const inProgress=G_meetings.filter(m=>new Date(m.start)<=now&&new Date(m.end)>=now);
+  const withLink=G_meetings.filter(m=>m.meetLink);
+
+  el.innerHTML='';
+  [{num:todayMeets.length,lbl:'Today',col:'var(--gold)'},{num:inProgress.length,lbl:'Live Now',col:'var(--red)'},{num:upcoming.length,lbl:'Upcoming',col:'var(--white)'},{num:withLink.length,lbl:'Has Link',col:'var(--green)'}].forEach(({num,lbl,col})=>{
+    const d=document.createElement('div');
+    d.style.cssText='text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px';
+    d.innerHTML='<div style="font-family:var(--fh);font-size:24px;font-weight:900;color:'+col+';line-height:1">'+num+'</div><div style="font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">'+lbl+'</div>';
+    el.appendChild(d);
+  });
+}
+
+function renderMeetingsList(){
+  const el=document.getElementById('meeting-list');if(!el)return;
+  const now=new Date();
+  const todayStr=now.toISOString().slice(0,10);
+  const tomorrowStr=new Date(now.getTime()+86400000).toISOString().slice(0,10);
+
+  let filtered=[];
+  if(G_meetingTab==='today')filtered=G_meetings.filter(m=>m.start.slice(0,10)===todayStr);
+  else if(G_meetingTab==='tomorrow')filtered=G_meetings.filter(m=>m.start.slice(0,10)===tomorrowStr);
+  else if(G_meetingTab==='week'){
+    const wEnd=new Date(now);wEnd.setDate(wEnd.getDate()+7);
+    filtered=G_meetings.filter(m=>new Date(m.start)<=wEnd&&new Date(m.start)>=now);
+  } else {
+    filtered=G_meetings.filter(m=>new Date(m.end)>=now);
+  }
+
+  filtered.sort((a,b)=>new Date(a.start)-new Date(b.start));
+  el.innerHTML='';
+
+  if(!filtered.length){
+    el.innerHTML='<div class="empty" style="padding:40px 0"><div class="empty-ico">[ CLEAR ]</div><div class="empty-txt">No meetings'+(G_meetingTab==='today'?' today':'')+'</div></div>';
+    return;
+  }
+
+  // Group by date for week/all views
+  const grouped={};
+  filtered.forEach(m=>{const d=m.start.slice(0,10);if(!grouped[d])grouped[d]=[];grouped[d].push(m);});
+
+  Object.keys(grouped).sort().forEach(date=>{
+    if(G_meetingTab==='week'||G_meetingTab==='all'){
+      const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const d=new Date(date+'T12:00:00');
+      const isToday=date===todayStr;const isTom=date===tomorrowStr;
+      const label=isToday?'Today':isTom?'Tomorrow':dayNames[d.getDay()]+', '+d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+      const hdr=document.createElement('div');hdr.className='meet-date-grp';hdr.textContent=label;el.appendChild(hdr);
+    }
+    grouped[date].forEach(m=>{
+      const isNow=new Date(m.start)<=now&&new Date(m.end)>=now;
+      const isSoon=!isNow&&new Date(m.start)>now&&(new Date(m.start)-now)<1800000; // within 30 min
+      const isDone=new Date(m.end)<now;
+      const card=document.createElement('div');
+      card.className='meet-card'+(isNow?' now':isSoon?' soon':isDone?' done':'');
+
+      // Time
+      const timeDiv=document.createElement('div');timeDiv.className='meet-time';
+      if(isNow){const dot=document.createElement('div');dot.className='meet-live-dot';timeDiv.appendChild(dot);}
+      const fmtTime=t=>{if(!t||!t.includes('T'))return 'All day';const d=new Date(t);return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}).replace(' am',' AM').replace(' pm',' PM');};
+      const tspan=document.createElement('span');tspan.textContent=fmtTime(m.start)+' — '+fmtTime(m.end);
+      if(isNow)tspan.style.color='var(--red)';
+      if(isSoon)tspan.style.color='var(--amber)';
+      timeDiv.appendChild(tspan);
+      if(isNow){const badge=document.createElement('span');badge.style.cssText='font-family:var(--fh);font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--red);background:rgba(255,0,0,.1);border:1px solid rgba(255,0,0,.25);border-radius:4px;padding:1px 6px';badge.textContent='LIVE';timeDiv.appendChild(badge);}
+      if(isSoon){const badge=document.createElement('span');badge.style.cssText='font-family:var(--fh);font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--amber);background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);border-radius:4px;padding:1px 6px';badge.textContent='SOON';timeDiv.appendChild(badge);}
+      card.appendChild(timeDiv);
+
+      // Title
+      const title=document.createElement('div');title.className='meet-title';title.textContent=m.title;card.appendChild(title);
+
+      // Meta row
+      const meta=document.createElement('div');meta.className='meet-meta';
+      if(m.attendees.length>1){const at=document.createElement('div');at.className='meet-chip';at.textContent=m.attendees.length+' attendees';meta.appendChild(at);}
+      if(m.location&&m.location.length<40){const loc=document.createElement('div');loc.className='meet-chip';loc.textContent=m.location;meta.appendChild(loc);}
+      if(m.organizer){const org=document.createElement('div');org.className='meet-chip';org.textContent=m.organizer;meta.appendChild(org);}
+      if(m.meetLink){const join=document.createElement('a');join.className='meet-join';join.textContent='Join';join.href=m.meetLink;join.target='_blank';join.rel='noopener';meta.appendChild(join);}
+      if(meta.children.length)card.appendChild(meta);
+
+      el.appendChild(card);
+    });
+  });
+}
+
+async function syncCalendar(){fetchCalendarEvents();}
+
 /* ── RULES SECTION ── */
 function renderRules(){
   const wrap=document.getElementById('rules-wrap');if(!wrap)return;
@@ -2481,7 +2795,7 @@ function startTick(){
 
 /* ── NAV ── */
 function gTab(name){
-  ['tasks','notifs','stats','done','recur','rules'].forEach(n=>{
+  ['tasks','notifs','stats','done','recur','rules','meetings'].forEach(n=>{
     const v=document.getElementById('v-'+n);if(v)v.classList.toggle('on',n===name);
     ['nt-'+n+'-m','sb-'+n].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.toggle('on',n===name);});
   });
@@ -2490,6 +2804,7 @@ function gTab(name){
   if(name==='done')renderDoneView();
   if(name==='recur')renderRecurring();
   if(name==='rules')renderRules();
+  if(name==='meetings'){renderMeetings();}
 }
 
 /* ── NOTIFS ── */
