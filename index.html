@@ -138,7 +138,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .add-go{background:var(--red);color:#fff;border:none;border-radius:7px;padding:0 16px;font-family:var(--fh);font-size:15px;font-weight:800;letter-spacing:.1em;cursor:pointer;white-space:nowrap;min-height:38px}
 .add-go:active{opacity:.8}
 /* Fields row — mobile: 3-col grid; desktop: single flex row */
-.add-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:6px}
+.add-row1{display:grid;grid-template-columns:1.5fr 1fr 1fr 0.7fr 1fr;gap:6px;margin-top:6px}
+.add-row2{display:grid;grid-template-columns:1fr 1fr 0.6fr 1fr;gap:6px;margin-top:5px}
+.af{display:flex;flex-direction:column;gap:2px;min-width:0}
+.af-lbl{font-family:var(--fm);font-size:8px;letter-spacing:.12em;color:var(--grey2);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.add-fields{display:none}
 .add-meta{display:none} /* legacy — removed */
 .add-sel{background:var(--s1);border:1px solid var(--b2);color:var(--grey);font-family:var(--fm);font-size:11px;padding:6px 8px;border-radius:6px;outline:none;-webkit-appearance:none;appearance:none;width:100%;cursor:pointer}
 .add-sel:focus{border-color:var(--red)}
@@ -488,12 +492,10 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .add-row{gap:8px}
   .add-inp{font-size:14px;padding:8px 14px}
   .add-go{padding:0 20px;font-size:15px;min-height:38px}
-  /* All fields in single horizontal flex row */
-  .add-fields{display:flex;flex-wrap:nowrap;gap:6px;margin-top:6px;align-items:center}
-  .add-fields .add-sel{min-width:88px;flex:1.4;max-width:150px}
-  .add-fields #add-tag{min-width:110px;flex:1.8}
-  .add-fields .add-t{min-width:76px;flex:1;max-width:140px}
-  .add-fields .add-t-sm{flex:0 0 55px;max-width:55px}
+  /* Desktop: labelled add form rows */
+  .add-row1{grid-template-columns:1.6fr 1fr 1fr 0.7fr 1.1fr;gap:8px}
+  .add-row2{grid-template-columns:1fr 1fr 0.5fr 1fr;gap:8px}
+  .af-lbl{font-size:9px;letter-spacing:.1em}
   .add-sel,.add-t{font-size:11px;padding:6px 9px;border-radius:6px}
 
   /* ── TOOLBAR: full width, bigger text ── */
@@ -775,32 +777,45 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
           <button class="add-go" onclick="addTask()">ADD</button>
         </div>
         <!-- Compact meta row: all fields inline, no labels -->
-        <div class="add-fields">
-          <select class="add-sel" id="add-tag" title="Category">
-            <option value="sales">Sales</option><option value="revenue">Revenue</option>
-            <option value="client">Client</option><option value="kam">KAM</option>
-            <option value="design">Design</option><option value="ops">Ops</option>
-            <option value="follow-up">Follow-up</option><option value="control">Control</option>
-            <option value="management">Management</option><option value="daily">Daily Work</option>
-            <option value="personal">Personal</option>
-          </select>
-          <select class="add-sel" id="add-pri" title="Priority">
-            <option value="medium">Medium</option><option value="urgent">Urgent</option>
-            <option value="high">High</option><option value="low">Low</option>
-          </select>
-          <input class="add-t" type="time" id="add-time" title="Time">
-          <input class="add-t" type="date" id="add-date" title="Due date">
-          <select class="add-sel" id="add-recur" title="Repeat">
-            <option value="none">Once</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="biweekly">15d</option>
-            <option value="monthly">Monthly</option>
-          </select>
-          <input class="add-t" type="date" id="add-start-date" title="Start date">
-          <input class="add-t" type="date" id="add-finish-date" title="Finish date">
-          <input class="add-t add-t-sm" type="number" id="add-hours" min="0" max="24" step="0.5" placeholder="Hrs" title="Est. hours">
-          <input class="add-t" type="date" id="add-next-action" title="Next action date">
+        <!-- Row 1: core fields with labels -->
+        <div class="add-row1">
+          <div class="af"><div class="af-lbl">Category</div>
+            <select class="add-sel" id="add-tag">
+              <option value="sales">Sales</option><option value="revenue">Revenue</option>
+              <option value="client">Client</option><option value="kam">KAM</option>
+              <option value="design">Design</option><option value="ops">Ops</option>
+              <option value="follow-up">Follow-up</option><option value="control">Control</option>
+              <option value="management">Management</option><option value="daily">Daily Work</option>
+              <option value="personal">Personal</option>
+            </select></div>
+          <div class="af"><div class="af-lbl">Priority</div>
+            <select class="add-sel" id="add-pri">
+              <option value="medium">Medium</option><option value="urgent">Urgent</option>
+              <option value="high">High</option><option value="low">Low</option>
+            </select></div>
+          <div class="af"><div class="af-lbl" style="color:var(--amber)">Repeat / Type</div>
+            <select class="add-sel" id="add-recur" style="color:var(--amber)">
+              <option value="none">One-time</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">15 Days</option>
+              <option value="monthly">Monthly</option>
+            </select></div>
+          <div class="af"><div class="af-lbl">Time</div>
+            <input class="add-t" type="time" id="add-time"></div>
+          <div class="af"><div class="af-lbl">Due Date</div>
+            <input class="add-t" type="date" id="add-date"></div>
+        </div>
+        <!-- Row 2: optional dates -->
+        <div class="add-row2">
+          <div class="af"><div class="af-lbl">Start Date</div>
+            <input class="add-t" type="date" id="add-start-date"></div>
+          <div class="af"><div class="af-lbl">Finish Date</div>
+            <input class="add-t" type="date" id="add-finish-date"></div>
+          <div class="af"><div class="af-lbl">Est. Hours</div>
+            <input class="add-t" type="number" id="add-hours" min="0" max="24" step="0.5" placeholder="0"></div>
+          <div class="af"><div class="af-lbl">Next Action</div>
+            <input class="add-t" type="date" id="add-next-action"></div>
         </div>
       </div>
       <div class="toolbar">
@@ -1484,8 +1499,11 @@ function mkCard(task){
   stgC.addEventListener('click',e=>{e.stopPropagation();if(!V())cycleStage(id);});chips.appendChild(stgC);
 
   if(task.recurrence&&task.recurrence!=='none'){
-    const rl={'daily':'DAILY','weekly':'WEEKLY','biweekly':'15D','monthly':'MONTHLY'}[task.recurrence]||'RECUR';
-    const rc2=document.createElement('span');rc2.className='chip';rc2.style.cssText='color:#f97316;border-color:#f9731633;background:#f9731614';rc2.textContent=rl;chips.appendChild(rc2);
+    const recurMap={daily:{l:'DAILY',c:'#f97316'},weekly:{l:'WEEKLY',c:'#f59e0b'},biweekly:{l:'15 DAYS',c:'#c8a84b'},monthly:{l:'MONTHLY',c:'#a78bfa'}};
+    const rm=recurMap[task.recurrence]||{l:'RECUR',c:'#f97316'};
+    const rc2=document.createElement('span');rc2.className='chip';
+    rc2.style.cssText='color:'+rm.c+';border-color:'+rm.c+'44;background:'+rm.c+'14;font-weight:700;letter-spacing:.08em';
+    rc2.textContent=rm.l;rc2.title='Recurring: '+task.recurrence;chips.appendChild(rc2);
   }
   if(task.sub_stage&&SUB_STAGE[task.sub_stage]){
     const ss=SUB_STAGE[task.sub_stage];const ssc=document.createElement('span');ssc.className='sub-chip';
@@ -1693,7 +1711,10 @@ async function addTask(){
   const task={id:uid(),title,tag:document.getElementById('add-tag').value||'personal',priority:document.getElementById('add-pri').value||'medium',task_time:document.getElementById('add-time').value||null,task_date:document.getElementById('add-date').value||today(),start_date:document.getElementById('add-start-date').value||null,finish_date:document.getElementById('add-finish-date').value||null,scheduled_hours:parseFloat(document.getElementById('add-hours')?.value)||0,next_action_date:document.getElementById('add-next-action')?.value||null,stage:'todo',done:false,created_at:new Date().toISOString(),recurrence:document.getElementById('add-recur')?.value||'none',remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null};
   const btn=document.querySelector('.add-go');if(btn){btn.disabled=true;btn.textContent='...';}
   setSyncing(true);
-  try{await SB.upsert(task);try{await SB.addNotif({task_id:task.id,title:'Task Created',body:title,type:'system'});}catch{}await loadTasks();render();inp.value='';inp.style.borderColor='';toast('Task created');}
+  try{await SB.upsert(task);try{await SB.addNotif({task_id:task.id,title:'Task Created',body:title,type:'system'});}catch{}await loadTasks();render();inp.value='';inp.style.borderColor='';
+  const recurVal2=document.getElementById('add-recur')?.value||'none';
+  const rLabel={daily:'Daily',weekly:'Weekly',biweekly:'15-day',monthly:'Monthly'}[recurVal2];
+  toast(rLabel?'Task added ('+rLabel+' recurring)':'Task added');}
   catch(e){setSyncing(false,true);toast('Failed: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent='ADD';}}
 }
@@ -2361,6 +2382,33 @@ function renderDrawer(task,atts){
   else ssSel.disabled=true;
   if(task.sub_stage&&SUB_STAGE[task.sub_stage])ssSel.style.color=SUB_STAGE[task.sub_stage].c;
   ssd.appendChild(ssSel);body.appendChild(ssd);
+
+  // Recurrence type in drawer
+  const recd=document.createElement('div');
+  recd.innerHTML='<div class="dr-lbl" style="color:var(--amber)">Recurrence / Task Type</div>';
+  const recSel=document.createElement('select');recSel.className='dr-sel';
+  recSel.style.color=(task.recurrence&&task.recurrence!=='none')?'var(--amber)':'var(--grey)';
+  [['none','One-time (no repeat)'],['daily','Daily - reopens every working day'],
+   ['weekly','Weekly - reopens every 7 days'],['biweekly','15 Days - reopens every 15 days'],
+   ['monthly','Monthly - reopens once a month']].forEach(([v,l])=>{
+    const o=document.createElement('option');o.value=v;o.textContent=l;
+    if((task.recurrence||'none')===v)o.selected=true;recSel.appendChild(o);
+  });
+  if(!V()){
+    recSel.addEventListener('change',()=>{
+      const val=recSel.value;
+      patch(id,{recurrence:val},'Task type set to: '+(val==='none'?'One-time':val));
+      recSel.style.color=val==='none'?'var(--grey)':'var(--amber)';
+    });
+  } else recSel.disabled=true;
+  recd.appendChild(recSel);
+  if(task.recurrence&&task.recurrence!=='none'){
+    const ri=document.createElement('div');
+    ri.style.cssText='font-family:var(--fm);font-size:9px;color:var(--amber);padding:5px 9px;border-radius:5px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);margin-top:5px';
+    ri.textContent='This task auto-reopens after 8 AM on the next working day when marked done. Sunday = holiday.';
+    recd.appendChild(ri);
+  }
+  body.appendChild(recd);
 
   // Time + Due Date
   const r2=document.createElement('div');r2.className='dr-2col';
