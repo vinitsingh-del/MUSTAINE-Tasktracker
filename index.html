@@ -694,6 +694,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <button class="ntab on" id="nt-tasks-m" onclick="gTab('tasks')">Tasks</button>
       <button class="ntab" id="nt-notifs-m" onclick="gTab('notifs')">Alerts<span id="alert-badge-m" style="display:none;background:var(--red);color:#fff;font-size:8px;border-radius:8px;padding:0 4px;margin-left:3px;font-family:var(--fm)"></span></button>
       <button class="ntab" id="nt-done-m" onclick="gTab('done')">Done</button>
+      <button class="ntab" id="nt-recur-m" onclick="gTab('recur')">🔁 Recurring</button>
       <button class="ntab" id="nt-rules-m" onclick="gTab('rules')">Rules</button>
       <button class="ntab" id="nt-stats-m" onclick="gTab('stats')">Stats</button>
     </div>
@@ -716,6 +717,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <button class="sb-tab on" id="sb-tasks" onclick="gTab('tasks')">Tasks</button>
       <button class="sb-tab" id="sb-notifs" onclick="gTab('notifs')">Alerts <span id="alert-badge-d" style="display:none;background:var(--red);color:#fff;font-size:8px;border-radius:8px;padding:0 5px;font-family:var(--fm)"></span></button>
       <button class="sb-tab" id="sb-done" onclick="gTab('done')">Done</button>
+      <button class="sb-tab" id="sb-recur" onclick="gTab('recur')">🔁 Recurring</button>
       <button class="sb-tab" id="sb-rules" onclick="gTab('rules')">Rules</button>
       <button class="sb-tab" id="sb-stats" onclick="gTab('stats')">Stats</button>
     </div>
@@ -874,6 +876,30 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       </div>
       <div class="done-stat-row" id="done-stats-row"></div>
       <div style="padding:0 12px 24px" id="done-list-wrap"></div>
+    </div>
+
+    <!-- RECURRING TASKS -->
+    <div class="view" id="v-recur">
+      <div class="sec">
+        <div class="sec-title">Recurring Tasks</div>
+        <button class="sec-btn" onclick="rolloverDailyTasks().then(loadTasks).then(render)" style="color:var(--amber)">↺ Reopen Due Now</button>
+      </div>
+      <div style="padding:6px 12px 8px;font-family:var(--fm);font-size:10px;color:var(--grey);line-height:1.6;background:rgba(200,168,75,.04);border-bottom:1px solid rgba(200,168,75,.15)">
+        Recurring tasks auto-reopen after 8 AM on their next due day. Mark them done when complete — they reappear the next cycle.
+        <b style="color:var(--gold)">Sunday = holiday</b>, so tasks skip to Monday.
+      </div>
+      <div id="recur-tabs" style="display:flex;gap:5px;padding:6px 12px;border-bottom:1px solid var(--b1);overflow-x:auto">
+        <button class="dtab on" data-rt="all" onclick="setRecurTab(this)">All Recurring</button>
+        <button class="dtab" data-rt="active" onclick="setRecurTab(this)">Active</button>
+        <button class="dtab" data-rt="done" onclick="setRecurTab(this)">Completed</button>
+        <button class="dtab" data-rt="daily" onclick="setRecurTab(this)">Daily</button>
+        <button class="dtab" data-rt="weekly" onclick="setRecurTab(this)">Weekly</button>
+        <button class="dtab" data-rt="biweekly" onclick="setRecurTab(this)">15 Days</button>
+        <button class="dtab" data-rt="monthly" onclick="setRecurTab(this)">Monthly</button>
+      </div>
+      <div id="recur-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 12px;border-bottom:1px solid var(--b1)"></div>
+      <div class="card-list" id="recur-list" style="padding:8px 12px"></div>
+      <div style="height:60px"></div>
     </div>
 
     <!-- RULES -->
@@ -1142,12 +1168,13 @@ async function autoStopStaleTimes(){
 
 async function rolloverDailyTasks(){
   const T=today();
-  // Skip if today is Sunday (day 0 = sunday)
-  if(new Date().getDay()===0){console.log('Sunday — no rollover');return;}
+  const dayNum=new Date().getDay(); // 0=Sun,6=Sat
+  // Sunday is a holiday — skip creating NEW tasks but still show existing recurring tasks
+  // We still run rollover on Sunday if there are tasks already marked done
   const rollKey='rolled_'+T+'_'+(SB.uid()||'');
   if(localStorage.getItem(rollKey))return;
   // Only run after 8 AM
-  if(new Date().getHours()<8){console.log('Before 8AM — no rollover');return;}
+  if(new Date().getHours()<8){console.log('Before 8AM — rollover deferred');return;}
 
   try{
     // Look back 90 days for any recurring tasks that are done but need reopening today
@@ -1166,7 +1193,7 @@ async function rolloverDailyTasks(){
     let created=0;
     for(const t of doneDailies){
       if(todayTitles.has(t.title.toLowerCase()))continue;
-      const nxtDay=nextWorkDay(yStr);
+      const nxtDay=nextWorkDay(T); // next working day from TODAY
       const newTask={
         id:uid(),title:t.title,tag:t.tag,priority:t.priority,
         task_time:'10:00',// reset to 10 AM
@@ -1213,7 +1240,11 @@ async function boot(){
   // Auto-stop timers left running from previous days
   autoStopStaleTimes();
   SB.getRole().then(()=>{if(V())applyViewer();});
-  rolloverDailyTasks(); // reopen daily tasks if needed (skips Sunday)
+  // Clear rollover keys from previous days (only keep today's key)
+  try{
+    Object.keys(localStorage).filter(k=>k.startsWith('rolled_')&&!k.startsWith('rolled_'+today())).forEach(k=>localStorage.removeItem(k));
+  }catch{}
+  rolloverDailyTasks(); // reopen recurring tasks for today
   setInterval(tick,30000);
   setInterval(async()=>{if(!document.hidden){await loadTasks();render();}},90000);
   document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await loadTasks();render();}});
@@ -1731,6 +1762,82 @@ async function stopTimer(id){
   await patch(id,{timer_started_at:null,timer_stopped_at:new Date().toISOString(),timer_total_seconds:el},'Timer stopped ('+fmtT(el)+')');
   render();if(G.openId===id)await refreshDrawer();
 }
+/* ── RECURRING SECTION ── */
+let G_recurTab='all';
+function setRecurTab(el){
+  document.querySelectorAll('#recur-tabs .dtab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');G_recurTab=el.dataset.rt;renderRecurring();
+}
+
+async function renderRecurring(){
+  const list=document.getElementById('recur-list');
+  const statsEl=document.getElementById('recur-stats');
+  if(!list)return;
+  list.innerHTML='<div style="text-align:center;padding:20px;font-family:var(--fm);font-size:11px;color:var(--grey2)">Loading...</div>';
+
+  // Fetch all recurring tasks (last 90 days + today)
+  let all=[];
+  try{
+    const d90=new Date();d90.setDate(d90.getDate()-90);
+    const raw=await SB.getRange(d90.toISOString().slice(0,10),today());
+    all=(raw||[]).map(norm).filter(t=>t.recurrence&&t.recurrence!=='none');
+  }catch(e){
+    all=G.tasks.filter(t=>t.recurrence&&t.recurrence!=='none');
+  }
+
+  // Stats
+  if(statsEl){
+    statsEl.innerHTML='';
+    const T=today();
+    const todayActive=all.filter(t=>(t.task_date||t.date||T)===T&&!['done','closed'].includes(t.stage));
+    const todayDone=all.filter(t=>t.done_at&&t.done_at.slice(0,10)===T);
+    const overdue=all.filter(t=>isOD(t));
+    const types={daily:all.filter(t=>t.recurrence==='daily').length,weekly:all.filter(t=>t.recurrence==='weekly').length,biweekly:all.filter(t=>t.recurrence==='biweekly').length,monthly:all.filter(t=>t.recurrence==='monthly').length};
+    [{num:all.length,lbl:'Total',col:'var(--white)'},{num:todayActive.length,lbl:'Due Today',col:'var(--amber)'},{num:todayDone.length,lbl:'Done Today',col:'var(--green)'},{num:overdue.length,lbl:'Overdue',col:'var(--red)'}].forEach(({num,lbl,col})=>{
+      const d=document.createElement('div');d.style.cssText='text-align:center;background:rgba(255,255,255,.03);border-radius:7px;padding:8px;border:1px solid rgba(255,255,255,.06)';
+      d.innerHTML='<div style="font-family:var(--fh);font-size:24px;font-weight:900;color:'+col+'">'+num+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em;margin-top:2px">'+lbl+'</div>';
+      statsEl.appendChild(d);
+    });
+  }
+
+  // Filter by tab
+  let filtered=all;
+  if(G_recurTab==='active')filtered=all.filter(t=>!['done','closed'].includes(t.stage));
+  else if(G_recurTab==='done')filtered=all.filter(t=>t.stage==='done'||t.stage==='closed');
+  else if(['daily','weekly','biweekly','monthly'].includes(G_recurTab))filtered=all.filter(t=>t.recurrence===G_recurTab);
+
+  // Sort: active first, then by task_date desc
+  filtered.sort((a,b)=>{
+    const aD=['done','closed'].includes(a.stage)?1:0;
+    const bD=['done','closed'].includes(b.stage)?1:0;
+    if(aD!==bD)return aD-bD;
+    return (b.task_date||b.date||'').localeCompare(a.task_date||a.date||'');
+  });
+
+  list.innerHTML='';
+  if(!filtered.length){
+    list.innerHTML='<div class="empty"><div class="empty-ico">[ NONE ]</div><div class="empty-txt">No recurring tasks'+(G_recurTab!=='all'?' in this filter':'')+'</div></div>';return;
+  }
+
+  // Group by recurrence type
+  const groups={daily:'Daily',weekly:'Weekly',biweekly:'15 Days',monthly:'Monthly'};
+  if(G_recurTab==='all'||G_recurTab==='active'||G_recurTab==='done'){
+    const grpMap={};
+    filtered.forEach(t=>{const k=t.recurrence||'none';if(!grpMap[k])grpMap[k]=[];grpMap[k].push(t);});
+    Object.entries(groups).forEach(([key,label])=>{
+      if(!grpMap[key]||!grpMap[key].length)return;
+      const hdr=document.createElement('div');
+      hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 2px 4px;margin-top:4px';
+      hdr.innerHTML='<div style="font-family:var(--fh);font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--amber);text-transform:uppercase">'+label+' ('+grpMap[key].length+')</div>'
+        +'<div style="font-family:var(--fm);font-size:9px;color:var(--grey2)">'+grpMap[key].filter(t=>!['done','closed'].includes(t.stage)).length+' active · '+grpMap[key].filter(t=>t.stage==='done'||t.stage==='closed').length+' done</div>';
+      list.appendChild(hdr);
+      grpMap[key].forEach(t=>list.appendChild(mkCard(t)));
+    });
+  } else {
+    filtered.forEach(t=>list.appendChild(mkCard(t)));
+  }
+}
+
 /* ── RULES SECTION ── */
 function renderRules(){
   const wrap=document.getElementById('rules-wrap');if(!wrap)return;
@@ -1823,13 +1930,14 @@ function startTick(){
 
 /* ── NAV ── */
 function gTab(name){
-  ['tasks','notifs','stats','done','rules'].forEach(n=>{
+  ['tasks','notifs','stats','done','recur','rules'].forEach(n=>{
     const v=document.getElementById('v-'+n);if(v)v.classList.toggle('on',n===name);
     ['nt-'+n+'-m','sb-'+n].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.toggle('on',n===name);});
   });
   if(name==='notifs')renderNotifs();
   if(name==='stats')renderStats();
   if(name==='done')renderDoneView();
+  if(name==='recur')renderRecurring();
   if(name==='rules')renderRules();
 }
 
