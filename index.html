@@ -1330,7 +1330,7 @@ function aMode(m){
   document.getElementById('a-tab-in').classList.toggle('on',m==='in');
   document.getElementById('a-tab-up').classList.toggle('on',m==='up');
   document.getElementById('af-name').style.display=m==='up'?'':'none';
-  document.getElementById('a-btn').textContent=m==='up'?'Create Account':'Sign In';
+  document.getElementById('a-btn').textContent=m==='up'?'Create & Sign In':'Sign In';
   document.getElementById('a-title-text').textContent=m==='up'?'Create your account':'Welcome back';
   document.getElementById('a-sub-text').textContent=m==='up'?'Join your Troopod workspace':'Sign in to your workspace';
   const ps=document.getElementById('pwd-strength');if(ps)ps.className='a-pwd-strength'+(m==='up'?' show':'');
@@ -1390,17 +1390,29 @@ async function doAuth(){
     if(aM==='up'){
         const r=await SB.signUp(email,pass,name);
         if(r?.access_token){
+          // Auto-confirmed — go straight in
           await boot();
+        } else if(r?.id||r?.user?.id){
+          // Also try signing in immediately (trigger confirmed the account)
+          try{
+            await SB.signIn(email,pass);
+            await boot();
+          }catch{
+            aMsg('Account created! Sign in below.',0);
+            aMode('in');
+            document.getElementById('a-email').value=email;
+          }
         } else {
-          // Show verification screen
-          const emailEl=document.getElementById('a-verify-email');
-          if(emailEl)emailEl.textContent=email;
-          document.getElementById('a-form-wrap').style.display='none';
-          document.getElementById('a-verify').className='a-verify on';
+          aMsg('Account created! Sign in below.',0);
+          aMode('in');
+          document.getElementById('a-email').value=email;
         }
       }
     else{await SB.signIn(email,pass);await boot();}
-  }catch(e){let m=e.message||'Error';if(m.includes('Invalid login'))m='Wrong email or password';if(m.includes('confirmed'))m='Confirm your email first';aMsg(m,1);}
+  }catch(e){let m=e.message||'Error';if(m.includes('Invalid login')||m.includes('invalid_credentials'))m='Wrong email or password. Check and try again.';
+      if(m.includes('confirmed'))m='Please check your email for a confirmation link.';
+      if(m.includes('already registered')||m.includes('already been registered'))m='This email already has an account. Sign in instead.';
+      if(m.includes('rate limit'))m='Too many attempts. Wait a moment and try again.';aMsg(m,1);}
   btn.disabled=false;btn.textContent=aM==='up'?'Create Account':'Sign In';
 }
 async function doMagic(){const e=document.getElementById('a-email').value.trim();if(!e){aMsg('Enter email first',1);return;}try{await SB.magic(e);aMsg('Magic link sent',0);}catch(e){aMsg(e.message,1);}}
