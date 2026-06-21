@@ -100,146 +100,224 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* AUTH */
 #as{position:fixed;inset:0;z-index:90;display:none;overflow:hidden}
-#as.on{display:flex;background:rgba(0,0,0,.8)}
+#as.on{display:flex}
 
-/* Split layout */
+/* Full-screen overlay: left = big logo+features, right = form, both float on the mesh */
+.as-wrap{
+  position:relative;width:100%;height:100%;
+  display:flex;align-items:stretch;
+}
+
+/* ── LEFT PANEL ── */
 .as-left{
-  display:none;flex:1;
-  background:rgba(0,0,0,.35);
-  position:relative;overflow:hidden;align-items:center;justify-content:center;flex-direction:column;gap:0;
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:60px 56px;
+  position:relative;overflow:hidden;
 }
+/* no border, no background — pure glass on the mesh */
+
+/* ── RIGHT PANEL ── form floats as a glass card ── */
 .as-right{
-  flex:none;width:100%;max-width:100%;
-  background:rgba(6,6,6,.88);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  display:flex;align-items:center;
-  justify-content:center;padding:24px 20px;overflow-y:auto;min-height:100vh;
+  flex:none;width:460px;
+  display:flex;align-items:center;justify-content:center;
+  padding:40px 44px;
+  position:relative;
+  background:rgba(4,4,4,.72);
+  backdrop-filter:blur(40px);
+  -webkit-backdrop-filter:blur(40px);
+  border-left:1px solid rgba(255,255,255,.06);
 }
 
-/* Desktop split */
-@media(min-width:768px){
-  #as{flex-direction:row}
-  .as-left{display:flex;flex:1}
-  .as-right{flex:none;width:420px;min-height:100vh;border-left:1px solid var(--b1)}
+/* Mobile: stack vertically, form on top */
+@media(max-width:767px){
+  .as-wrap{flex-direction:column}
+  .as-left{display:none}
+  .as-right{width:100%;flex:1;border-left:none;padding:32px 24px;
+    background:rgba(4,4,4,.85)}
 }
-@media(min-width:1200px){
-  .as-right{width:460px}
+@media(min-width:768px) and (max-width:1100px){
+  .as-left{padding:40px 36px}
+  .as-right{width:400px;padding:36px 32px}
 }
 
-/* Left panel content */
-.asl-logo{font-family:var(--fh);font-size:80px;font-weight:900;letter-spacing:.08em;color:var(--red);animation:glow 3s infinite;line-height:1}
-.asl-tag{font-family:var(--fm);font-size:10px;letter-spacing:.3em;color:rgba(200,168,75,.6);text-transform:uppercase;margin-top:6px;margin-bottom:40px}
-.asl-features{display:flex;flex-direction:column;gap:16px;max-width:320px}
-.asl-feat{display:flex;align-items:center;gap:14px}
-.asl-feat-icon{width:36px;height:36px;border-radius:8px;background:rgba(230,51,41,.12);border:1px solid rgba(230,51,41,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
-.asl-feat-icon::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:var(--red);opacity:.9}
-.asl-icon-1::after{background:var(--red)}
-.asl-icon-2::after{background:var(--gold)}
-.asl-icon-3::after{background:var(--green)}
-.asl-feat-text{font-family:var(--fm);font-size:12px;color:rgba(255,255,255,.6);line-height:1.4}
-.asl-feat-title{font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--white);display:block;margin-bottom:2px}
-/* Ambient glow orbs */
-.asl-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
-.asl-orb1{width:300px;height:300px;background:rgba(230,51,41,.08);top:-80px;right:-80px}
-.asl-orb2{width:250px;height:250px;background:rgba(200,168,75,.05);bottom:-60px;left:-60px}
-.asl-stealth{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-family:var(--fm);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.15);text-transform:uppercase;white-space:nowrap}
+/* ── LEFT CONTENT ── */
+.asl-logo{
+  font-family:var(--fh);font-size:72px;font-weight:900;
+  letter-spacing:.06em;color:var(--red);line-height:1;
+  text-shadow:0 0 60px rgba(255,0,0,.4),0 0 120px rgba(255,0,0,.15);
+  animation:glow 3s ease-in-out infinite;
+  margin-bottom:6px;
+}
+.asl-tag{
+  font-family:var(--fm);font-size:10px;letter-spacing:.3em;
+  color:rgba(200,168,75,.7);text-transform:uppercase;margin-bottom:44px;
+}
 
-/* Right panel — form */
-.aw{width:100%;max-width:380px}
-.a-logo{font-family:var(--fh);font-size:36px;font-weight:900;letter-spacing:.1em;color:var(--red);animation:glow 3s infinite;display:none}
-.a-tag{font-family:var(--fm);font-size:9px;letter-spacing:.28em;color:var(--grey2);text-transform:uppercase;margin-bottom:28px;display:none}
+/* ── ANIMATED CYCLING SUBTITLE ── */
+.asl-cycle-wrap{
+  margin-bottom:40px;min-height:64px;position:relative;overflow:hidden;
+}
+.asl-cycle-line{
+  font-family:var(--fh);font-size:32px;font-weight:800;
+  letter-spacing:.04em;line-height:1.25;
+  position:absolute;width:100%;
+  opacity:0;transform:translateY(22px);
+  transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1);
+}
+.asl-cycle-line.active{
+  opacity:1;transform:translateY(0);
+}
+.asl-cycle-line.exit{
+  opacity:0;transform:translateY(-22px);
+}
+.asl-cycle-sub{
+  font-family:var(--fb);font-size:14px;font-weight:400;
+  color:rgba(255,255,255,.45);letter-spacing:.01em;line-height:1.6;
+  margin-top:4px;display:block;
+}
 
-/* Mobile-only logo (hidden on desktop via left panel) */
-.a-mobile-logo{display:flex;flex-direction:column;align-items:center;margin-bottom:28px}
-@media(min-width:768px){.a-mobile-logo{display:none}}
+/* ── FEATURES ── */
+.asl-features{display:flex;flex-direction:column;gap:18px;margin-top:8px}
+.asl-feat{display:flex;align-items:flex-start;gap:14px;opacity:.85}
+.asl-feat-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:7px;
+}
+.asl-feat-text{}
+.asl-feat-title{
+  font-family:var(--fh);font-size:16px;font-weight:800;letter-spacing:.06em;
+  color:var(--white);display:block;margin-bottom:2px;
+}
+.asl-feat-desc{
+  font-family:var(--fb);font-size:13px;color:rgba(255,255,255,.45);
+  line-height:1.5;
+}
 
-/* Form heading */
-.a-heading{margin-bottom:20px}
-.a-heading-title{font-family:var(--fh);font-size:28px;font-weight:900;letter-spacing:.06em;color:var(--white);margin-bottom:4px}
-.a-heading-sub{font-family:var(--fm);font-size:11px;color:var(--grey);letter-spacing:.04em}
+.asl-stealth{
+  margin-top:48px;font-family:var(--fm);font-size:9px;
+  letter-spacing:.2em;color:rgba(255,255,255,.12);text-transform:uppercase;
+}
+
+/* ── FORM ELEMENTS ── */
+.aw{width:100%;max-width:360px}
+.a-heading{margin-bottom:24px}
+.a-heading-title{
+  font-family:var(--fh);font-size:32px;font-weight:900;
+  letter-spacing:.04em;color:var(--white);margin-bottom:5px;
+}
+.a-heading-sub{font-family:var(--fb);font-size:13px;color:rgba(255,255,255,.45)}
 
 /* Tabs */
-.a-tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:20px;border:1px solid var(--b2)}
-.a-tab{font-family:var(--fh);font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px;border-radius:7px;border:none;background:transparent;color:var(--grey);cursor:pointer;transition:all .2s}
-.a-tab.on{background:var(--red);color:#fff;box-shadow:0 4px 12px rgba(230,51,41,.3)}
+.a-tabs{
+  display:grid;grid-template-columns:1fr 1fr;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:4px;gap:4px;margin-bottom:24px;
+}
+.a-tab{
+  font-family:var(--fh);font-size:14px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:10px;border-radius:7px;
+  border:none;background:transparent;color:rgba(255,255,255,.4);cursor:pointer;
+  transition:all .2s;
+}
+.a-tab.on{background:var(--red);color:#fff;box-shadow:0 4px 16px rgba(255,0,0,.25)}
 
-/* Field groups */
-.a-field{margin-bottom:14px}
-.a-lbl{font-family:var(--fm);font-size:9px;letter-spacing:.18em;color:var(--grey);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px}
-.a-lbl-req{color:var(--red);font-size:10px}
+/* Fields */
+.a-field{margin-bottom:16px}
+.a-lbl{
+  font-family:var(--fm);font-size:9px;letter-spacing:.18em;
+  color:rgba(255,255,255,.45);text-transform:uppercase;margin-bottom:7px;
+  display:flex;align-items:center;gap:4px;
+}
+.a-lbl-req{color:var(--red);font-size:11px}
 .a-inp-wrap{position:relative}
 .a-inp{
-  background:var(--s1);border:1.5px solid var(--b2);color:var(--white);
-  font-family:var(--fb);font-size:15px;padding:12px 14px;border-radius:9px;
-  outline:none;width:100%;-webkit-appearance:none;transition:border-color .2s,box-shadow .2s;
-  box-shadow:0 2px 8px rgba(0,0,0,.2);
+  width:100%;background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.1);
+  color:var(--white);font-family:var(--fb);font-size:15px;
+  padding:13px 16px;border-radius:10px;outline:none;
+  -webkit-appearance:none;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+  box-sizing:border-box;
 }
-.a-inp:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(230,51,41,.12)}
-.a-inp::placeholder{color:var(--grey2)}
-.a-inp.valid{border-color:var(--green)}
-.a-inp.invalid{border-color:var(--red)}
-.a-inp-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.a-inp-check{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s}
+.a-inp:focus{
+  border-color:var(--red);background:rgba(255,0,0,.06);
+  box-shadow:0 0 0 3px rgba(255,0,0,.1);
+}
+.a-inp::placeholder{color:rgba(255,255,255,.22)}
+.a-inp.valid{border-color:rgba(34,197,94,.5)}
+.a-inp.invalid{border-color:rgba(255,0,0,.5)}
+.a-eye{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;
+  padding:4px;line-height:1;transition:color .2s;
+}
+.a-eye:hover{color:rgba(255,255,255,.7)}
+.a-inp-check{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-size:13px;color:var(--green);pointer-events:none;
+  opacity:0;transition:opacity .2s;
+}
 .a-inp-check.show{opacity:1}
-.a-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--grey);cursor:pointer;padding:3px;line-height:1}
-.a-field-hint{font-family:var(--fm);font-size:10px;color:var(--grey2);margin-top:5px;display:none}
-.a-field-hint.show{display:block}
-.a-field-hint.err{color:var(--red)}
-.a-field-hint.ok{color:var(--green)}
 
 /* Password strength */
-.a-pwd-strength{display:none;margin-top:6px}
+.a-pwd-strength{display:none;margin-top:7px}
 .a-pwd-strength.show{display:block}
-.a-pwd-bar{height:3px;background:var(--b2);border-radius:2px;overflow:hidden;margin-bottom:4px}
+.a-pwd-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-bottom:4px}
 .a-pwd-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
-.a-pwd-lbl{font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.06em}
+.a-pwd-lbl{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.06em}
 
 /* Messages */
-.a-err{font-family:var(--fm);font-size:11px;color:var(--red);background:rgba(230,51,41,.08);border:1px solid rgba(230,51,41,.2);border-radius:8px;padding:10px 14px;display:none;text-align:left;line-height:1.5;margin-bottom:12px;border-left:3px solid var(--red)}
-.a-err.on{display:block;animation:fadeInUp .2s ease}
-.a-ok{font-family:var(--fm);font-size:11px;color:var(--green);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 14px;display:none;text-align:left;line-height:1.5;margin-bottom:12px;border-left:3px solid var(--green)}
-.a-ok.on{display:block;animation:fadeInUp .2s ease}
-
-/* Verify screen (shown after signup) */
-.a-verify{display:none;text-align:center;padding:8px 0}
-.a-verify.on{display:block}
-.a-verify-icon{font-size:48px;margin-bottom:12px}
-.a-verify-title{font-family:var(--fh);font-size:22px;font-weight:800;letter-spacing:.06em;color:var(--white);margin-bottom:8px}
-.a-verify-msg{font-family:var(--fm);font-size:12px;color:var(--grey);line-height:1.7;margin-bottom:20px}
-.a-verify-email{font-family:var(--fh);font-size:15px;font-weight:700;color:var(--gold);display:block;margin:8px 0}
-.a-verify-steps{background:var(--s1);border:1px solid var(--b2);border-radius:10px;padding:14px;text-align:left;margin-bottom:16px}
-.a-vstep{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-family:var(--fm);font-size:11px;color:var(--grey);line-height:1.4}
-.a-vstep:last-child{margin-bottom:0}
-.a-vstep-num{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.a-back-link{font-family:var(--fm);font-size:11px;color:var(--grey2);cursor:pointer;background:none;border:none;text-decoration:underline}
-.a-back-link:hover{color:var(--gold)}
-
-/* Submit button */
-.a-btn{
-  background:var(--red);color:#fff;border:none;border-radius:9px;padding:14px;
-  font-family:var(--fh);font-size:18px;font-weight:800;letter-spacing:.12em;
-  text-transform:uppercase;cursor:pointer;width:100%;
-  transition:opacity .2s,transform .1s,box-shadow .2s;
-  box-shadow:0 4px 16px rgba(230,51,41,.35);margin-bottom:12px;
+.a-err,.a-ok{
+  font-family:var(--fb);font-size:12px;border-radius:8px;
+  padding:10px 14px;display:none;line-height:1.5;margin-bottom:14px;
 }
-.a-btn:hover{box-shadow:0 6px 24px rgba(230,51,41,.5)}
+.a-err{color:#ff8080;background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.2);border-left:3px solid var(--red)}
+.a-ok{color:#80ffb4;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-left:3px solid var(--green)}
+.a-err.on,.a-ok.on{display:block}
+
+/* Verify screen */
+.a-verify{display:none;text-align:center;padding:10px 0}
+.a-verify.on{display:block}
+.a-verify-title{font-family:var(--fh);font-size:26px;font-weight:900;letter-spacing:.04em;color:var(--white);margin-bottom:8px;margin-top:16px}
+.a-verify-msg{font-family:var(--fb);font-size:13px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:20px}
+.a-verify-email{font-family:var(--fh);font-size:16px;font-weight:800;color:var(--gold);display:block;margin:6px 0}
+.a-verify-steps{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;text-align:left;margin-bottom:18px}
+.a-vstep{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-family:var(--fb);font-size:12px;color:rgba(255,255,255,.5);line-height:1.4}
+.a-vstep:last-child{margin-bottom:0}
+.a-vstep-num{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.a-back-link{font-family:var(--fm);font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;background:none;border:none;text-decoration:underline}
+.a-back-link:hover{color:var(--gold)}
+.a-verify-icon-svg{margin:0 auto 16px;display:block}
+
+/* Submit btn */
+.a-btn{
+  background:var(--red);color:#fff;border:none;border-radius:10px;
+  padding:15px;font-family:var(--fh);font-size:18px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;width:100%;
+  transition:all .2s;box-shadow:0 4px 20px rgba(255,0,0,.3);margin-bottom:14px;
+}
+.a-btn:hover{box-shadow:0 6px 28px rgba(255,0,0,.45);transform:translateY(-1px)}
 .a-btn:active{transform:scale(.98)}
-.a-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.a-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;transform:none}
 
 /* Divider */
-.a-or{display:flex;align-items:center;gap:10px;margin:4px 0 10px}
-.a-or::before,.a-or::after{content:'';flex:1;height:1px;background:var(--b2)}
-.a-or span{font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.1em;text-transform:uppercase}
+.a-or{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.a-or::before,.a-or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+.a-or span{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase}
 
 /* Magic link */
 .a-magic{
-  background:transparent;border:1.5px solid var(--b2);color:var(--grey);
-  border-radius:9px;padding:11px;font-family:var(--fm);font-size:11px;
-  letter-spacing:.08em;cursor:pointer;width:100%;text-transform:uppercase;
-  transition:all .2s;
+  background:transparent;border:1.5px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.45);border-radius:10px;padding:13px;
+  font-family:var(--fm);font-size:11px;letter-spacing:.08em;
+  cursor:pointer;width:100%;text-transform:uppercase;transition:all .2s;
 }
 .a-magic:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Name field hidden by default */
+#af-name{display:none}
+/* Mobile logo — only shown when left panel is hidden */
+.a-mobile-logo{display:none}
+@media(max-width:767px){.a-mobile-logo{display:flex;flex-direction:column;align-items:center;margin-bottom:28px}}
 
 /* APP */
 #app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:rgba(0,0,0,.84)}
@@ -842,148 +920,164 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 </div>
 
 <div id="as">
-  <!-- LEFT PANEL — desktop only -->
-  <div class="as-left">
-    <div class="asl-orb asl-orb1"></div>
-    <div class="asl-orb asl-orb2"></div>
-    <div class="asl-logo">MUSTAINE</div>
-    <div class="asl-tag">by Vinit &middot; Troopod</div>
-    <div class="asl-features">
-      <div class="asl-feat">
-        <div class="asl-feat-icon asl-icon-1"></div>
-        <div class="asl-feat-text">
-          <span class="asl-feat-title">Your Cofounder</span>
-          Task intelligence that thinks with you, not for you.
+  <div class="as-wrap">
+
+    <!-- ── LEFT PANEL ── -->
+    <div class="as-left">
+      <div class="asl-logo">MUSTAINE</div>
+      <div class="asl-tag">by Vinit &middot; Troopod</div>
+
+      <!-- Continuously cycling subtitles -->
+      <div class="asl-cycle-wrap" id="asl-cycle">
+        <div class="asl-cycle-line active" data-sub="Task intelligence that thinks with you, not for you.">
+          <span style="color:var(--red)">Your Cofounder.</span>
+          <span class="asl-cycle-sub">Task intelligence that thinks with you, not for you.</span>
+        </div>
+        <div class="asl-cycle-line" data-sub="Auto-recurring tasks, smart scheduling, zero overhead.">
+          <span style="color:var(--gold)">Your EA.</span>
+          <span class="asl-cycle-sub">Auto-recurring tasks, smart scheduling, zero overhead.</span>
+        </div>
+        <div class="asl-cycle-line" data-sub="Real-time stats, efficiency scores, daily PDF reports.">
+          <span style="color:var(--green)">Your Team Member.</span>
+          <span class="asl-cycle-sub">Real-time stats, efficiency scores, daily PDF reports.</span>
+        </div>
+        <div class="asl-cycle-line" data-sub="Every task tracked, every hour logged, nothing lost.">
+          <span style="color:var(--amber)">Your Memory.</span>
+          <span class="asl-cycle-sub">Every task tracked, every hour logged, nothing lost.</span>
+        </div>
+        <div class="asl-cycle-line" data-sub="Built for founders who move fast and close deals.">
+          <span style="color:rgba(200,100,255,.9)">Your Weapon.</span>
+          <span class="asl-cycle-sub">Built for founders who move fast and close deals.</span>
         </div>
       </div>
-      <div class="asl-feat">
-        <div class="asl-feat-icon asl-icon-2"></div>
-        <div class="asl-feat-text">
-          <span class="asl-feat-title">Your EA</span>
-          Auto-recurring tasks, smart scheduling, zero overhead.
+
+      <!-- Static feature list -->
+      <div class="asl-features">
+        <div class="asl-feat">
+          <div class="asl-feat-dot" style="background:var(--red)"></div>
+          <div class="asl-feat-text">
+            <span class="asl-feat-title">Recurring Tasks</span>
+            <span class="asl-feat-desc">Auto-reopen daily, weekly, or monthly. Never forget a routine.</span>
+          </div>
+        </div>
+        <div class="asl-feat">
+          <div class="asl-feat-dot" style="background:var(--gold)"></div>
+          <div class="asl-feat-text">
+            <span class="asl-feat-title">Live Efficiency Score</span>
+            <span class="asl-feat-desc">A-F grade updated every session. Know exactly how today went.</span>
+          </div>
+        </div>
+        <div class="asl-feat">
+          <div class="asl-feat-dot" style="background:var(--green)"></div>
+          <div class="asl-feat-text">
+            <span class="asl-feat-title">Timer &amp; Hours Tracking</span>
+            <span class="asl-feat-desc">Start/stop timers per task. 24h utilisation bar. PDF export.</span>
+          </div>
         </div>
       </div>
-      <div class="asl-feat">
-        <div class="asl-feat-icon asl-icon-3"></div>
-        <div class="asl-feat-text">
-          <span class="asl-feat-title">Your Team Member</span>
-          Real-time stats, efficiency scores, daily PDF reports.
-        </div>
-      </div>
+
+      <div class="asl-stealth">Troopod Internal &middot; Stealth Mode</div>
     </div>
-    <div class="asl-stealth">Troopod Internal &middot; Stealth Mode</div>
-  </div>
 
-  <!-- RIGHT PANEL — form -->
-  <div class="as-right">
-    <div class="aw">
-      <!-- Mobile logo (hidden on desktop) -->
-      <div class="a-mobile-logo">
-        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:36px;height:36px;margin-bottom:8px">
-          <rect width="40" height="40" rx="9" fill="rgba(230,51,41,0.1)"/>
-          <rect x=".5" y=".5" width="39" height="39" rx="8.5" stroke="rgba(230,51,41,0.4)" stroke-width="1"/>
-          <path d="M8 29V11l7 11.5L20 13l5 9.5L32 11v18" stroke="#e63329" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div style="font-family:var(--fh);font-size:28px;font-weight:900;letter-spacing:.1em;color:var(--red)">MUSTAINE</div>
-        <div style="font-family:var(--fm);font-size:9px;letter-spacing:.22em;color:var(--grey2);text-transform:uppercase;margin-top:3px">by Vinit &middot; Troopod</div>
+    <!-- ── RIGHT PANEL ── form card ── -->
+    <div class="as-right">
+      <div class="aw">
+        <!-- Mobile logo -->
+        <div class="a-mobile-logo">
+          <div style="font-family:var(--fh);font-size:32px;font-weight:900;letter-spacing:.1em;color:var(--red);text-shadow:0 0 40px rgba(255,0,0,.4)">MUSTAINE</div>
+          <div style="font-family:var(--fm);font-size:9px;letter-spacing:.24em;color:rgba(200,168,75,.6);text-transform:uppercase;margin-top:4px">by Vinit &middot; Troopod</div>
+        </div>
+
+        <!-- Main form -->
+        <div id="a-form-wrap">
+          <div class="a-heading">
+            <div class="a-heading-title" id="a-title-text">Welcome back</div>
+            <div class="a-heading-sub" id="a-sub-text">Sign in to your workspace</div>
+          </div>
+
+          <div class="a-tabs">
+            <button class="a-tab on" id="a-tab-in" onclick="aMode('in')">Sign In</button>
+            <button class="a-tab" id="a-tab-up" onclick="aMode('up')">Create Account</button>
+          </div>
+
+          <div id="af-name">
+            <div class="a-lbl">Full Name <span class="a-lbl-req">*</span></div>
+            <div class="a-inp-wrap">
+              <input class="a-inp" id="a-name" type="text" placeholder="Your full name" autocomplete="name" oninput="validateName(this)">
+              <span class="a-inp-check" id="chk-name">&#10003;</span>
+            </div>
+          </div>
+
+          <div class="a-field">
+            <div class="a-lbl">Email Address <span class="a-lbl-req">*</span></div>
+            <div class="a-inp-wrap">
+              <input class="a-inp" id="a-email" type="email" placeholder="your@email.com"
+                autocomplete="email" inputmode="email" oninput="validateEmail(this)">
+              <span class="a-inp-check" id="chk-email">&#10003;</span>
+            </div>
+            <div class="a-field-hint" id="hint-email"></div>
+          </div>
+
+          <div class="a-field">
+            <div class="a-lbl">Password <span class="a-lbl-req">*</span></div>
+            <div class="a-inp-wrap">
+              <input class="a-inp" id="a-pass" type="password" placeholder="Min 6 characters"
+                autocomplete="current-password" oninput="validatePass(this)" style="padding-right:44px">
+              <button class="a-eye" type="button" onclick="togglePwd()" id="a-eye-btn" title="Toggle visibility">
+                <svg id="eye-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+                  <path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/>
+                </svg>
+              </button>
+            </div>
+            <div class="a-pwd-strength" id="pwd-strength">
+              <div class="a-pwd-bar"><div class="a-pwd-fill" id="pwd-fill"></div></div>
+              <div class="a-pwd-lbl" id="pwd-lbl">Enter a password</div>
+            </div>
+          </div>
+
+          <div class="a-err" id="a-err"></div>
+          <div class="a-ok"  id="a-ok"></div>
+
+          <button class="a-btn" id="a-btn" onclick="doAuth()">Sign In</button>
+          <div class="a-or"><span>or</span></div>
+          <button class="a-magic" onclick="doMagic()">Send Magic Link</button>
+        </div>
+
+        <!-- Email verification screen -->
+        <div class="a-verify" id="a-verify">
+          <svg class="a-verify-icon-svg" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" width="56" height="56">
+            <rect width="56" height="56" rx="14" fill="rgba(200,168,75,.1)"/>
+            <rect x=".5" y=".5" width="55" height="55" rx="13.5" stroke="rgba(200,168,75,.3)" stroke-width="1"/>
+            <path d="M12 19h32v22H12V19z" stroke="#c8a84b" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+            <path d="M12 19l16 14 16-14" stroke="#c8a84b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="a-verify-title">Check your email</div>
+          <div class="a-verify-msg">
+            Confirmation sent to<br>
+            <span class="a-verify-email" id="a-verify-email"></span>
+            Click the link in the email to verify your account, then sign in.
+          </div>
+          <div class="a-verify-steps">
+            <div class="a-vstep">
+              <div class="a-vstep-num">1</div>
+              <div>Open your email inbox and find the email from MUSTAINE</div>
+            </div>
+            <div class="a-vstep">
+              <div class="a-vstep-num">2</div>
+              <div>Click <b style="color:var(--white)">Confirm your mail</b> in the email</div>
+            </div>
+            <div class="a-vstep">
+              <div class="a-vstep-num">3</div>
+              <div>Return here and sign in with your credentials</div>
+            </div>
+          </div>
+          <button class="a-back-link" onclick="showSignIn()">Back to Sign In</button>
+        </div>
+
       </div>
-
-      <!-- Main form / verify screen switcher -->
-      <div id="a-form-wrap">
-        <!-- Heading -->
-        <div class="a-heading">
-          <div class="a-heading-title" id="a-title-text">Welcome back</div>
-          <div class="a-heading-sub" id="a-sub-text">Sign in to your workspace</div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="a-tabs">
-          <button class="a-tab on" id="a-tab-in" onclick="aMode('in')">Sign In</button>
-          <button class="a-tab" id="a-tab-up" onclick="aMode('up')">Create Account</button>
-        </div>
-
-        <!-- Name field (sign up only) -->
-        <div class="a-field" id="af-name" style="display:none">
-          <div class="a-lbl">Full Name <span class="a-lbl-req">*</span></div>
-          <div class="a-inp-wrap">
-            <input class="a-inp" id="a-name" type="text" placeholder="Vinit Singh" autocomplete="name" oninput="validateName(this)">
-            <span class="a-inp-check" id="chk-name">✓</span>
-          </div>
-          <div class="a-field-hint" id="hint-name">Min 2 characters</div>
-        </div>
-
-        <!-- Email field -->
-        <div class="a-field">
-          <div class="a-lbl">Email Address <span class="a-lbl-req">*</span></div>
-          <div class="a-inp-wrap">
-            <input class="a-inp" id="a-email" type="email" placeholder="vinit@pushstart.in"
-              autocomplete="email" inputmode="email" oninput="validateEmail(this)">
-            <span class="a-inp-check" id="chk-email">✓</span>
-          </div>
-          <div class="a-field-hint" id="hint-email"></div>
-        </div>
-
-        <!-- Password field -->
-        <div class="a-field">
-          <div class="a-lbl">Password <span class="a-lbl-req">*</span></div>
-          <div class="a-inp-wrap">
-            <input class="a-inp" id="a-pass" type="password" placeholder="Min 6 characters"
-              autocomplete="current-password" oninput="validatePass(this)" style="padding-right:42px">
-            <button class="a-eye" type="button" onclick="togglePwd()" id="a-eye-btn" title="Show/hide password">
-              <svg id="eye-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="17" height="17">
-                <path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/>
-              </svg>
-            </button>
-          </div>
-          <!-- Password strength (signup only) -->
-          <div class="a-pwd-strength" id="pwd-strength">
-            <div class="a-pwd-bar"><div class="a-pwd-fill" id="pwd-fill"></div></div>
-            <div class="a-pwd-lbl" id="pwd-lbl">Enter a password</div>
-          </div>
-          <div class="a-field-hint" id="hint-pass"></div>
-        </div>
-
-        <!-- Messages -->
-        <div class="a-err" id="a-err"></div>
-        <div class="a-ok" id="a-ok"></div>
-
-        <!-- Submit -->
-        <button class="a-btn" id="a-btn" onclick="doAuth()">Sign In</button>
-
-        <!-- Magic link -->
-        <div class="a-or"><span>or</span></div>
-        <button class="a-magic" onclick="doMagic()">Send Magic Link</button>
-      </div>
-
-      <!-- EMAIL VERIFICATION SCREEN (shown after signup) -->
-      <div class="a-verify" id="a-verify">
-        <div class="a-verify-icon"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:48px;height:48px;margin:0 auto 12px;display:block"><rect width="48" height="48" rx="12" fill="rgba(200,168,75,.1)"/><rect x=".5" y=".5" width="47" height="47" rx="11.5" stroke="rgba(200,168,75,.3)"/><path d="M10 16h28v20H10V16z" stroke="#c8a84b" stroke-width="1.5" fill="none" stroke-linejoin="round"/><path d="M10 16l14 12L38 16" stroke="#c8a84b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="a-verify-title">Check your email</div>
-        <div class="a-verify-msg">
-          We sent a confirmation link to
-          <span class="a-verify-email" id="a-verify-email"></span>
-          Click the link to verify your account, then sign in below.
-        </div>
-        <div class="a-verify-steps">
-          <div class="a-vstep">
-            <div class="a-vstep-num">1</div>
-            <div>Open your email inbox and find the email from MUSTAINE / Supabase</div>
-          </div>
-          <div class="a-vstep">
-            <div class="a-vstep-num">2</div>
-            <div>Click the <b style="color:var(--white)">Confirm your mail</b> button in the email</div>
-          </div>
-          <div class="a-vstep">
-            <div class="a-vstep-num">3</div>
-            <div>Come back here and sign in with your email and password</div>
-          </div>
-        </div>
-        <button class="a-back-link" onclick="showSignIn()">&#8592; Back to Sign In</button>
-      </div>
-    </div>
-  </div>
+    </div><!-- /as-right -->
+  </div><!-- /as-wrap -->
 </div>
-
 <div id="app">
   <!-- MOBILE HEADER -->
   <div class="mob-hdr">
@@ -3102,6 +3196,27 @@ function dismissMcard(){
 }
 // Show first card after 5 min, then every 5 min
 setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
+
+
+/* ── CYCLING AUTH SUBTITLES ── */
+(function(){
+  let cur=0;
+  function cycleLines(){
+    const wrap=document.getElementById('asl-cycle');if(!wrap)return;
+    const lines=wrap.querySelectorAll('.asl-cycle-line');if(!lines.length)return;
+    const next=(cur+1)%lines.length;
+    // Exit current
+    lines[cur].classList.remove('active');lines[cur].classList.add('exit');
+    // After exit, reset exit class
+    const exitIdx=cur;
+    setTimeout(()=>{lines[exitIdx].classList.remove('exit');},700);
+    // Enter next
+    cur=next;
+    lines[cur].classList.add('active');
+  }
+  // Start cycling after 3s, every 3s
+  setTimeout(()=>{setInterval(cycleLines,3000);},3000);
+})();
 
 window.addEventListener('load',()=>setTimeout(boot,4200)); // wait for USP animations
 </script>
