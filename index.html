@@ -83,7 +83,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   100%{opacity:0;transform:translateY(-8px) scale(1.04);filter:blur(3px)}}
 @keyframes uspGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 20px rgba(200,168,75,.6),0 0 60px rgba(200,168,75,.2)}}
 @keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
-#ls{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#ls{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(255,0,0,.06) 0%,transparent 60%);pointer-events:none}
 .ls-inner{display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeInUp .6s ease both}
 .ls-mark{animation:fadeInUp .5s ease both;animation-delay:.1s;opacity:0}
@@ -320,7 +320,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 @media(max-width:767px){.a-mobile-logo{display:flex;flex-direction:column;align-items:center;margin-bottom:28px}}
 
 /* APP */
-#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:rgba(0,0,0,.84)}
+#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:rgba(0,0,0,.8)}
 
 /* MOBILE HEADER */
 .mob-hdr{flex-shrink:0;background:rgba(0,0,0,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
@@ -723,99 +723,104 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .sidebar{display:flex}
   .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 
-  /* ── DRAWER: slides from right ── */
+  /* ── DRAWER ── */
   #drawer{top:0;left:auto;right:0;bottom:0;width:460px;max-height:100vh;
-    border-radius:0;border-top:none;border-left:1px solid var(--b2);
+    border-radius:0;border-top:none;border-left:1px solid rgba(255,255,255,.07);
     transform:translateX(110%)}
   #drawer.on{transform:translateX(0)}
   .dr-drag{display:none}
   .dr-body{padding:16px 20px;gap:14px}
 
-  /* ── VIEW: centred content with max-width container ── */
+  /* ── VIEW ── full width, same as mobile feel ── */
   .view{width:100%;max-width:none;margin:0;padding-bottom:24px}
-  /* All direct children of view get centred with max-width */
   .day-strip,.add-box,.toolbar,.filters,.stage-strip,.od-banner,
   .timer-active-strip,.sec,.card-list,.show-done-btn,
-  .done-tab,.dr-range,.done-stat-row,#done-list-wrap,.done-stat-row{
+  .done-tab,.dr-range,.done-stat-row,#done-list-wrap{
     max-width:1600px;margin-left:auto;margin-right:auto;width:100%;box-sizing:border-box;
   }
 
-  /* ── DAY STRIP: tighter, chips + meter in one row ── */
-  .day-strip{padding:8px 20px 7px;gap:5px}
-  .day-date{font-size:10px;letter-spacing:.2em;margin-bottom:2px}
-  .chips-row{flex-wrap:nowrap;gap:7px;align-items:center}
-  .stat-chip{font-size:11px;padding:4px 13px;border-radius:6px}
-  #hours-meter{margin-top:5px}
+  /* ── DAY STRIP ── same feel as mobile ── */
+  .day-strip{padding:8px 16px 7px}
+  .chips-row{flex-wrap:nowrap;gap:6px;align-items:center}
+  .stat-chip{font-size:11px;padding:4px 12px;border-radius:6px}
   .load-msg{margin-top:5px;font-size:11px}
 
-  /* ── ADD BOX: desktop — one compact flex row ── */
-  .add-box{padding:7px 20px 8px}
+  /* ── ADD FORM ── compact labelled rows ── */
+  .add-box{padding:7px 16px 8px}
   .add-row{gap:8px}
   .add-inp{font-size:14px;padding:8px 14px}
   .add-go{padding:0 20px;font-size:15px;min-height:38px}
-  /* Desktop: labelled add form rows */
   .add-row1{grid-template-columns:1.6fr 1fr 1fr 0.7fr 1.1fr;gap:8px}
   .add-row2{grid-template-columns:1fr 1fr 0.5fr 1fr;gap:8px}
   .af-lbl{font-size:9px;letter-spacing:.1em}
   .add-sel,.add-t{font-size:11px;padding:6px 9px;border-radius:6px}
 
-  /* ── TOOLBAR: full width, bigger text ── */
-  .toolbar{padding:5px 20px;gap:7px}
-  .tb{font-size:11px;padding:5px 12px}
-
-  /* ── FILTERS: full width ── */
-  .filters{padding:0 20px}
-  .ftab{font-size:10px;padding:8px 14px}
-
-  /* ── STAGE STRIP ── */
-  .stage-strip{padding:5px 20px}
-  .stab{font-size:10px;padding:4px 12px}
-
-  /* ── OVERDUE BANNER ── */
-  .od-banner{margin:6px 20px;font-size:10px}
+  /* ── TOOLBAR/FILTERS/STAGE ── */
+  .toolbar{padding:5px 16px;gap:7px}
+  .tb{font-size:10px;padding:5px 11px}
+  .filters{padding:0 16px}
+  .ftab{font-size:9px;padding:7px 12px}
+  .stage-strip{padding:5px 16px}
+  .stab{font-size:9px;padding:3px 10px}
+  .od-banner{margin:6px 16px;font-size:10px}
 
   /* ── SECTION HEADERS ── */
-  .sec{padding:8px 20px 4px;box-sizing:border-box}
-  #done-sec,#blocked-sec{width:100%;}
+  .sec{padding:8px 16px 4px;box-sizing:border-box}
+  #done-sec,#blocked-sec{width:100%}
 
-  /* ── TASK CARDS: wider, more breathing room ── */
-  .card-list{padding:0 16px 10px;gap:9px;width:100%;box-sizing:border-box}
-  .card-inner{padding:11px 12px 11px 16px;gap:10px}
-  .card-title{font-size:14px;margin-bottom:7px}
-  .chip{font-size:9px;padding:2px 7px}
-  .card-check{width:22px;height:22px}
-  .card-timer{padding:7px 16px}
-  .ct-disp{font-size:12px}
-
-  /* ── SHOW DONE BTN ── */
-  .show-done-btn{width:calc(100% - 40px);margin:5px 20px 10px}
-
-  /* ── TIMER STRIP ── */
-  .timer-active-strip{padding:5px 20px}
+  /* ── CARDS ── same proportions as mobile ── */
+  .card-list{padding:0 12px 10px;gap:8px;width:100%;box-sizing:border-box}
+  .card{border-radius:12px}
+  .card-inner{padding:10px 10px 10px 14px;gap:8px}
+  .card-title{font-size:13px;font-weight:600;margin-bottom:6px}
+  .chip{font-size:9px;padding:2px 6px}
+  .card-check{width:20px;height:20px}
+  .card-timer{padding:6px 14px}
+  .ct-disp{font-size:11px}
+  .show-done-btn{width:calc(100% - 32px);margin:4px 16px 8px}
+  .timer-active-strip{padding:5px 16px}
 
   /* ── NOTIF LIST ── */
-  #notif-list{padding:0 8px}
+  #notif-list{padding:0 4px}
 
-  /* ── ANALYTICS WRAP ── */
-  #an-wrap{padding:0 4px 24px}
-  .an-card{padding:16px 18px;margin-bottom:10px}
+  /* ── ANALYTICS ── 2-col grid ── */
+  #an-wrap{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    padding:10px 12px 28px;align-items:start;
+  }
+  #an-wrap > .an-card:first-child,
+  #an-wrap > .an-card:last-child{grid-column:1/-1}
+  .an-card{padding:14px 16px;margin-bottom:0;border-radius:12px}
 
   /* ── DONE VIEW ── */
-  .done-tab{padding:6px 20px}
-  .done-stat-row{padding:10px 20px}
-  #done-list-wrap{padding:0 20px 24px}
+  .done-tab{padding:6px 16px}
+  .done-stat-row{padding:8px 16px}
+  #done-list-wrap{padding:0 16px 24px}
 
-  /* ── RULES ── */
-  #rules-wrap{padding:0 20px 60px}
-  .rule-card{padding:14px 18px;margin-bottom:10px}
+  /* ── RULES / MEETINGS ── */
+  #rules-wrap{padding:0 16px 60px}
+  .rule-card{padding:13px 16px;margin-bottom:8px}
 
   /* ── HOURS METER ── */
-  #hours-meter{margin:6px 0 0}
-
-  /* ── LOAD MSG ── */
-  .load-msg{font-size:11px;padding:6px 12px;margin-top:8px}
+  #hours-meter{margin:5px 0 0}
+  .load-msg{font-size:10px;padding:5px 10px;margin-top:6px}
 
   #toast{bottom:28px}
+}
+
+/* ── 1200px: 2-col cards ── */
+@media(min-width:1200px){
+  .sidebar{width:220px;min-width:220px}
+  .card-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 10px}
+  .card-list > .sec,.date-grp,.show-done-btn,#done-sec,#blocked-sec{grid-column:1/-1}
+}
+
+/* ── 1440px: wider sidebar ── */
+@media(min-width:1440px){
+  .sidebar{width:240px;min-width:240px}
+  .card-list{gap:10px;padding:0 20px 12px}
+  .sec{padding:8px 20px 4px}
+  .day-strip,.add-box,.toolbar,.filters,.stage-strip{padding-left:20px;padding-right:20px}
 }
 
 @media(min-width:1200px){
@@ -869,7 +874,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
 <!-- MATERIAL 3 EXPRESSIVE — LIQUID MESH BACKGROUND -->
 <div id="bg-canvas" aria-hidden="true">
-  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <!-- Heavy blur filter — 150px equivalent -->
       <filter id="heavyBlur" x="-80%" y="-80%" width="260%" height="260%" color-interpolation-filters="sRGB">
@@ -1353,19 +1358,30 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       </div>
 
       <!-- Connect prompt (shown when not connected) -->
-      <div id="cal-connect-wrap" style="padding:20px 16px;display:none">
-        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:28px 24px;text-align:center;max-width:480px;margin:0 auto">
-          <div style="width:52px;height:52px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24" style="color:var(--grey)"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <div id="cal-connect-wrap" style="padding:12px 16px">
+        <!-- Quick action bar -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <a href="https://calendar.google.com" target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 13px;font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.7);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:all .2s">
+            <svg viewBox="0 0 18 18" width="13" height="13" fill="none"><rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M2 7h14M6 2v2M12 2v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            Open Google Calendar
+          </a>
+          <div style="display:flex;gap:3px">
+            <button onclick="setCalView('week')" data-cv="week" class="dtab on" style="font-size:9px;padding:4px 10px">Week</button>
+            <button onclick="setCalView('day')" data-cv="day" class="dtab" style="font-size:9px;padding:4px 10px">Day</button>
+            <button onclick="setCalView('agenda')" data-cv="agenda" class="dtab" style="font-size:9px;padding:4px 10px">Agenda</button>
           </div>
-          <div style="font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:.06em;color:var(--white);margin-bottom:8px">Connect Google Calendar</div>
-          <div style="font-family:var(--fb);font-size:13px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:20px">See your meetings alongside your tasks.<br>Each user connects their own Google account — your data stays yours.</div>
-          <button onclick="connectGoogleCalendar()" style="background:var(--white);color:#1a1a1a;border:none;border-radius:9px;padding:13px 28px;font-family:var(--fh);font-size:16px;font-weight:800;letter-spacing:.08em;cursor:pointer;width:100%;max-width:280px;transition:opacity .2s">
-            <svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:middle;margin-right:8px;margin-top:-2px" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-            Connect with Google
-          </button>
-          <div style="font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.2);margin-top:14px;letter-spacing:.06em">Read-only access · Calendar events only · No task creation</div>
+          <div style="font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.2);margin-left:auto;letter-spacing:.04em">Uses your Google session</div>
         </div>
+        <!-- Embedded Google Calendar — uses active browser Google session, no extra login -->
+        <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">
+          <iframe id="gcal-iframe"
+            src="https://calendar.google.com/calendar/r/week?pli=1"
+            style="width:100%;height:600px;border:none;display:block;filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.95)"
+            title="Google Calendar" loading="lazy">
+          </iframe>
+        </div>
+        <div style="font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.15);text-align:center;margin-top:8px;letter-spacing:.04em">Already signed into Google? Your calendar loads automatically above.</div>
       </div>
 
       <!-- Meeting tabs (shown when connected) -->
@@ -2591,25 +2607,22 @@ function setMeetingTab(el){
   renderMeetingsList();
 }
 
+function setCalView(v){
+  document.querySelectorAll('[data-cv]').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
+  const iframe=document.getElementById('gcal-iframe');
+  if(iframe){
+    const viewMap={week:'week',day:'day',agenda:'agenda'};
+    iframe.src='https://calendar.google.com/calendar/r/'+(viewMap[v]||'week')+'?pli=1';
+  }
+}
 function renderMeetings(){
+  // Always show the embed — no auth step needed
   const connect=document.getElementById('cal-connect-wrap');
   const tabs=document.getElementById('cal-tabs-wrap');
   const syncBtn=document.getElementById('cal-sync-btn');
-  const token=getCalToken();
-  const connected=G_calConnected||!!token;
-
-  if(!connected){
-    if(connect)connect.style.display='';
-    if(tabs)tabs.style.display='none';
-    if(syncBtn)syncBtn.style.display='none';
-    if(token)fetchCalendarEvents();
-  } else {
-    if(connect)connect.style.display='none';
-    if(tabs)tabs.style.display='';
-    if(syncBtn)syncBtn.style.display='';
-    renderMeetingStats();
-    renderMeetingsList();
-  }
+  if(connect)connect.style.display='';
+  if(tabs)tabs.style.display='none';
+  if(syncBtn)syncBtn.style.display='none';
 }
 
 function renderMeetingStats(){
