@@ -200,7 +200,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* ═══ AUTH SCREEN ═══ */
 #as{position:fixed;inset:0;z-index:90;display:none;overflow:hidden}
-#as.on{display:flex}
+#as.on{/* display managed by showAuth() */}
 
 /* Full screen — mesh bg shows through everywhere */
 .as-wrap{
@@ -1960,8 +1960,24 @@ function showVerifyScreen(email){
 async function doMagic(){const e=document.getElementById('a-email').value.trim();if(!e){aMsg('Enter email first',1);return;}try{await SB.magic(e);aMsg('Magic link sent',0);}catch(e){aMsg(e.message,1);}}
 async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();toast('Signed out');}
 
-function showAuth(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='flex';document.getElementById('app').style.display='none';}
-function showApp(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='none';document.getElementById('app').style.display='flex';}
+function showAuth(){
+  const ls=document.getElementById('ls');if(ls)ls.style.display='none';
+  const app=document.getElementById('app');if(app)app.style.display='none';
+  const as=document.getElementById('as');
+  if(!as)return;
+  as.style.display='flex';
+  // Staggered animation — needs two rAF to actually trigger after display change
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    as.classList.add('as-animating');
+  }));
+  // Start kinetic word after initial stagger settles
+  setTimeout(()=>{if(!window._aslStarted){window._aslStarted=true;startAslKinetic();}},1000);
+}
+function showApp(){
+  const ls=document.getElementById('ls');if(ls)ls.style.display='none';
+  const as=document.getElementById('as');if(as){as.style.display='none';as.classList.remove('as-animating');}
+  const app=document.getElementById('app');if(app)app.style.display='flex';
+}
 
 /* ── BOOT ── */
 /* ── NEXT WORKING DAY (skip Sunday) ── */
@@ -2053,9 +2069,12 @@ async function rolloverDailyTasks(){
 }
 
 async function boot(){
-  document.getElementById('ls').style.display='flex';
-  document.getElementById('as').style.display='none';
-  document.getElementById('app').style.display='none';
+  // ls is already hidden by lsDismiss() — don't touch it
+  // Just ensure as and app are hidden before we decide which to show
+  const asEl=document.getElementById('as');
+  const appEl=document.getElementById('app');
+  if(asEl)asEl.style.display='none';
+  if(appEl)appEl.style.display='none';
   const s=await SB.refresh()||SB.sess();
   if(!s){showAuth();return;}
   const name=(s.user?.email||'').split('@')[0]||'Sign Out';
