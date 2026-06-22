@@ -83,8 +83,25 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   100%{opacity:0;transform:translateY(-8px) scale(1.04);filter:blur(3px)}}
 @keyframes uspGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 20px rgba(200,168,75,.6),0 0 60px rgba(200,168,75,.2)}}
 @keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
-#ls{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#ls{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
 #ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(255,0,0,.06) 0%,transparent 60%);pointer-events:none}
+/* Preloader stamp animations */
+.ls-stage{position:relative;display:flex;flex-direction:column;align-items:flex-start;padding:0 clamp(32px,8vw,100px);width:100%;max-width:940px}
+.ls-logo{font-family:'Barlow Condensed',sans-serif;font-size:clamp(64px,13vw,160px);font-weight:900;letter-spacing:-.01em;line-height:.88;color:var(--red);text-shadow:0 0 60px rgba(255,0,0,.2)}
+.ls-rule{width:0;height:2px;background:linear-gradient(to right,var(--red),transparent);margin:8px 0 14px;animation:lsRule .8s cubic-bezier(.4,0,.2,1) .3s both}
+@keyframes lsRule{from{width:0;opacity:0}to{width:min(380px,60vw);opacity:1}}
+.ls-byline{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,11px);letter-spacing:.28em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:clamp(20px,4vh,44px);animation:lsFade .6s ease .2s both}
+@keyframes lsFade{from{opacity:0}to{opacity:1}}
+.ls-ids{display:flex;flex-direction:column;gap:clamp(1px,.8vh,6px)}
+.ls-id{font-family:'Barlow Condensed',sans-serif;font-size:clamp(24px,5vw,64px);font-weight:800;letter-spacing:.04em;line-height:1.1;text-transform:uppercase;opacity:0;transform:translateY(32px)}
+.ls-id.active{animation:lsStamp .55s cubic-bezier(.16,1,.3,1) both}
+.ls-id:nth-child(1).active{color:rgba(255,255,255,.18)}
+.ls-id:nth-child(2).active{color:rgba(255,255,255,.32)}
+.ls-id:nth-child(3).active{color:rgba(255,255,255,.48)}
+.ls-id:nth-child(4).active{color:rgba(200,168,75,.75)}
+.ls-id:nth-child(5).active{color:rgba(255,255,255,.9);text-shadow:0 0 30px rgba(255,255,255,.1)}
+@keyframes lsStamp{from{opacity:0;transform:translateY(32px) scaleY(1.1);filter:blur(6px)}to{opacity:1;transform:translateY(0) scaleY(1);filter:blur(0)}}
+.ls-skip{position:absolute;bottom:clamp(20px,4vh,36px);right:clamp(24px,5vw,60px);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.18);text-transform:uppercase;animation:lsFade 1s ease 2.2s both}
 .ls-inner{display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeInUp .6s ease both}
 .ls-mark{animation:fadeInUp .5s ease both;animation-delay:.1s;opacity:0}
 .ls-logo{font-family:var(--fh);font-size:56px;font-weight:900;letter-spacing:.1em;color:var(--red);animation:glow 2s infinite, fadeInUp .5s ease .2s both}
@@ -1030,7 +1047,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   </svg>
 </div>
 
-<div id="ls" onclick="lsSkip()" style="cursor:pointer">
+<div id="ls" onclick="lsSkip()">
   <div class="ls-stage">
     <div class="ls-logo">MUSTAINE</div>
     <div class="ls-rule"></div>
@@ -1043,73 +1060,135 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <div class="ls-id" id="lid4">Your Weapon.</div>
     </div>
   </div>
-  <div class="ls-skip">Tap to skip &rarr;</div>
+  <div class="ls-skip">Tap anywhere to skip &rarr;</div>
 </div>
 
-<div id="as">
-  <div style="position:relative;width:100%;height:100%;display:grid;grid-template-columns:1fr 400px">
 
-    <!-- LEFT: identity -->
-    <div style="position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(32px,6vw,72px);overflow:hidden">
-      <!-- Kinetic word stage -->
-      <div id="asl-stage" style="position:absolute;top:50%;left:0;right:0;transform:translateY(-60%);padding:0 clamp(32px,6vw,72px);pointer-events:none;z-index:0;overflow:visible"></div>
-      <!-- Brand + features -->
-      <div style="position:relative;z-index:2">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(52px,7vw,90px);font-weight:900;letter-spacing:.06em;color:var(--red);line-height:1;text-shadow:0 0 60px rgba(255,0,0,.3)">MUSTAINE</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.28em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-top:6px;margin-bottom:36px">by Vinit &middot; Troopod</div>
-        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:8px">
-          <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:5px"></div><div><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:.06em;color:#fff;display:block;margin-bottom:1px">Recurring Tasks</div><div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:rgba(255,255,255,.38);line-height:1.5">Auto-reopen daily, weekly, monthly. Never miss a cycle.</div></div></div>
-          <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px"></div><div><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:.06em;color:#fff;display:block;margin-bottom:1px">Live Efficiency Score</div><div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:rgba(255,255,255,.38);line-height:1.5">A-F grade every session. Know exactly how today went.</div></div></div>
-          <div style="display:flex;align-items:flex-start;gap:10px"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:5px"></div><div><div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:.06em;color:#fff;display:block;margin-bottom:1px">AI Smart Parsing</div><div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:rgba(255,255,255,.38);line-height:1.5">Type in plain English. Claude structures it instantly.</div></div></div>
-        </div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.2em;color:rgba(255,255,255,.12);text-transform:uppercase;margin-top:28px">Troopod Internal &middot; Stealth Mode</div>
+
+<div id="as">
+  <div class="as-wrap">
+
+    <!-- ── LEFT: kinetic word stage ── -->
+    <div class="as-left">
+      <div class="asl-accent"></div>
+
+      <!-- Large cycling word -->
+      <div class="asl-kword-stage" id="asl-stage">
+        <!-- Words injected by JS -->
+      </div>
+
+      <!-- Brand mark (bottom) -->
+      <div class="asl-brand">
+        <div class="asl-logo">MUSTAINE</div>
+        <div class="asl-tagline">by Vinit &middot; Troopod &middot; Stealth Mode</div>
       </div>
     </div>
 
-    <!-- RIGHT: form -->
-    <div style="display:flex;align-items:center;justify-content:center;padding:clamp(28px,4vh,48px) clamp(28px,3vw,44px);background:rgba(6,6,8,.86);backdrop-filter:blur(48px);-webkit-backdrop-filter:blur(48px);border-left:1px solid rgba(255,255,255,.07)">
-      <div style="width:100%;max-width:340px">
+    <!-- ── RIGHT: form artifact ── -->
+    <div class="as-right">
+      <div class="aw">
+
+        <!-- Mobile logo -->
+        <div class="a-mobile-logo">
+          <div class="a-mlogo">MUSTAINE</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.25);margin-top:4px">by Vinit &middot; Troopod</div>
+        </div>
 
         <!-- Form -->
         <div id="a-form-wrap">
-          <div style="margin-bottom:22px">
-            <div id="a-title-text" style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(28px,4vw,38px);font-weight:900;letter-spacing:.02em;color:#fff;line-height:1;margin-bottom:5px">Welcome back</div>
-            <div id="a-sub-text" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:300;color:rgba(255,255,255,.38)">Sign in to your workspace</div>
+          <div class="a-heading">
+            <div class="a-heading-title" id="a-title-text">Welcome back</div>
+            <div class="a-heading-sub" id="a-sub-text">Sign in to your workspace</div>
           </div>
-          <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:22px">
-            <button class="a-tab on" id="a-tab-in" onclick="aMode('in')" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:9px 16px 9px 0;border:none;background:transparent;color:#fff;cursor:pointer;border-bottom:2px solid var(--red);margin-bottom:-1px">Sign In</button>
-            <button class="a-tab" id="a-tab-up" onclick="aMode('up')" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:9px 16px 9px 8px;border:none;background:transparent;color:rgba(255,255,255,.3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px">Create Account</button>
+
+          <div class="a-tabs">
+            <button class="a-tab on" id="a-tab-in" onclick="aMode('in')">Sign In</button>
+            <button class="a-tab" id="a-tab-up" onclick="aMode('up')">Create Account</button>
           </div>
-          <div id="af-name" style="display:none;margin-bottom:14px">
+
+          <div id="af-name">
             <div class="a-lbl">Full Name <span class="a-lbl-req">*</span></div>
-            <div class="a-inp-wrap"><input class="a-inp" id="a-name" type="text" placeholder="Your name" autocomplete="name" oninput="validateName(this)"><span class="a-inp-check" id="chk-name">&#10003;</span></div>
+            <div class="a-inp-wrap">
+              <input class="a-inp" id="a-name" type="text"
+                placeholder="Your name"
+                autocomplete="name" oninput="validateName(this)">
+              <span class="a-inp-check" id="chk-name">&#10003;</span>
+            </div>
           </div>
-          <div style="margin-bottom:14px">
+
+          <div class="a-field">
             <div class="a-lbl">Email <span class="a-lbl-req">*</span></div>
-            <div class="a-inp-wrap"><input class="a-inp" id="a-email" type="email" placeholder="your@email.com" autocomplete="email" inputmode="email" oninput="validateEmail(this)"><span class="a-inp-check" id="chk-email">&#10003;</span></div>
-            <div class="a-field-hint" id="hint-email"></div>
+            <div class="a-inp-wrap">
+              <input class="a-inp" id="a-email" type="email"
+                placeholder="your@email.com"
+                autocomplete="email" inputmode="email"
+                oninput="validateEmail(this)">
+              <span class="a-inp-check" id="chk-email">&#10003;</span>
+            </div>
           </div>
-          <div style="margin-bottom:14px">
+
+          <div class="a-field">
             <div class="a-lbl">Password <span class="a-lbl-req">*</span></div>
-            <div class="a-inp-wrap"><input class="a-inp" id="a-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password" oninput="validatePass(this)" style="padding-right:42px"><button class="a-eye" type="button" onclick="togglePwd()" title="Show/hide"><svg id="eye-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="17" height="17"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/></svg></button></div>
-            <div class="a-pwd-strength" id="pwd-strength"><div class="a-pwd-bar"><div class="a-pwd-fill" id="pwd-fill"></div></div><div class="a-pwd-lbl" id="pwd-lbl">Enter a password</div></div>
+            <div class="a-inp-wrap">
+              <input class="a-inp" id="a-pass" type="password"
+                placeholder="Min 6 characters"
+                autocomplete="current-password"
+                oninput="validatePass(this)"
+                style="padding-right:44px">
+              <button class="a-eye" type="button" onclick="togglePwd()" title="Show / hide">
+                <svg id="eye-icon" viewBox="0 0 20 20" fill="none"
+                  stroke="currentColor" stroke-width="1.5" width="17" height="17">
+                  <path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/>
+                  <circle cx="10" cy="10" r="2.5"/>
+                </svg>
+              </button>
+            </div>
+            <div class="a-pwd-strength" id="pwd-strength">
+              <div class="a-pwd-bar"><div class="a-pwd-fill" id="pwd-fill"></div></div>
+              <div class="a-pwd-lbl" id="pwd-lbl">Enter a password</div>
+            </div>
           </div>
+
           <div class="a-err" id="a-err"></div>
-          <div class="a-ok" id="a-ok"></div>
+          <div class="a-ok"  id="a-ok"></div>
+
           <button class="a-btn" id="a-btn" onclick="doAuth()">Sign In</button>
+
           <div class="a-or"><span>or</span></div>
           <button class="a-magic" onclick="doMagic()">Send Magic Link</button>
         </div>
 
-        <!-- Verify -->
+        <!-- Email verification screen -->
         <div class="a-verify" id="a-verify">
-          <svg viewBox="0 0 56 44" fill="none" width="52" height="41" style="display:block;margin:0 auto"><rect width="56" height="44" rx="10" fill="rgba(200,168,75,.08)"/><rect x=".5" y=".5" width="55" height="43" rx="9.5" stroke="rgba(200,168,75,.22)" stroke-width="1"/><path d="M8 13h40v22H8V13z" stroke="#c8a84b" stroke-width="1.2" fill="none" stroke-linejoin="round"/><path d="M8 13l20 15 20-15" stroke="#c8a84b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 56 44" fill="none" xmlns="http://www.w3.org/2000/svg"
+            width="48" height="38" style="display:block;margin:0 auto">
+            <rect width="56" height="44" rx="10" fill="rgba(255,215,0,.08)"/>
+            <rect x=".5" y=".5" width="55" height="43" rx="9.5"
+              stroke="rgba(255,215,0,.25)" stroke-width="1"/>
+            <path d="M8 13h40v22H8V13z" stroke="#c8a84b" stroke-width="1.2"
+              fill="none" stroke-linejoin="round"/>
+            <path d="M8 13l20 15 20-15" stroke="#c8a84b" stroke-width="1.2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <div class="a-verify-title">Check your inbox</div>
-          <div class="a-verify-msg">Confirmation sent to<br><span class="a-verify-email" id="a-verify-email"></span>Click the link, then sign in.</div>
+          <div class="a-verify-msg">
+            Confirmation sent to<br>
+            <span class="a-verify-email" id="a-verify-email"></span>
+            Click the link in the email, then sign in here.
+          </div>
           <div class="a-verify-steps">
-            <div class="a-vstep"><div class="a-vstep-num">1</div><div>Open email, find MUSTAINE message</div></div>
-            <div class="a-vstep"><div class="a-vstep-num">2</div><div>Click <b style="color:#fff">Confirm your mail</b></div></div>
-            <div class="a-vstep"><div class="a-vstep-num">3</div><div>Return here and sign in</div></div>
+            <div class="a-vstep">
+              <div class="a-vstep-num">1</div>
+              <div>Open your email and find the MUSTAINE message</div>
+            </div>
+            <div class="a-vstep">
+              <div class="a-vstep-num">2</div>
+              <div>Click <b style="color:#fff">Confirm your mail</b></div>
+            </div>
+            <div class="a-vstep">
+              <div class="a-vstep-num">3</div>
+              <div>Return here and sign in</div>
+            </div>
           </div>
           <button class="a-back-link" onclick="showSignIn()">Back to Sign In</button>
         </div>
@@ -1117,14 +1196,6 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       </div>
     </div>
 
-    <!-- Mobile: hide left panel, right fills screen -->
-    <style>
-      @media(max-width:767px){
-        #as > div{grid-template-columns:1fr!important}
-        #as > div > div:first-child{display:none!important}
-        #as > div > div:last-child{border-left:none!important;background:rgba(4,4,6,.92)!important}
-      }
-    </style>
   </div>
 </div>
 <div id="app">
@@ -1802,13 +1873,17 @@ function showVerifyScreen(email){
 async function doMagic(){const e=document.getElementById('a-email').value.trim();if(!e){aMsg('Enter email first',1);return;}try{await SB.magic(e);aMsg('Magic link sent',0);}catch(e){aMsg(e.message,1);}}
 async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();toast('Signed out');}
 
-function showAuth(){
-  document.getElementById('ls').style.display='none';
-  document.getElementById('app').style.display='none';
-  document.getElementById('as').style.display='flex';
-  if(!window._aslStarted){window._aslStarted=true;setTimeout(startAslKinetic,400);}
-}
+function showAuth(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='flex';document.getElementById('app').style.display='none';}
+function showApp(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='none';document.getElementById('app').style.display='flex';}
 
+/* ── BOOT ── */
+/* ── NEXT WORKING DAY (skip Sunday) ── */
+function nextWorkDay(fromDate){
+  const d=new Date(fromDate+'T10:00:00');
+  d.setDate(d.getDate()+1);
+  if(d.getDay()===0)d.setDate(d.getDate()+1); // skip Sunday
+  return d.toISOString().slice(0,10);
+}
 
 /* ── DAILY RECURRING ROLLOVER ── */
 /* ── AUTO-STOP STALE TIMERS (started before today) ── */
@@ -3902,7 +3977,7 @@ setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
 
 
 /* ── KINETIC AUTH WORDS ── */
-function startAslKinetic(){
+(function(){
   const WORDS=[
     {w:'COFOUNDER.',c:'rgba(255,255,255,.92)'},
     {w:'EA.',c:'rgba(200,168,75,.95)'},
@@ -3945,42 +4020,28 @@ function startAslKinetic(){
     }
     cur=next;
   },2600);
-};
+})();
 
 
-// Preloader skip
+// Preloader stamp sequence
 function lsSkip(){
   const ls=document.getElementById('ls');
-  if(ls&&!ls._gone){ls._gone=true;ls.style.transition='opacity .4s';ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';boot();},420);}
+  if(ls)ls.style.display='none';
+  boot();
 }
 window.addEventListener('load',()=>{
-  // Stamp identity words
-  [0,1,2,3,4].forEach((n,i)=>setTimeout(()=>{const e=document.getElementById('lid'+n);if(e)e.classList.add('active');},[600,1000,1440,1920,2440][i]));
-  // Boot after sequence
+  [0,1,2,3,4].forEach((n,i)=>{
+    setTimeout(()=>{
+      const e=document.getElementById('lid'+n);
+      if(e)e.classList.add('active');
+    },[600,1000,1440,1920,2440][i]);
+  });
   setTimeout(()=>{
     const ls=document.getElementById('ls');
-    if(ls&&!ls._gone){ls._gone=true;ls.style.transition='opacity .5s';ls.style.opacity='0';setTimeout(boot,520);}
-    else if(!ls)boot();
+    if(ls){ls.style.transition='opacity .45s ease';ls.style.opacity='0';setTimeout(boot,460);}
+    else boot();
   },3600);
 });
 </script>
 </body>
-</html>#ls{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.ls-stage{position:relative;display:flex;flex-direction:column;align-items:flex-start;padding:0 clamp(28px,6vw,80px);width:100%;max-width:900px}
-.ls-logo{font-family:'Barlow Condensed',sans-serif;font-size:clamp(72px,14vw,160px);font-weight:900;letter-spacing:-.02em;line-height:.88;color:var(--red);text-shadow:0 0 80px rgba(255,0,0,.25);animation:lsLogoIn .9s cubic-bezier(.16,1,.3,1) both}
-@keyframes lsLogoIn{from{opacity:0;transform:translateY(40px) skewX(-3deg)}to{opacity:1;transform:translateY(0)}}
-.ls-rule{width:0;height:2px;background:linear-gradient(to right,var(--red),transparent);margin:10px 0 14px;animation:lsRuleIn .8s cubic-bezier(.4,0,.2,1) .5s both}
-@keyframes lsRuleIn{from{width:0;opacity:0}to{width:min(420px,65vw);opacity:1}}
-.ls-byline{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:.3em;color:rgba(255,255,255,.3);text-transform:uppercase;animation:lsFadeUp .6s ease .3s both;margin-bottom:clamp(24px,5vh,48px)}
-.ls-ids{display:flex;flex-direction:column;gap:clamp(2px,1vh,8px);overflow:hidden}
-.ls-id{font-family:'Barlow Condensed',sans-serif;font-size:clamp(28px,5.5vw,64px);font-weight:800;letter-spacing:.06em;line-height:1;text-transform:uppercase;opacity:0;transform:translateY(100%);color:rgba(255,255,255,.12);transition:none}
-.ls-id.active{animation:lsIdStamp .55s cubic-bezier(.16,1,.3,1) both}
-.ls-id:nth-child(1).active{color:rgba(255,255,255,.22)}
-.ls-id:nth-child(2).active{color:rgba(255,255,255,.38)}
-.ls-id:nth-child(3).active{color:rgba(255,255,255,.55)}
-.ls-id:nth-child(4).active{color:rgba(200,168,75,.8)}
-.ls-id:nth-child(5).active{color:var(--white);text-shadow:0 0 40px rgba(255,255,255,.15)}
-@keyframes lsIdStamp{0%{opacity:0;transform:translateY(40px) scaleY(1.15);filter:blur(8px)}60%{filter:blur(0)}100%{opacity:1;transform:translateY(0) scaleY(1)}}
-.ls-skip{position:absolute;bottom:clamp(24px,4vh,40px);right:clamp(24px,4vw,60px);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.2);text-transform:uppercase;animation:lsFadeUp 1s ease 2s both}
-@keyframes lsFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
+</html>
