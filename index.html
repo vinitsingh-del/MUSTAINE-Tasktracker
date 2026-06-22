@@ -646,6 +646,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 /* FOCUS LATER / PAUSED card style */
 .card.paused-card{border-color:rgba(249,115,22,.3);opacity:.75}
 .card.focus-card{border-color:rgba(167,139,250,.3);opacity:.75}
+/* WORKING TODAY */
+.card.working-card{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.04)}
+.card.working-card::before{background:var(--green)}
+.wt-btn{background:none;border:1px solid rgba(255,255,255,.12);border-radius:5px;
+  color:rgba(255,255,255,.4);font-family:var(--fm);font-size:9px;letter-spacing:.06em;
+  padding:2px 8px;cursor:pointer;text-transform:uppercase;white-space:nowrap;
+  transition:all .18s;flex-shrink:0}
+.wt-btn:hover{border-color:rgba(34,197,94,.5);color:var(--green)}
+.wt-btn.active{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.5);color:var(--green);font-weight:700}
+/* Filter chip */
+.stab.wt-stab{border-color:rgba(34,197,94,.35);color:var(--green)}
+.stab.wt-stab.on{background:rgba(34,197,94,.15);border-color:var(--green);color:var(--green)}
 
 /* STEALTH */
 .stealth{position:fixed;bottom:6px;right:10px;font-family:var(--fm);font-size:8px;letter-spacing:.15em;color:rgba(255,255,255,.08);pointer-events:none;z-index:1;user-select:none}
@@ -1283,6 +1295,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <button class="stab" data-stage="blocked" onclick="setStage(this)">Blocked</button>
         <button class="stab" data-stage="urgent" onclick="setStage(this)" style="color:var(--red)">Urgent</button>
         <button class="stab timer-btn" data-stage="timer" onclick="setStage(this)" id="stage-timer-btn" style="display:none">Timer</button>
+        <button class="stab wt-stab" data-stage="working_today" onclick="setStage(this)" id="stage-wt-btn">Working Today <span id="wt-count" style="font-weight:700"></span></button>
       </div>
       <div class="sec" id="act-hdr" style="display:none"><div class="sec-title" id="act-title">Active</div></div>
       <div class="card-list" id="active-list" data-cardlist="active"></div>
@@ -1541,7 +1554,7 @@ const calDuration=t=>{
 };
 
 /* ── NORM ── */
-const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',sub_stage:t.sub_stage||null,hours_worked:parseFloat(t.hours_worked)||0,done_at:t.done_at||null});
+const norm=t=>({...t,date:t.task_date||t.date||today(),time:t.task_time||t.time||'',task_date:t.task_date||today(),task_time:t.task_time||t.time||null,start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,remarks:typeof t.remarks==='string'?pj(t.remarks,[]):(t.remarks||[]),activity:typeof t.activity==='string'?pj(t.activity,[]):(t.activity||[]),attachments:t.attachments||[],timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',sub_stage:t.sub_stage||null,hours_worked:parseFloat(t.hours_worked)||0,done_at:t.done_at||null,working_today:!!t.working_today});
 
 /* ── SUPABASE ── */
 const SB=(()=>{
@@ -1567,7 +1580,7 @@ const SB=(()=>{
     if(!r.ok){const m=(Array.isArray(d)?d[0]?.message:null)||d?.message||d?.error||r.statusText;throw new Error(m);}
     return d;
   }
-  const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,sub_stage:t.sub_stage||null,hours_worked:parseFloat(t.hours_worked)||0,done_at:t.done_at||null,...(t.created_at?{created_at:t.created_at}:{})});
+  const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,sub_stage:t.sub_stage||null,hours_worked:parseFloat(t.hours_worked)||0,done_at:t.done_at||null,working_today:!!t.working_today,...(t.created_at?{created_at:t.created_at}:{})});
   async function signIn(e,p){const d=await api('POST','/auth/v1/token',{email:e,password:p},{grant_type:'password'});if(d?.access_token)save(d);return d;}
   async function signUp(e,p,n){const d=await api('POST','/auth/v1/signup',{email:e,password:p,options:{data:{full_name:n}}});if(d?.access_token)save(d);return d;}
   async function signOut(){try{await api('POST','/auth/v1/logout',{});}catch{}clear();}
@@ -1910,6 +1923,7 @@ function render(){
   const tagOk2=t=>{
     if(!G.stageFilter||G.stageFilter==='timer') return true;
     if(G.stageFilter==='urgent') return t.priority==='urgent';
+    if(G.stageFilter==='working_today') return !!t.working_today&&!['done','closed'].includes(t.stage);
     return t.stage===G.stageFilter;
   };
   const src=G.tasks.filter(t=>tagOk(t)&&tagOk2(t));
@@ -1931,6 +1945,10 @@ function render(){
   const runningCount=G.tasks.filter(tRun).length;
   const ts=document.getElementById('timer-strip');const tc=document.getElementById('timer-count');
   if(ts){ts.className='timer-active-strip'+(runningCount>0?' on':'');if(tc)tc.textContent=runningCount>0?runningCount+' task'+(runningCount>1?'s':''):'';} const timerStab=document.getElementById('stage-timer-btn');if(timerStab)timerStab.style.display=runningCount>0?'':'none';
+  // Working today count badge
+  const wtCount=G.tasks.filter(t=>t.working_today&&!['done','closed'].includes(t.stage)).length;
+  const wtCountEl=document.getElementById('wt-count');if(wtCountEl)wtCountEl.textContent=wtCount>0?'('+wtCount+')':'';
+  const wtStabEl=document.getElementById('stage-wt-btn');if(wtStabEl)wtStabEl.style.fontWeight=wtCount>0?'700':'400';
 
   // ── OD BANNER ──
   const ob=document.getElementById('od-banner');
@@ -2074,7 +2092,8 @@ function mkCard(task){
   const card=document.createElement('div');
   const isPaused=task.sub_stage==='paused';
   const isFocus=task.sub_stage==='focus_later';
-  card.className='card'+(isDone?' done-card':'')+(isBlocked?' blocked-card':'')+(od?' od-card':'')+(isPaused?' paused-card':'')+(isFocus?' focus-card':'');
+  const isWt=!!task.working_today;
+  card.className='card'+(isDone?' done-card':'')+(isBlocked?' blocked-card':'')+(od?' od-card':'')+(isPaused?' paused-card':'')+(isFocus?' focus-card':'')+(isWt?' working-card':'');
   card.style.setProperty('--accent',od?'#e63329':tm.c);
   card.dataset.id=id;
 
@@ -2105,6 +2124,12 @@ function mkCard(task){
   const stgC=document.createElement('span');stgC.className='chip';stgC.style.cssText='color:'+sm.c+';border-color:'+sm.c+'33;background:'+sm.c+'14';stgC.textContent=sm.l;
   stgC.addEventListener('click',e=>{e.stopPropagation();if(!V())cycleStage(id);});chips.appendChild(stgC);
 
+  // Working Today badge
+  if(task.working_today&&!isDone){
+    const wtc=document.createElement('span');wtc.className='chip';
+    wtc.style.cssText='color:var(--green);border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.1);font-weight:700;animation:pulse 2s infinite';
+    wtc.textContent='TODAY';chips.appendChild(wtc);
+  }
   if(task.recurrence&&task.recurrence!=='none'){
     const recurMap={daily:{l:'DAILY',c:'#f97316'},weekly:{l:'WEEKLY',c:'#f59e0b'},biweekly:{l:'15 DAYS',c:'#c8a84b'},monthly:{l:'MONTHLY',c:'#a78bfa'}};
     const rm=recurMap[task.recurrence]||{l:'RECUR',c:'#f97316'};
@@ -2143,6 +2168,16 @@ function mkCard(task){
     del.addEventListener('click',e=>{e.stopPropagation();delTask(e,id);});acts.appendChild(del);
     const blk=document.createElement('button');blk.className='card-blk';blk.textContent=isBlocked?'unblock':'block';
     blk.addEventListener('click',e=>{e.stopPropagation();toggleBlock(id);});acts.appendChild(blk);
+    // Working Today toggle
+    if(!isDone){
+      const wtb=document.createElement('button');
+      wtb.className='wt-btn'+(isWt?' active':'');
+      wtb.id='wt-'+id;
+      wtb.textContent=isWt?'Today':'+ Today';
+      wtb.title=isWt?'Remove from today focus':'Mark as working today';
+      wtb.addEventListener('click',e=>{e.stopPropagation();toggleWorkingToday(id);});
+      acts.appendChild(wtb);
+    }
   }
 
   inner.appendChild(chk);inner.appendChild(body);inner.appendChild(acts);
@@ -2171,6 +2206,11 @@ function setStage(el){
   el.classList.add('on');
   G.stageFilter=el.dataset.stage;
   if(G.stageFilter==='timer'){filterTimerTasks();return;}
+  render();
+}
+function filterWorkingToday(){
+  gTab('tasks');G.stageFilter='working_today';
+  document.querySelectorAll('.stab').forEach(t=>t.classList.toggle('on',t.dataset.stage==='working_today'));
   render();
 }
 
@@ -2357,6 +2397,19 @@ function cycleStage(id){
   patch(id,{stage:nx,done:nx==='done'},STG[t.stage]?.l+' to '+STG[nx]?.l);
   if(G.openId===id)refreshDrawer();
 }
+async function toggleWorkingToday(id){
+  if(V())return;
+  const t=G.tasks.find(x=>x.id===id);if(!t)return;
+  const val=!t.working_today;
+  await patch(id,{working_today:val},val?'Marked: Working today':'Removed from today focus');
+  // Update button immediately
+  const btn=document.getElementById('wt-'+id);
+  if(btn){btn.textContent=val?'Today':'+ Today';btn.className='wt-btn'+(val?' active':'');}
+  render();
+  if(G.openId===id)refreshDrawer();
+  if(val)toast('Added to today focus');
+}
+
 function toggleBlock(id){
   const t=G.tasks.find(x=>x.id===id);if(!t)return;
   if(t.stage==='blocked')patch(id,{stage:'todo',done:false},'Unblocked');
@@ -3204,6 +3257,18 @@ function renderDrawer(task,atts){
   tInp.addEventListener('change',()=>{if(!V())patch(id,{title:tInp.value.trim()},'Title updated');});tDiv.appendChild(tInp);body.appendChild(tDiv);
 
   // Quick actions
+  if(!V()){
+    // Working Today toggle in drawer (prominent)
+    if(!isDone){
+      const wtDr=document.createElement('div');
+      const isWtNow=!!task.working_today;
+      wtDr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;border:1px solid '+(isWtNow?'rgba(34,197,94,.4)':'rgba(255,255,255,.08)')+';background:'+(isWtNow?'rgba(34,197,94,.08)':'rgba(255,255,255,.03)')+';margin-bottom:4px;cursor:pointer;transition:all .2s';
+      wtDr.innerHTML='<div><div style="font-family:var(--fh);font-size:14px;font-weight:800;letter-spacing:.06em;color:'+(isWtNow?'var(--green)':'var(--white)')+'">'+( isWtNow?'Working Today':'Mark as Working Today')+'</div><div style="font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">'+(isWtNow?'In your today focus — tap to remove':'Add to your focus list for today regardless of due date')+'</div></div>'
+        +'<div style="width:36px;height:22px;border-radius:11px;background:'+(isWtNow?'var(--green)':'rgba(255,255,255,.15)')+';position:relative;transition:background .2s;flex-shrink:0"><div style="position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;transition:left .2s;left:'+(isWtNow?'17px':'3px')+'"></div></div>';
+      wtDr.addEventListener('click',()=>{toggleWorkingToday(id);setTimeout(()=>refreshDrawer(),200);});
+      body.appendChild(wtDr);
+    }
+  }
   if(!V()){
     // Explicit save reminder (drawer auto-saves on change, but button for confidence)
     const saveBanner=document.createElement('div');
