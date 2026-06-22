@@ -2418,8 +2418,30 @@ function toggleBlock(id){
 }
 async function delTask(e,id){
   const btn=document.getElementById('del-'+id);
-  if(G.delArm[id]){clearTimeout(G.delArm[id]);delete G.delArm[id];setSyncing(true);try{await SB.del(id);if(G.openId===id)closeDrawer();await loadTasks();render();toast('Deleted');}catch(e){toast('Delete failed','err');};}
-  else{if(btn){btn.textContent='Sure?';btn.classList.add('arm');}G.delArm[id]=setTimeout(()=>{delete G.delArm[id];const b=document.getElementById('del-'+id);if(b){b.textContent='✕';b.classList.remove('arm');}},2500);}
+  if(G.delArm[id]){
+    clearTimeout(G.delArm[id]);delete G.delArm[id];
+    setSyncing(true);
+    try{
+      await SB.del(id);
+      if(G.openId===id)closeDrawer();
+      // Remove from G.tasks cache immediately
+      G.tasks=G.tasks.filter(t=>t.id!==id);
+      // Refresh current view
+      await loadTasks();
+      render();
+      // Also refresh recurring tab if visible
+      const recurView=document.getElementById('v-recur');
+      if(recurView&&recurView.classList.contains('on'))await renderRecurring();
+      toast('Deleted');
+    }catch(e){setSyncing(false,true);toast('Delete failed','err');}
+  } else {
+    if(btn){btn.textContent='Sure?';btn.classList.add('arm');}
+    G.delArm[id]=setTimeout(()=>{
+      delete G.delArm[id];
+      const b=document.getElementById('del-'+id);
+      if(b){b.textContent='✕';b.classList.remove('arm');}
+    },2500);
+  }
 }
 function startEdit(e,id){
   const t=G.tasks.find(x=>x.id===id);if(!t)return;
@@ -3470,16 +3492,46 @@ function renderDrawer(task,atts){
   if(!actList.children.length)actList.innerHTML='<div style="font-family:var(--fm);font-size:10px;color:var(--grey2)">No activity</div>';
   actDiv.appendChild(actList);body.appendChild(actDiv);
 
-  // Save & Close
+  // Drawer actions row: Save & Close + Delete
+  const drawerActsRow=document.createElement('div');
+  drawerActsRow.style.cssText='display:flex;gap:8px;margin-top:4px';
+
   const cls=document.createElement('button');cls.className='dr-save';
-  cls.style.cssText='background:var(--red);display:flex;align-items:center;justify-content:center;gap:8px';
-  cls.innerHTML='<span style="font-size:14px">&#10003;</span> Save & Close';
-  cls.addEventListener('click',()=>{
-    toast('Task saved','ok');
-    closeDrawer();
-  });
-  body.appendChild(cls);
-  // Also: keyboard shortcut Cmd+S / Ctrl+S saves and closes when drawer is open
+  cls.style.cssText='flex:1;background:var(--red);display:flex;align-items:center;justify-content:center;gap:8px;border-radius:9px;padding:13px;border:none;font-family:var(--fh);font-size:16px;font-weight:800;letter-spacing:.1em;color:#fff;cursor:pointer;text-transform:uppercase';
+  cls.innerHTML='&#10003; Save & Close';
+  cls.addEventListener('click',()=>{toast('Task saved','ok');closeDrawer();});
+  drawerActsRow.appendChild(cls);
+
+  if(!V()){
+    // Delete button in drawer
+    const drDel=document.createElement('button');
+    drDel.id='dr-del-'+id;
+    drDel.style.cssText='background:rgba(230,51,41,.08);border:1px solid rgba(230,51,41,.25);color:var(--red);border-radius:9px;padding:13px 18px;font-family:var(--fm);font-size:11px;letter-spacing:.06em;cursor:pointer;text-transform:uppercase;white-space:nowrap;transition:all .2s;flex-shrink:0';
+    drDel.textContent='Delete';
+    drDel.addEventListener('click',async()=>{
+      if(drDel.dataset.armed){
+        drDel.textContent='Deleting...';drDel.disabled=true;
+        try{
+          await SB.del(id);
+          G.tasks=G.tasks.filter(t=>t.id!==id);
+          closeDrawer();
+          await loadTasks();render();
+          const recurView=document.getElementById('v-recur');
+          if(recurView&&recurView.classList.contains('on'))await renderRecurring();
+          toast('Task deleted');
+        }catch(e){toast('Delete failed','err');drDel.textContent='Delete';drDel.disabled=false;}
+      } else {
+        drDel.textContent='Confirm?';
+        drDel.style.background='rgba(230,51,41,.18)';
+        drDel.style.borderColor='var(--red)';
+        drDel.dataset.armed='1';
+        setTimeout(()=>{if(drDel.dataset.armed){drDel.textContent='Delete';drDel.style.background='rgba(230,51,41,.08)';drDel.style.borderColor='rgba(230,51,41,.25)';delete drDel.dataset.armed;}},2500);
+      }
+    });
+    drawerActsRow.appendChild(drDel);
+  }
+
+  body.appendChild(drawerActsRow);
   cls.dataset.saveClose='1';
 }
 
