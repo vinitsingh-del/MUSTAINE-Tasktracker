@@ -200,7 +200,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* ═══ AUTH SCREEN ═══ */
 #as{position:fixed;inset:0;z-index:90;display:none;overflow:hidden}
-#as.on{/* display managed by showAuth() */}
+#as.on{display:flex}
 
 /* Full screen — mesh bg shows through everywhere */
 .as-wrap{
@@ -1961,7 +1961,6 @@ async function doMagic(){const e=document.getElementById('a-email').value.trim()
 async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();toast('Signed out');}
 
 function showAuth(){
-  const ls=document.getElementById('ls');if(ls)ls.style.display='none';
   const app=document.getElementById('app');if(app)app.style.display='none';
   const as=document.getElementById('as');
   if(!as)return;
@@ -2069,12 +2068,13 @@ async function rolloverDailyTasks(){
 }
 
 async function boot(){
-  // ls is already hidden by lsDismiss() — don't touch it
-  // Just ensure as and app are hidden before we decide which to show
+  // Guard: never run twice
+  if(window._bootRunning)return;window._bootRunning=true;
   const asEl=document.getElementById('as');
   const appEl=document.getElementById('app');
-  if(asEl)asEl.style.display='none';
-  if(appEl)appEl.style.display='none';
+  // Only hide if not already visible (prevents flicker on double-call)
+  if(asEl&&asEl.style.display!=='flex')asEl.style.display='none';
+  if(appEl&&appEl.style.display!=='flex')appEl.style.display='none';
   const s=await SB.refresh()||SB.sess();
   if(!s){showAuth();return;}
   const name=(s.user?.email||'').split('@')[0]||'Sign Out';
@@ -4170,8 +4170,15 @@ function lsSkip(){lsDismiss();}
 })();
 
 window.addEventListener('load',()=>{
-  // Ensure boot happens even if sequence is already done
-  setTimeout(()=>{if(!window._booted){window._booted=true;boot();}},4500);
+  // Hard fallback: if lsDismiss never fired (e.g. very fast load), boot after 4.5s
+  setTimeout(()=>{
+    if(!window._booted){
+      window._booted=true;
+      const ls=document.getElementById('ls');
+      if(ls){ls.style.opacity='0';ls.style.display='none';}
+      boot();
+    }
+  },4500);
 });
 </script>
 </body>
