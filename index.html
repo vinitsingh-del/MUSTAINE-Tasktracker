@@ -85,10 +85,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 @keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
 #ls{
   position:fixed;inset:0;
-  background:rgba(0,0,0,.78);
-  z-index:999;display:flex;
+  background:#000;
+  z-index:9999;display:flex;
   align-items:center;justify-content:center;
   overflow:hidden;cursor:pointer;
+  transition:opacity .6s ease;
 }
 
 /* Entire preloader is one typographic composition */
@@ -4053,7 +4054,7 @@ setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
 
 
 /* ── KINETIC AUTH WORDS ── */
-(function(){
+function startAslKinetic(){
   const WORDS=[
     {w:'COFOUNDER.',c:'rgba(255,255,255,.92)'},
     {w:'EA.',c:'rgba(200,168,75,.95)'},
@@ -4096,41 +4097,39 @@ setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
     }
     cur=next;
   },2600);
-})();
+}
 
 
 // ── PRELOADER SEQUENCE ──
-function lsSkip(){
+function lsDismiss(){
   const ls=document.getElementById('ls');
-  if(ls)ls.style.display='none';
-  // Boot immediately if not already started
-  if(!window._booted){window._booted=true;boot();}
+  if(!ls||ls._dismissed)return;
+  ls._dismissed=true;
+  ls.style.opacity='0';
+  setTimeout(()=>{
+    ls.style.display='none';
+    // Only boot after preloader is gone
+    if(!window._booted){window._booted=true;boot();}
+  },600);
 }
 
+function lsSkip(){lsDismiss();}
+
 (function lsSequence(){
-  const IDS=[0,1,2,3,4];
-  const DELAYS=[700,1100,1550,2050,2600]; // stamp in staggered
-  IDS.forEach((n,i)=>{
+  // Stamp identity words in staggered
+  [0,1,2,3,4].forEach((n,i)=>{
     setTimeout(()=>{
       const el=document.getElementById('lid'+n);
       if(el)el.classList.add('active');
-    },DELAYS[i]);
+    },[700,1100,1550,2050,2600][i]);
   });
+  // Auto-dismiss after full sequence
+  setTimeout(lsDismiss, 3800);
 })();
 
 window.addEventListener('load',()=>{
-  // Boot app after all words have stamped in
-  setTimeout(()=>{
-    window._booted=true;
-    boot().then(()=>{
-      const ls=document.getElementById('ls');
-      if(ls){
-        ls.style.transition='opacity .5s ease';
-        ls.style.opacity='0';
-        setTimeout(()=>{ls.style.display='none';},500);
-      }
-    });
-  },3800);
+  // Ensure boot happens even if sequence is already done
+  setTimeout(()=>{if(!window._booted){window._booted=true;boot();}},4500);
 });
 </script>
 </body>
