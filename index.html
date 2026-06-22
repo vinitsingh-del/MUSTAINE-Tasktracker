@@ -69,7 +69,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 #blob4{animation:blob4 25s cubic-bezier(.4,0,.2,1) infinite;transform-origin:center;animation-delay:-14s}
 
 /* Make sure app, auth, loading sit above canvas */
-#ls,#as,#app{position:fixed;z-index:2}
+#as,#app{position:fixed;z-index:2}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes glow{0%,100%{text-shadow:0 0 8px rgba(230,51,41,.5)}50%{text-shadow:0 0 24px rgba(230,51,41,.9)}}
@@ -116,7 +116,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .ls-hint{font-family:var(--fm);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.12);text-transform:uppercase;animation:fadeInUp .5s ease 3.5s both;opacity:0}
 
 /* AUTH — Luxury Editorial Direction */
-#as{position:fixed;inset:0;z-index:90;display:none;overflow:hidden}
+#as{position:fixed;inset:0;z-index:2;display:none;overflow:hidden}
 #as.on{display:flex}
 
 .as-wrap{
@@ -418,7 +418,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 }
 
 /* APP */
-#app{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;background:rgba(0,0,0,.8)}
+#app{position:fixed;inset:0;z-index:2;display:none;flex-direction:column;overflow:hidden;background:rgba(0,0,0,.8)}
 
 /* MOBILE HEADER */
 .mob-hdr{flex-shrink:0;background:rgba(0,0,0,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
