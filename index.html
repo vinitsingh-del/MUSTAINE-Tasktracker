@@ -83,24 +83,119 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   100%{opacity:0;transform:translateY(-8px) scale(1.04);filter:blur(3px)}}
 @keyframes uspGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 20px rgba(200,168,75,.6),0 0 60px rgba(200,168,75,.2)}}
 @keyframes scanline{0%{background-position:0 0}100%{background-position:0 100vh}}
-#ls{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden}
-#ls::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(255,0,0,.06) 0%,transparent 60%);pointer-events:none}
-.ls-inner{display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeInUp .6s ease both}
-.ls-mark{animation:fadeInUp .5s ease both;animation-delay:.1s;opacity:0}
-.ls-logo{font-family:var(--fh);font-size:56px;font-weight:900;letter-spacing:.1em;color:var(--red);animation:glow 2s infinite, fadeInUp .5s ease .2s both}
-.ls-byline{font-family:var(--fm);font-size:10px;letter-spacing:.28em;color:var(--grey2);text-transform:uppercase;animation:fadeInUp .5s ease .35s both;opacity:0}
-.ls-usps{height:28px;display:flex;align-items:center;justify-content:center;margin:4px 0;overflow:hidden;position:relative;min-width:260px}
-.ls-usp{position:absolute;font-family:var(--fh);font-size:22px;font-weight:900;letter-spacing:.28em;color:var(--white);opacity:0;text-transform:uppercase;white-space:nowrap}
-#usp0{animation:uspFade 1.3s cubic-bezier(.4,0,.2,1) .6s both}
-#usp1{animation:uspFade 1.3s cubic-bezier(.4,0,.2,1) 1.9s both}
-#usp2{animation:uspFade 1.5s cubic-bezier(.4,0,.2,1) 3.2s both,uspGlow 1.5s ease 3.6s both;color:var(--gold)}
-.ls-bar{width:200px;height:2px;background:var(--b2);border-radius:1px;overflow:hidden;margin-top:8px;animation:fadeInUp .5s ease .4s both;opacity:0}
-.ls-prog{height:100%;background:linear-gradient(90deg,var(--red),var(--gold),var(--red));background-size:200% 100%;animation:lp 3.8s ease-out forwards,burnFlow 2s linear infinite}
-.ls-hint{font-family:var(--fm);font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.12);text-transform:uppercase;animation:fadeInUp .5s ease 3.5s both;opacity:0}
+#ls{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.78);
+  z-index:999;display:flex;
+  align-items:center;justify-content:center;
+  overflow:hidden;cursor:pointer;
+}
 
-/* AUTH — Luxury Editorial Direction */
-#as{position:fixed;inset:0;z-index:90;display:none;overflow:hidden}
-#as.on{display:flex}
+/* Entire preloader is one typographic composition */
+.ls-stage{
+  position:relative;
+  display:flex;flex-direction:column;
+  align-items:flex-start;
+  padding:0 clamp(28px,6vw,80px);
+  width:100%;max-width:900px;
+}
+
+/* MUSTAINE — massive, left-aligned, fills width */
+.ls-logo{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(72px,14vw,160px);
+  font-weight:900;
+  letter-spacing:-.02em;
+  line-height:.88;
+  color:var(--red);
+  text-shadow:0 0 80px rgba(255,0,0,.25),0 0 160px rgba(255,0,0,.1);
+  animation:lsLogoIn .9s cubic-bezier(.16,1,.3,1) both;
+  position:relative;z-index:2;
+}
+@keyframes lsLogoIn{
+  from{opacity:0;transform:translateY(40px) skewX(-3deg)}
+  to{opacity:1;transform:translateY(0) skewX(0deg)}
+}
+
+/* Thin red separator line under logo */
+.ls-rule{
+  width:0;height:2px;
+  background:linear-gradient(to right,var(--red),transparent);
+  margin:10px 0 16px;
+  animation:lsRuleIn .8s cubic-bezier(.4,0,.2,1) .5s both;
+}
+@keyframes lsRuleIn{
+  from{width:0;opacity:0}to{width:min(420px,65vw);opacity:1}
+}
+
+/* Byline */
+.ls-byline{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(9px,1.4vw,12px);
+  letter-spacing:.3em;
+  color:rgba(255,255,255,.3);
+  text-transform:uppercase;
+  animation:lsFadeIn .6s ease .3s both;
+  margin-bottom:clamp(24px,5vh,48px);
+}
+
+/* Identity words — stack vertically, stamp in one by one */
+.ls-ids{
+  display:flex;flex-direction:column;
+  gap:clamp(2px,1vh,8px);
+  overflow:hidden;
+}
+
+.ls-id{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(28px,5.5vw,64px);
+  font-weight:800;
+  letter-spacing:.06em;
+  line-height:1;
+  text-transform:uppercase;
+  opacity:0;
+  transform:translateY(100%);
+  color:rgba(255,255,255,.12);
+  transition:none;
+}
+.ls-id.active{
+  animation:lsIdStamp .55s cubic-bezier(.16,1,.3,1) both;
+}
+/* Each subsequent word brighter */
+.ls-id:nth-child(1).active{color:rgba(255,255,255,.22)}
+.ls-id:nth-child(2).active{color:rgba(255,255,255,.38)}
+.ls-id:nth-child(3).active{color:rgba(255,255,255,.55)}
+.ls-id:nth-child(4).active{color:rgba(200,168,75,.8)}
+.ls-id:nth-child(5).active{
+  color:var(--white);
+  text-shadow:0 0 40px rgba(255,255,255,.15);
+}
+
+@keyframes lsIdStamp{
+  0%{opacity:0;transform:translateY(40px) scaleY(1.15);filter:blur(8px)}
+  60%{filter:blur(0px)}
+  100%{opacity:1;transform:translateY(0) scaleY(1)}
+}
+
+/* Skip hint — bottom right, barely visible */
+.ls-skip{
+  position:absolute;
+  bottom:clamp(24px,4vh,40px);
+  right:clamp(24px,4vw,60px);
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:.18em;
+  color:rgba(255,255,255,.2);
+  text-transform:uppercase;
+  animation:lsFadeIn 1s ease 2s both;
+  cursor:pointer;
+  transition:color .2s;
+}
+.ls-skip:hover{color:rgba(255,255,255,.5)}
+
+@keyframes lsFadeIn{
+  from{opacity:0}to{opacity:1}
+}
+
 
 .as-wrap{
   position:relative;width:100%;height:100%;
@@ -1030,27 +1125,20 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   </svg>
 </div>
 
-<div id="ls">
-  <div class="ls-inner">
-    <!-- Logo mark — M icon -->
-    <div class="ls-mark">
-      <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:64px">
-        <rect width="60" height="60" rx="14" fill="#e63329" opacity="0.12"/>
-        <rect x="1" y="1" width="58" height="58" rx="13" stroke="#e63329" stroke-width="1.5" opacity="0.4"/>
-        <text x="30" y="42" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-weight="900" font-size="36" fill="#e63329" letter-spacing="-1">M</text>
-      </svg>
-    </div>
+<div id="ls" onclick="lsSkip()">
+  <div class="ls-stage">
     <div class="ls-logo">MUSTAINE</div>
-    <div class="ls-byline">by Vinit &middot; Troopod</div>
-    <div class="ls-usps">
-      <div class="ls-usp" id="usp0">YOUR COFOUNDER</div>
-      <div class="ls-usp" id="usp1">YOUR EA</div>
-      <div class="ls-usp" id="usp2">YOUR TEAM MEMBER</div>
+    <div class="ls-rule"></div>
+    <div class="ls-byline">by Vinit &middot; Troopod &middot; Stealth</div>
+    <div class="ls-ids">
+      <div class="ls-id" id="lid0">Your Cofounder.</div>
+      <div class="ls-id" id="lid1">Your EA.</div>
+      <div class="ls-id" id="lid2">Your Team Member.</div>
+      <div class="ls-id" id="lid3">Your Memory.</div>
+      <div class="ls-id" id="lid4">Your Weapon.</div>
     </div>
-    <div class="ls-bar"><div class="ls-prog"></div></div>
-    <div class="ls-hint">Troopod Task OS · Stealth Mode</div>
-    <div style="margin-top:20px;font-family:var(--fm);font-size:9px;letter-spacing:.15em;color:rgba(255,255,255,.18);text-transform:uppercase;cursor:pointer" onclick="document.getElementById('ls').style.display='none';document.getElementById('as').style.display='flex'">tap to skip &rarr;</div>
   </div>
+  <div class="ls-skip" onclick="lsSkip()">Tap to skip &rarr;</div>
 </div>
 
 <div id="as">
@@ -4011,7 +4099,39 @@ setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
 })();
 
 
-window.addEventListener('load',()=>setTimeout(boot,4200)); // wait for USP animations
+// ── PRELOADER SEQUENCE ──
+function lsSkip(){
+  const ls=document.getElementById('ls');
+  if(ls)ls.style.display='none';
+  // Boot immediately if not already started
+  if(!window._booted){window._booted=true;boot();}
+}
+
+(function lsSequence(){
+  const IDS=[0,1,2,3,4];
+  const DELAYS=[700,1100,1550,2050,2600]; // stamp in staggered
+  IDS.forEach((n,i)=>{
+    setTimeout(()=>{
+      const el=document.getElementById('lid'+n);
+      if(el)el.classList.add('active');
+    },DELAYS[i]);
+  });
+})();
+
+window.addEventListener('load',()=>{
+  // Boot app after all words have stamped in
+  setTimeout(()=>{
+    window._booted=true;
+    boot().then(()=>{
+      const ls=document.getElementById('ls');
+      if(ls){
+        ls.style.transition='opacity .5s ease';
+        ls.style.opacity='0';
+        setTimeout(()=>{ls.style.display='none';},500);
+      }
+    });
+  },3800);
+});
 </script>
 </body>
 </html>
