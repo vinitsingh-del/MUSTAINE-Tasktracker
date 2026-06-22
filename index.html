@@ -212,95 +212,94 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   .as-wrap{grid-template-columns:1fr;grid-template-rows:1fr}
 }
 
-/* ── LEFT: identity column ── transparent on the blob mesh ── */
+/* ── LEFT PANEL — pure kinetic type ── */
 .as-left{
-  position:relative;
-  display:flex;flex-direction:column;
-  justify-content:flex-end;
-  padding:clamp(32px,6vw,72px);
+  position:relative;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:clamp(28px,5vw,60px);
   overflow:hidden;
 }
 @media(max-width:767px){.as-left{display:none}}
 
-/* MUSTAINE wordmark — large, left-flush */
-.asl-logo{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:clamp(52px,7vw,90px);
-  font-weight:900;letter-spacing:.06em;
-  color:var(--red);line-height:1;
-  text-shadow:0 0 60px rgba(255,0,0,.3);
-  animation:authLogoIn .8s cubic-bezier(.16,1,.3,1) .1s both;
-}
-@keyframes authLogoIn{
-  from{opacity:0;transform:translateX(-24px)}
-  to{opacity:1;transform:translateX(0)}
-}
-.asl-tag{
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px;letter-spacing:.28em;
-  color:rgba(255,255,255,.25);text-transform:uppercase;
-  margin-top:6px;margin-bottom:40px;
-  animation:authLogoIn .8s cubic-bezier(.16,1,.3,1) .25s both;
+/* Red accent stripe — left edge */
+.as-left::before{
+  content:'';position:absolute;left:0;top:15%;bottom:15%;
+  width:3px;
+  background:linear-gradient(to bottom,transparent,var(--red) 30%,var(--red) 70%,transparent);
+  opacity:.7;
 }
 
-/* Kinetic identity words — left panel */
+/* Kinetic word stage — fills center of panel */
 .asl-kword-stage{
   position:absolute;
-  top:50%;left:0;right:0;
-  transform:translateY(-55%);
-  padding:0 clamp(32px,6vw,72px);
-  overflow:hidden;
-  pointer-events:none;
+  inset:0;
+  display:flex;align-items:center;justify-content:flex-start;
+  padding:0 clamp(28px,5vw,60px);
+  pointer-events:none;overflow:hidden;
 }
 .asl-kword{
   font-family:'Barlow Condensed',sans-serif;
-  font-size:clamp(60px,9vw,120px);
-  font-weight:900;letter-spacing:-.01em;
+  font-size:clamp(80px,12vw,160px);
+  font-weight:900;letter-spacing:-.02em;
   line-height:.88;
   color:transparent;
-  -webkit-text-stroke:1px rgba(255,255,255,.1);
-  position:absolute;
-  white-space:nowrap;
+  -webkit-text-stroke:1.5px rgba(255,255,255,.12);
+  position:absolute;white-space:nowrap;
 }
-.asl-kword.entering{animation:kwordIn .65s cubic-bezier(.16,1,.3,1) both}
-.asl-kword.exiting{animation:kwordOut .45s cubic-bezier(.4,0,1,1) both}
+.asl-kword.entering{animation:kwordIn .6s cubic-bezier(.16,1,.3,1) both}
+.asl-kword.exiting{animation:kwordOut .4s cubic-bezier(.4,0,1,1) both}
 .asl-kword.active{
-  color:rgba(255,255,255,.88);
+  color:rgba(255,255,255,.9);
   -webkit-text-stroke:0px;
 }
 @keyframes kwordIn{
-  from{opacity:0;transform:translateY(48px) skewX(-3deg)}
+  from{opacity:0;transform:translateY(56px) skewX(-4deg);filter:blur(6px)}
+  50%{filter:blur(0)}
   to{opacity:1;transform:translateY(0) skewX(0)}
 }
 @keyframes kwordOut{
-  from{opacity:1;transform:translateY(0)}
-  to{opacity:0;transform:translateY(-36px) skewX(2deg)}
+  from{opacity:1;transform:translateY(0) skewX(0)}
+  to{opacity:0;transform:translateY(-44px) skewX(3deg)}
 }
+/* Category eyebrow above the kinetic word */
+.asl-eyebrow{
+  position:absolute;
+  /* sits just above the word — JS positions dynamically */
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:.28em;color:var(--red);
+  text-transform:uppercase;opacity:0;
+  transition:opacity .3s ease;
+}
+.asl-eyebrow.show{opacity:.8}
 
-/* Feature dots */
-.asl-features{
-  display:flex;flex-direction:column;gap:12px;margin-bottom:8px;
-  animation:authLogoIn .8s cubic-bezier(.16,1,.3,1) .4s both;
-}
-.asl-feat{display:flex;align-items:flex-start;gap:10px}
-.asl-feat-dot{
-  width:6px;height:6px;border-radius:50%;
-  flex-shrink:0;margin-top:5px;
-}
-.asl-feat-title{
+/* Brand mark at bottom */
+.asl-brand{position:relative;z-index:2}
+.asl-logo{
   font-family:'Barlow Condensed',sans-serif;
-  font-size:14px;font-weight:800;letter-spacing:.06em;
-  color:var(--white);display:block;margin-bottom:1px;
+  font-size:clamp(28px,4vw,42px);
+  font-weight:900;letter-spacing:.1em;
+  color:var(--red);line-height:1;
+  text-shadow:0 0 40px rgba(255,0,0,.25);
+  animation:aslBrandIn .9s cubic-bezier(.16,1,.3,1) .1s both;
 }
-.asl-feat-desc{
-  font-family:'Inter',sans-serif;font-size:11px;font-weight:300;
-  color:rgba(255,255,255,.38);line-height:1.5;
+.asl-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:.26em;
+  color:rgba(255,255,255,.2);text-transform:uppercase;
+  margin-top:5px;
+  animation:aslBrandIn .9s cubic-bezier(.16,1,.3,1) .25s both;
 }
 .asl-stealth{
   font-family:'JetBrains Mono',monospace;font-size:8px;
-  letter-spacing:.2em;color:rgba(255,255,255,.12);
-  text-transform:uppercase;margin-top:32px;
+  letter-spacing:.18em;color:rgba(255,255,255,.1);
+  text-transform:uppercase;margin-top:12px;
+  animation:aslBrandIn .9s cubic-bezier(.16,1,.3,1) .35s both;
 }
+@keyframes aslBrandIn{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+/* Keep old class names for compat */
+.asl-features,.asl-feat,.asl-feat-dot,.asl-feat-title,.asl-feat-desc{display:none}
 
 /* ── RIGHT: form panel ── glass card on the mesh ── */
 .as-right{
@@ -1170,39 +1169,17 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 <div id="as">
   <div class="as-wrap">
 
-    <!-- ── LEFT: identity + features ── -->
+    <!-- ── LEFT: pure kinetic type stage ── -->
     <div class="as-left">
-      <!-- Kinetic word (injected by startAslKinetic) -->
+      <!-- Eyebrow label (updates with each word) -->
+      <div id="asl-eyebrow" style="position:absolute;top:calc(50% - clamp(50px,7vw,90px));left:clamp(28px,5vw,60px);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.28em;color:var(--red);text-transform:uppercase;opacity:0;transition:opacity .4s ease;z-index:3;pointer-events:none"></div>
+      <!-- Giant cycling word — injected by startAslKinetic() -->
       <div class="asl-kword-stage" id="asl-stage"></div>
 
-      <!-- Bottom: brand + features -->
-      <div style="position:relative;z-index:2">
+      <!-- Brand mark bottom -->
+      <div class="asl-brand">
         <div class="asl-logo">MUSTAINE</div>
         <div class="asl-tag">by Vinit &middot; Troopod</div>
-
-        <div class="asl-features">
-          <div class="asl-feat">
-            <div class="asl-feat-dot" style="background:var(--red)"></div>
-            <div>
-              <span class="asl-feat-title">Recurring Tasks</span>
-              <span class="asl-feat-desc">Auto-reopen daily, weekly, monthly. Never miss a cycle.</span>
-            </div>
-          </div>
-          <div class="asl-feat">
-            <div class="asl-feat-dot" style="background:var(--gold)"></div>
-            <div>
-              <span class="asl-feat-title">Live Efficiency Score</span>
-              <span class="asl-feat-desc">A-F grade every session. Know exactly how today went.</span>
-            </div>
-          </div>
-          <div class="asl-feat">
-            <div class="asl-feat-dot" style="background:var(--green)"></div>
-            <div>
-              <span class="asl-feat-title">AI Smart Parsing</span>
-              <span class="asl-feat-desc">Type in plain English. Claude structures it instantly.</span>
-            </div>
-          </div>
-        </div>
         <div class="asl-stealth">Troopod Internal &middot; Stealth Mode</div>
       </div>
     </div>
@@ -4098,25 +4075,38 @@ setTimeout(()=>{showMcard();setInterval(showMcard,300000);},300000);
 /* ── KINETIC AUTH WORDS ── */
 function startAslKinetic(){
   const WORDS=[
-    {w:'COFOUNDER.',c:'rgba(255,255,255,.92)'},
-    {w:'EA.',c:'rgba(200,168,75,.95)'},
-    {w:'TEAM.',c:'rgba(34,197,94,.9)'},
-    {w:'WEAPON.',c:'rgba(249,115,22,.9)'},
-    {w:'MEMORY.',c:'rgba(200,168,75,.9)'},
+    {w:'COFOUNDER.',c:'rgba(255,255,255,.92)',e:'Your Cofounder'},
+    {w:'EA.',c:'rgba(200,168,75,.9)',e:'Your EA'},
+    {w:'TEAM.',c:'rgba(34,197,94,.85)',e:'Your Team Member'},
+    {w:'WEAPON.',c:'rgba(249,115,22,.9)',e:'Your Weapon'},
+    {w:'MEMORY.',c:'rgba(200,168,75,.85)',e:'Your Memory'},
   ];
   let cur=0;
   const stage=document.getElementById('asl-stage');
   if(!stage)return;
 
   function makeWord(idx){
+    const wobj=WORDS[idx%WORDS.length];
+    // Eyebrow label
+    const eyebrow=document.createElement('div');
+    eyebrow.className='asl-eyebrow';
+    eyebrow.textContent=wobj.e||'';
+    // eyebrow style set in HTML
+    // Main word
     const d=document.createElement('div');
     d.className='asl-kword';
-    // Break into lines if word is long
-    const wobj=WORDS[idx%WORDS.length];
     d.textContent=wobj.w;
     d.style.color=wobj.c;
-    d.style.textShadow='0 0 80px '+wobj.c.replace('.9','0.2').replace('.95','0.2').replace('.92','0.2');
-    return d;
+    d.style.textShadow='0 0 80px '+wobj.c.replace('.9','0.15').replace('.85','0.12').replace('.92','0.15');
+    // Wrap
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:absolute;display:flex;flex-direction:column;gap:0';
+    wrap.appendChild(eyebrow);wrap.appendChild(d);
+    // Show eyebrow after word enters
+    setTimeout(()=>eyebrow.style.opacity='.8',400);
+    wrap.classList={add:c=>d.classList.add(c),remove:c=>{d.classList.remove(c);wrap.classList.remove&&null},contains:c=>d.classList.contains(c)};
+    wrap._wordEl=d;wrap._eyebrow=eyebrow;
+    return wrap;
   }
 
   // Initial word
