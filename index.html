@@ -89,7 +89,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   z-index:9999;display:flex;
   align-items:center;justify-content:center;
   overflow:hidden;cursor:pointer;
-  transition:opacity .6s ease;
 }
 
 /* Entire preloader is one typographic composition */
@@ -1962,16 +1961,15 @@ async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();t
 
 function showAuth(){
   const app=document.getElementById('app');if(app)app.style.display='none';
-  const as=document.getElementById('as');
-  if(!as)return;
+  const as=document.getElementById('as');if(!as)return;
   as.style.display='flex';
-  // Staggered animation — needs two rAF to actually trigger after display change
+  // Two rAF ensures browser paints before animation class triggers
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     as.classList.add('as-animating');
   }));
-  // Start kinetic word after initial stagger settles
-  setTimeout(()=>{if(!window._aslStarted){window._aslStarted=true;startAslKinetic();}},1000);
+  setTimeout(()=>{if(!window._aslStarted){window._aslStarted=true;startAslKinetic();}},900);
 }
+
 function showApp(){
   const ls=document.getElementById('ls');if(ls)ls.style.display='none';
   const as=document.getElementById('as');if(as){as.style.display='none';as.classList.remove('as-animating');}
@@ -2069,7 +2067,6 @@ async function rolloverDailyTasks(){
 
 async function boot(){
   // Guard: never run twice
-  if(window._bootRunning)return;window._bootRunning=true;
   const asEl=document.getElementById('as');
   const appEl=document.getElementById('app');
   // Only hide if not already visible (prevents flicker on double-call)
@@ -4143,42 +4140,29 @@ function startAslKinetic(){
 
 
 // ── PRELOADER SEQUENCE ──
-function lsDismiss(){
+
+function lsHide(){
   const ls=document.getElementById('ls');
-  if(!ls||ls._dismissed)return;
-  ls._dismissed=true;
+  if(!ls||ls.dataset.gone)return;
+  ls.dataset.gone='1';
+  ls.style.transition='opacity .5s ease';
   ls.style.opacity='0';
-  setTimeout(()=>{
-    ls.style.display='none';
-    // Only boot after preloader is gone
-    if(!window._booted){window._booted=true;boot();}
-  },600);
+  setTimeout(()=>{ls.style.display='none';},520);
 }
+function lsSkip(){lsHide();boot();}
 
-function lsSkip(){lsDismiss();}
-
-(function lsSequence(){
+window.addEventListener('load',()=>{
+  const ls=document.getElementById('ls');
+  if(!ls){boot();return;}
   // Stamp identity words in staggered
   [0,1,2,3,4].forEach((n,i)=>{
     setTimeout(()=>{
       const el=document.getElementById('lid'+n);
       if(el)el.classList.add('active');
-    },[700,1100,1550,2050,2600][i]);
+    },[600,1000,1440,1920,2440][i]);
   });
-  // Auto-dismiss after full sequence
-  setTimeout(lsDismiss, 3800);
-})();
-
-window.addEventListener('load',()=>{
-  // Hard fallback: if lsDismiss never fired (e.g. very fast load), boot after 4.5s
-  setTimeout(()=>{
-    if(!window._booted){
-      window._booted=true;
-      const ls=document.getElementById('ls');
-      if(ls){ls.style.opacity='0';ls.style.display='none';}
-      boot();
-    }
-  },4500);
+  // Fade out and boot after sequence
+  setTimeout(()=>{lsHide();boot();},3600);
 });
 </script>
 </body>
