@@ -460,7 +460,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 
 /* DAY STRIP */
 .day-strip{padding:8px 12px 7px;background:rgba(14,14,14,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06)}
-.day-date{font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.day-date{font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.day-greeting{font-family:var(--fb);font-size:13px;font-weight:400;color:rgba(255,255,255,.75);margin-bottom:6px;letter-spacing:.01em;transition:opacity .5s ease}
+.day-greeting em{font-style:normal;color:var(--gold)}
 .chips-row{display:flex;gap:5px;flex-wrap:wrap}
 .stat-chip{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;background:var(--s2);border:1px solid var(--b2);color:var(--grey);cursor:pointer}
 .stat-chip:active{border-color:var(--gold);color:var(--white)}
@@ -1274,6 +1276,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
       <div class="day-strip">
         <div style="display:flex;align-items:center;gap:8px">
         <div class="day-date" id="day-date">—</div>
+        <div class="day-greeting" id="day-greeting"></div>
         <div id="today-info-btn" title="What's in Today view?" style="font-family:var(--fm);font-size:9px;color:var(--grey2);cursor:pointer;border:1px solid var(--b2);border-radius:4px;padding:1px 6px;letter-spacing:.06em" onclick="toggleTodayInfo()">Today?</div>
       </div>
       <div id="today-info" style="display:none;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px 11px;margin-top:5px;font-family:var(--fm);font-size:10px;color:var(--grey);line-height:1.7">
@@ -3891,6 +3894,27 @@ function tick(){
   const ds=DAYS[n.getDay()]+', '+n.getDate()+' '+MONS[n.getMonth()];
   const dd=document.getElementById('day-date');if(dd)dd.textContent=ds;
   const sd=document.getElementById('sb-date');if(sd)sd.textContent=ds;
+  // Greeting based on hour
+  const greetEl=document.getElementById('day-greeting');
+  if(greetEl){
+    const h=n.getHours();const m=n.getMinutes();
+    const name=(SB.usr()?.user_metadata?.full_name||SB.usr()?.email?.split('@')[0]||'').split(' ')[0];
+    const hi=name?', <em>'+name+'</em>':'';
+    let g='';
+    if(h>=5&&h<9)       g='Rise and grind'+hi+'. Early bird gets the deal.';
+    else if(h>=9&&h<10) g='Good morning'+hi+'. Coffee’s working, let’s go.';
+    else if(h>=10&&h<11)g='Mid-morning'+hi+'. Perfect time for a second coffee ☕';
+    else if(h>=11&&h<12)g='Pre-lunch push'+hi+'. Close something before noon.';
+    else if(h===12)      g='Noon'+hi+'. Quick break, then back to it.';
+    else if(h>=13&&h<14)g='Post-lunch mode'+hi+'. Don’t let the food coma win.';
+    else if(h>=14&&h<16)g='Afternoon'+hi+'. Peak focus window — use it.';
+    else if(h>=16&&h<18)g='Golden hour'+hi+'. Wrap up the big ones.';
+    else if(h>=18&&h<20)g='Good evening'+hi+'. Closing time.';
+    else if(h>=20&&h<22)g='Evening grind'+hi+'. The focused ones are still at it.';
+    else if(h>=22&&h<24)g='Working late'+hi+'. Take a break soon — tomorrow needs you.';
+    else                 g='Late night mode'+hi+'. Seriously, get some sleep soon.';
+    greetEl.innerHTML=g;
+  }
   const pct=Math.min(100,Math.max(0,(n.getHours()*60+n.getMinutes()-540)/720*100));
   ['burn-m','burn-d'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.width=pct+'%';});
   // Midnight check: stop running timers at 12:00 AM
