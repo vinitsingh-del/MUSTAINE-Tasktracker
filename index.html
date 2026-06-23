@@ -3901,7 +3901,10 @@ function tick(){
     const name=(SB.usr()?.user_metadata?.full_name||SB.usr()?.email?.split('@')[0]||'').split(' ')[0];
     const hi=name?', <em>'+name+'</em>':'';
     let g='';
-    if(h>=5&&h<9)       g='Rise and grind'+hi+'. Early bird gets the deal.';
+    if(h>=5&&h<6)       g='Up before the sun'+hi+'. You’re already winning the day.';
+    else if(h>=6&&h<7)  g='Dawn grind'+hi+'. Most people are still asleep — good.';
+    else if(h>=7&&h<8)  g='Early morning'+hi+'. Get the priority list clear before the noise starts.';
+    else if(h>=8&&h<9)  g='Morning'+hi+'. Inbox can wait. Tasks first.';
     else if(h>=9&&h<10) g='Good morning'+hi+'. Coffee’s working, let’s go.';
     else if(h>=10&&h<11)g='Mid-morning'+hi+'. Perfect time for a second coffee ☕';
     else if(h>=11&&h<12)g='Pre-lunch push'+hi+'. Close something before noon.';
