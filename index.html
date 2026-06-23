@@ -1855,7 +1855,15 @@ const SB=(()=>{
   }
   const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,sub_stage:t.sub_stage||null,hours_worked:parseFloat(t.hours_worked)||0,done_at:t.done_at||null,working_today:!!t.working_today,snooze_until:t.snooze_until||null,updated_by_name:t.updated_by_name||null,...(t.created_at?{created_at:t.created_at}:{})});
   async function signIn(e,p){const d=await api('POST','/auth/v1/token',{email:e,password:p},{grant_type:'password'});if(d?.access_token)save(d);return d;}
-  async function signUp(e,p,n){const d=await api('POST','/auth/v1/signup',{email:e,password:p,options:{data:{full_name:n}}});if(d?.access_token)save(d);return d;}
+  async function signUp(e,p,n){
+    const body={email:e,password:p};
+    if(n)body.options={data:{full_name:n}};
+    const d=await api('POST','/auth/v1/signup',body);
+    // Save session if auto-confirmed
+    if(d?.access_token)save(d);
+    else if(d?.session?.access_token)save(d.session);
+    return d;
+  }
   async function signOut(){try{await api('POST','/auth/v1/logout',{});}catch{}clear();}
   async function magic(e){return api('POST','/auth/v1/magiclink',{email:e});}
   async function getTasks(date){await refresh();return(await api('GET','/rest/v1/tasks',null,{task_date:'eq.'+date,select:'*',order:'created_at.asc'}))||[];}
@@ -1952,7 +1960,7 @@ function aMsg(t,err){
   if(t)e.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function doAuth(){
-  const email=(document.getElementById('a-email')?.value||'').trim();
+  const email=(document.getElementById('a-email')?.value||'').trim().toLowerCase();
   const pass=document.getElementById('a-pass')?.value||'';
   const name=(document.getElementById('a-name')?.value||'').trim();
   aMsg('',1);aMsg('',0);
@@ -1960,7 +1968,7 @@ async function doAuth(){
   // Client-side validation
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){aMsg('Enter a valid email address',1);return;}
   if(pass.length<6){aMsg('Password must be at least 6 characters',1);return;}
-  if(aM==='up'&&name.length<2){aMsg('Enter your full name',1);return;}
+  if(aM==='up'&&name.length<2){aMsg('Enter your full name (min 2 characters)',1);return;}
 
   const btn=document.getElementById('a-btn');
   if(btn){btn.disabled=true;btn.textContent='Please wait...';}
@@ -1968,43 +1976,61 @@ async function doAuth(){
   try{
     if(aM==='up'){
       // ── SIGN UP ──
-      let result;
-      try{result=await SB.signUp(email,pass,name);}
-      catch(signupErr){
-        // Handle "user already exists" gracefully
-        const msg=signupErr.message||'';
-        if(msg.includes('already registered')||msg.includes('already been registered')||msg.includes('User already registered')){
-          aMsg('This email already has an account. Switch to Sign In above.',1);
+      // Step 1: Call signup API
+      let signupResult;
+      try{
+        signupResult=await SB.signUp(email,pass,name);
+      }catch(signupErr){
+        const msg=(signupErr.message||'').toLowerCase();
+        if(msg.includes('already registered')||msg.includes('already been registered')||msg.includes('user already registered')){
+          aMsg('An account already exists with this email. Use Sign In instead.',1);
           if(btn){btn.disabled=false;btn.textContent='Create Account';}
           return;
         }
         throw signupErr;
       }
 
-      // Supabase returns different shapes depending on email confirmation setting:
-      // Auto-confirmed: { access_token, user, ... }
-      // Needs confirmation: { id, email, ... } OR { user: { id, email, ... } }
-      const uid=result?.id||result?.user?.id;
-      if(result?.access_token){
-        // Auto-confirmed — go directly into app
+      // Step 2: Check what Supabase returned
+      // Our DB trigger auto-confirms, so we can always try sign-in immediately
+      const hasSession=!!(signupResult?.access_token||signupResult?.session?.access_token);
+      const hasUser=!!(signupResult?.id||signupResult?.user?.id);
+
+      if(hasSession){
+        // Already have session — go straight to app
+        aMsg('Account created! Signing you in...', 0);
         await boot();
         return;
       }
-      if(uid){
-        // Account created — try immediate sign-in (works if auto-confirmed)
+
+      if(hasUser){
+        // User created — our trigger auto-confirms, so sign in immediately
+        aMsg('Account created! Signing in...', 0);
+        await new Promise(r=>setTimeout(r,400)); // brief wait for trigger
         try{
           await SB.signIn(email,pass);
           await boot();
           return;
-        }catch{
-          // Email confirmation required — show verify screen
-          showVerifyScreen(email);
-          if(btn){btn.disabled=false;btn.textContent='Create Account';}
-          return;
+        }catch(signInErr){
+          const m=(signInErr.message||'').toLowerCase();
+          if(m.includes('not confirmed')||m.includes('email')){
+            // Trigger didn't fire in time — wait longer and retry
+            await new Promise(r=>setTimeout(r,1500));
+            try{
+              await SB.signIn(email,pass);
+              await boot();
+              return;
+            }catch{
+              aMsg('Account created! Check your email to confirm, then Sign In.',0);
+              if(btn){btn.disabled=false;btn.textContent='Create Account';}
+              return;
+            }
+          }
+          throw signInErr;
         }
       }
-      // Unknown response — show verify screen as safe fallback
-      showVerifyScreen(email);
+
+      // No user returned — unexpected
+      aMsg('Signup error. Please try again.',1);
 
     }else{
       // ── SIGN IN ──
@@ -2014,17 +2040,17 @@ async function doAuth(){
 
   }catch(e){
     const raw=(e.message||'').toLowerCase();
-    let msg='Something went wrong. Please try again.';
-    if(raw.includes('invalid login')||raw.includes('invalid_credentials')||raw.includes('invalid email or password'))
-      msg='Wrong email or password. Please check and try again.';
+    let msg='Something went wrong. Try again.';
+    if(raw.includes('invalid login')||raw.includes('invalid_credentials')||raw.includes('invalid email or password')||raw.includes('invalid credentials'))
+      msg='Wrong email or password.';
     else if(raw.includes('email not confirmed')||raw.includes('not confirmed'))
-      msg='Email not verified. Check your inbox and click the confirmation link, then try signing in.';
+      msg='Email not confirmed. Wait a moment and try signing in again.';
     else if(raw.includes('already registered'))
-      msg='This email already has an account. Use Sign In instead.';
+      msg='Email already registered. Use Sign In.';
     else if(raw.includes('rate limit')||raw.includes('too many'))
-      msg='Too many attempts. Wait 30 seconds and try again.';
+      msg='Too many attempts. Wait a moment and try again.';
     else if(raw.includes('network')||raw.includes('failed to fetch'))
-      msg='Connection error. Check your internet and try again.';
+      msg='Connection error. Check your internet.';
     else if(e.message)
       msg=e.message;
     aMsg(msg,1);
