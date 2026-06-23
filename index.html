@@ -2286,10 +2286,54 @@ function render(){
       al.innerHTML='<div class="empty"><div class="empty-ico">[ NONE ]</div><div class="empty-txt">No active tasks'+(G.filter!=='all'?' in '+G.filter:'')+'</div></div>';
     } else if(G.df!=='today'){
       // Group by date
-      const grps={};sorted.forEach(t=>{const d=t.task_date||t.date||T;if(!grps[d])grps[d]=[];grps[d].push(t);});
-      Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
-        const ip=d<T;const div=document.createElement('div');div.className='date-grp'+(ip?' past':'');div.textContent=(d===T?'Today':d)+(ip?' — PAST':'');al.appendChild(div);
-        grps[d].forEach(t=>al.appendChild(mkCard(t)));
+      // ── CATEGORY COHORT GROUPING ──
+      // Group by category, then by date within each category
+      // Category order: priority by urgency/importance
+      const CAT_ORDER=['sales','revenue','client','kam','design','ops','follow-up','control','management','daily','personal'];
+      const cohorts={};
+      sorted.forEach(t=>{
+        const cat=t.tag||'daily';
+        if(!cohorts[cat])cohorts[cat]=[];
+        cohorts[cat].push(t);
+      });
+      // Sort categories by: most tasks first, then by CAT_ORDER
+      const catKeys=Object.keys(cohorts).sort((a,b)=>{
+        // Urgent tasks pull their category to top
+        const aUrg=cohorts[a].filter(t=>t.priority==='urgent').length;
+        const bUrg=cohorts[b].filter(t=>t.priority==='urgent').length;
+        if(aUrg!==bUrg)return bUrg-aUrg;
+        // Then by count
+        if(cohorts[b].length!==cohorts[a].length)return cohorts[b].length-cohorts[a].length;
+        return CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b);
+      });
+      catKeys.forEach(cat=>{
+        const tasks=cohorts[cat];if(!tasks.length)return;
+        const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
+        // Category header
+        const catHdr=document.createElement('div');
+        catHdr.className='date-grp';
+        catHdr.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 2px 4px;margin-top:6px';
+        catHdr.innerHTML=
+          '<span style="width:8px;height:8px;border-radius:50%;background:'+tm.c+';flex-shrink:0;display:inline-block"></span>'
+          +'<span style="color:'+tm.c+';font-family:var(--fh);font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase">'+tm.l+'</span>'
+          +'<span style="font-family:var(--fm);font-size:9px;color:var(--grey2)">'+tasks.length+' task'+(tasks.length>1?'s':'')
+          +(tasks.filter(t=>isOD(t)).length?' · <span style=\'color:var(--red)\'>'+ tasks.filter(t=>isOD(t)).length+' overdue</span>':'')
+          +'</span>';
+        al.appendChild(catHdr);
+        // Within each category, group by date
+        const dateGrps={};
+        tasks.forEach(t=>{const d=t.task_date||t.date||T;if(!dateGrps[d])dateGrps[d]=[];dateGrps[d].push(t);});
+        Object.keys(dateGrps).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
+          const ip=d<T;
+          if(Object.keys(dateGrps).length>1){
+            // Only show date sub-header if tasks span multiple dates
+            const dateDiv=document.createElement('div');
+            dateDiv.style.cssText='font-family:var(--fm);font-size:9px;color:var(--grey2);padding:3px 2px 2px;letter-spacing:.06em'+(ip?' color:var(--red)':'');
+            dateDiv.textContent=(d===T?'Today':d)+(ip?' — Past':'');
+            al.appendChild(dateDiv);
+          }
+          dateGrps[d].forEach(t=>al.appendChild(mkCard(t)));
+        });
       });
     } else {
       sorted.forEach(t=>al.appendChild(mkCard(t)));
