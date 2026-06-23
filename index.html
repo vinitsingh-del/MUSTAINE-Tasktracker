@@ -1556,9 +1556,10 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <div class="sec-title">Recurring Tasks</div>
         <button class="sec-btn" onclick="rolloverDailyTasks().then(loadTasks).then(render)" style="color:var(--amber)">↺ Reopen Due Now</button>
       </div>
-      <div style="padding:6px 12px 8px;font-family:var(--fm);font-size:10px;color:var(--grey);line-height:1.6;background:rgba(200,168,75,.04);border-bottom:1px solid rgba(200,168,75,.15)">
-        Recurring tasks auto-reopen after 8 AM on their next due day. Mark them done when complete — they reappear the next cycle.
-        <b style="color:var(--gold)">Sunday = holiday</b>, so tasks skip to Monday.
+      <div style="padding:6px 12px 8px;font-family:var(--fm);font-size:10px;color:var(--grey);line-height:1.6;background:rgba(200,168,75,.04);border-bottom:1px solid rgba(200,168,75,.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <span>Recurring tasks auto-reopen after 8 AM on their next due day. <b style="color:var(--gold)">Sunday = holiday.</b>
+        Deleted recurring tasks are permanently removed and will not reappear.</span>
+        <button onclick="showDeletedRecurring()" style="font-family:var(--fm);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey2);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:4px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0">View Deleted</button>
       </div>
       <div id="recur-tabs" style="display:flex;gap:5px;padding:6px 12px;border-bottom:1px solid var(--b1);overflow-x:auto">
         <button class="dtab on" data-rt="all" onclick="setRecurTab(this)">All Recurring</button>
@@ -1809,6 +1810,17 @@ const SB=(()=>{
   async function getRange(s,e){await refresh();const r=await fetch(SUPA+'/rest/v1/tasks?task_date=gte.'+s+'&task_date=lte.'+e+'&select=*&order=task_date.desc,created_at.asc',{headers:hdrs()});return r.ok?r.json():[];}
   async function upsert(t){await refresh();return api('POST','/rest/v1/tasks',row(t),{on_conflict:'id'},{'Prefer':'resolution=merge-duplicates,return=representation'});}
   async function del(id){await refresh();return api('DELETE','/rest/v1/tasks',null,{id:'eq.'+id},{'Prefer':'return=minimal'});}
+  async function markRecurDeleted(titleLower){
+    await refresh();
+    return api('POST','/rest/v1/deleted_recurring',
+      {user_id:uid(),title_lower:titleLower},null,
+      {'Prefer':'resolution=merge-duplicates,return=minimal'});
+  }
+  async function getDeletedRecurring(){
+    await refresh();
+    const rows=await api('GET','/rest/v1/deleted_recurring',null,{user_id:'eq.'+uid()});
+    return new Set((rows||[]).map(r=>r.title_lower));
+  }
   async function getNotifs(){await refresh();return(await api('GET','/rest/v1/notifications',null,{select:'*',order:'created_at.desc',limit:'50'}))||[];}
   async function addNotif(n){await refresh();const u=uid2();if(!u)return;return api('POST','/rest/v1/notifications',{...n,user_id:u},null,{'Prefer':'return=minimal'});}
   async function readAll(){await refresh();return api('PATCH','/rest/v1/notifications',{read:true},{user_id:'eq.'+uid2(),read:'eq.false'},{'Prefer':'return=minimal'});}
@@ -2043,9 +2055,16 @@ async function rolloverDailyTasks(){
     // Skip if today already has an ACTIVE (not done) version of this recurring task
     const todayTitles=new Set((todayRaw||[]).filter(t=>!['done','closed'].includes(t.stage)).map(t=>t.title.toLowerCase()));
 
+    // Fetch permanently deleted recurring titles to skip them
+    const deletedTitles=await SB.getDeletedRecurring().catch(()=>new Set());
+
     let created=0;
     for(const t of doneDailies){
       if(todayTitles.has(t.title.toLowerCase()))continue;
+      // Skip if this recurring task was permanently deleted by the user
+      if(deletedTitles.has(t.title.toLowerCase())){
+        console.log('Skipping deleted recurring task:',t.title);continue;
+      }
       const nxtDay=nextWorkDay(T); // next working day from TODAY
       const newTask={
         id:uid(),title:t.title,tag:t.tag,priority:t.priority,
@@ -2699,17 +2718,20 @@ async function delTask(e,id){
     clearTimeout(G.delArm[id]);delete G.delArm[id];
     setSyncing(true);
     try{
+      const taskToDelete=G.tasks.find(t=>t.id===id);
       await SB.del(id);
+      // If it was a recurring task, permanently block rollover from recreating it
+      if(taskToDelete&&taskToDelete.recurrence&&taskToDelete.recurrence!=='none'){
+        await SB.markRecurDeleted(taskToDelete.title.toLowerCase());
+        toast('Recurring task deleted — will not reappear');
+      } else {
+        toast('Deleted');
+      }
       if(G.openId===id)closeDrawer();
-      // Remove from G.tasks cache immediately
       G.tasks=G.tasks.filter(t=>t.id!==id);
-      // Refresh current view
-      await loadTasks();
-      render();
-      // Also refresh recurring tab if visible
+      await loadTasks();render();
       const recurView=document.getElementById('v-recur');
       if(recurView&&recurView.classList.contains('on'))await renderRecurring();
-      toast('Deleted');
     }catch(e){setSyncing(false,true);toast('Delete failed','err');}
   } else {
     if(btn){btn.textContent='Sure?';btn.classList.add('arm');}
@@ -2744,6 +2766,39 @@ async function stopTimer(id){
 }
 /* ── RECURRING SECTION ── */
 let G_recurTab='all';
+
+async function showDeletedRecurring(){
+  const deleted=await SB.getDeletedRecurring().catch(()=>new Set());
+  if(!deleted.size){toast('No deleted recurring tasks');return;}
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px';
+  const box=document.createElement('div');
+  box.style.cssText='background:rgba(18,18,22,.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto';
+  box.innerHTML='<div style="font-family:var(--fh);font-size:18px;font-weight:800;letter-spacing:.06em;color:var(--white);margin-bottom:6px">Deleted Recurring Tasks</div>'
+    +'<div style="font-family:var(--fm);font-size:11px;color:var(--grey2);margin-bottom:16px">These tasks were permanently deleted and will not reappear. Click Restore to bring them back.</div>';
+  [...deleted].forEach(title=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:7px;margin-bottom:6px';
+    row.innerHTML='<span style="font-family:var(--fb);font-size:12px;color:var(--grey)">'+(title.charAt(0).toUpperCase()+title.slice(1))+'</span>';
+    const btn=document.createElement('button');
+    btn.textContent='Restore';
+    btn.style.cssText='font-family:var(--fm);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:5px;padding:4px 10px;cursor:pointer;flex-shrink:0';
+    btn.addEventListener('click',async()=>{
+      await SB.api('DELETE','/rest/v1/deleted_recurring',null,{user_id:'eq.'+SB.uid(),title_lower:'eq.'+title},{'Prefer':'return=minimal'}).catch(()=>{});
+      row.style.opacity='.3';btn.textContent='Restored';btn.disabled=true;
+      toast('Restored — will reappear on next rollover');
+    });
+    row.appendChild(btn);box.appendChild(row);
+  });
+  const cls=document.createElement('button');
+  cls.textContent='Close';
+  cls.style.cssText='width:100%;margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--grey);font-family:var(--fm);font-size:11px;padding:10px;border-radius:8px;cursor:pointer;letter-spacing:.08em;text-transform:uppercase';
+  cls.addEventListener('click',()=>modal.remove());
+  box.appendChild(cls);modal.appendChild(box);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+
 function setRecurTab(el){
   document.querySelectorAll('#recur-tabs .dtab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');G_recurTab=el.dataset.rt;renderRecurring();
@@ -4041,13 +4096,17 @@ function renderDrawer(task,atts){
       if(drDel.dataset.armed){
         drDel.textContent='Deleting...';drDel.disabled=true;
         try{
+          const taskDel=G.tasks.find(t=>t.id===id);
           await SB.del(id);
+          if(taskDel&&taskDel.recurrence&&taskDel.recurrence!=='none'){
+            await SB.markRecurDeleted(taskDel.title.toLowerCase());
+          }
           G.tasks=G.tasks.filter(t=>t.id!==id);
           closeDrawer();
           await loadTasks();render();
           const recurView=document.getElementById('v-recur');
           if(recurView&&recurView.classList.contains('on'))await renderRecurring();
-          toast('Task deleted');
+          toast(taskDel?.recurrence&&taskDel.recurrence!=='none'?'Recurring task deleted — won’t reappear':'Task deleted');
         }catch(e){toast('Delete failed','err');drDel.textContent='Delete';drDel.disabled=false;}
       } else {
         drDel.textContent='Confirm?';
