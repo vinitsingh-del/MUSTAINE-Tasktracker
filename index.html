@@ -748,11 +748,43 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .card.focus-card{border-color:rgba(167,139,250,.3);opacity:.75}
 /* AI FEATURES */
 .ai-bar{display:flex;gap:6px;align-items:center;padding:5px 0 0}
-.ai-btn{font-family:var(--fm);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:5px;border:1px solid rgba(200,168,75,.3);background:rgba(200,168,75,.06);color:rgba(200,168,75,.8);cursor:pointer;transition:all .2s;flex-shrink:0}
-.ai-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,.1)}
-.ai-btn:disabled{opacity:.4;cursor:not-allowed}
-.ai-result{display:none;margin-top:7px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);border-radius:8px;padding:10px 12px;font-family:var(--fm);font-size:11px;color:rgba(255,255,255,.7);line-height:1.6}
-.ai-result.show{display:block;animation:fadeUp .2s ease}
+.ai-bar{display:flex;gap:5px;align-items:center;padding:6px 0 2px;flex-wrap:wrap}
+.ai-btn{
+  font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 12px;border-radius:6px;
+  border:1px solid rgba(200,168,75,.3);
+  background:rgba(200,168,75,.06);
+  color:rgba(200,168,75,.85);
+  cursor:pointer;transition:all .18s;flex-shrink:0;
+  display:flex;align-items:center;gap:5px;
+}
+.ai-btn::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(200,168,75,.5)}
+.ai-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,.12);box-shadow:0 0 8px rgba(200,168,75,.15)}
+.ai-btn:disabled{opacity:.35;cursor:not-allowed}
+.ai-loading{font-family:var(--fm);font-size:9px;color:var(--gold);letter-spacing:.08em;animation:pulse 1s infinite}
+.ai-result{
+  display:none;margin-top:8px;
+  background:rgba(8,8,10,.85);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(200,168,75,.25);
+  border-left:3px solid var(--gold);
+  border-radius:8px;padding:12px 14px;
+  font-family:var(--fm);font-size:11px;
+  color:rgba(255,255,255,.75);line-height:1.6;
+}
+.ai-result.show{display:block;animation:fadeUp .25s ease}
+.ai-result-header{font-family:var(--fh);font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ai-result-header::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.ai-parsed-row{display:grid;grid-template-columns:72px 1fr;gap:6px;margin-bottom:6px;align-items:baseline}
+.ai-parsed-key{font-family:var(--fm);font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.35);text-transform:uppercase}
+.ai-parsed-val{color:var(--white);font-size:11px;font-weight:500}
+.ai-apply-btn{
+  margin-top:10px;background:var(--gold);color:#000;border:none;
+  border-radius:6px;padding:7px 16px;
+  font-family:var(--fh);font-size:13px;font-weight:800;letter-spacing:.08em;
+  cursor:pointer;transition:opacity .2s;
+}
+.ai-apply-btn:hover{opacity:.85}
 .ai-parsed-row{display:flex;gap:8px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
 .ai-parsed-key{font-size:9px;letter-spacing:.1em;color:var(--grey2);text-transform:uppercase;min-width:64px;flex-shrink:0}
 .ai-parsed-val{color:var(--white);font-size:11px}
@@ -2972,7 +3004,12 @@ async function callClaude(prompt,systemPrompt,maxTokens){
   try{
     const r=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key":"",
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
       body:JSON.stringify({
         model:"claude-sonnet-4-6",
         max_tokens:maxTokens||500,
@@ -2980,99 +3017,184 @@ async function callClaude(prompt,systemPrompt,maxTokens){
         messages:[{role:"user",content:prompt}]
       })
     });
+    if(!r.ok){
+      const err=await r.json().catch(()=>({}));
+      console.error('Claude API error:',r.status,err);
+      return null;
+    }
     const d=await r.json();
     return d?.content?.[0]?.text||null;
-  }catch(e){return null;}
+  }catch(e){console.error('callClaude error:',e);return null;}
 }
 
 // Natural language task parser
 async function aiNaturalLanguage(){
   const inp=document.getElementById('add-title');
   const text=(inp?.value||'').trim();
-  if(!text||text.length<5){toast('Type a task first, then click Smart Parse','warn');inp?.focus();return;}
-  const btn=document.getElementById('ai-nl-btn');
-  const loading=document.getElementById('ai-loading');
-  const result=document.getElementById('ai-result');
-  if(btn)btn.disabled=true;if(loading)loading.style.display='';
-  const today=new Date().toISOString().slice(0,10);
-  const nlSys='You are a task parser. The user typed a natural-language task. Today is '+today+'. Extract and return ONLY a JSON object with these exact keys: title (cleaned task title max 80 chars), category (one of: sales/revenue/client/kam/design/ops/follow-up/control/management/daily/personal), priority (urgent/high/medium/low), due_date (YYYY-MM-DD or null), due_time (HH:MM 24h format or null), person (person name mentioned or null), notes (any extra context max 60 chars or null). Respond ONLY with the JSON, no markdown, no explanation.';
-  const parsed=await callClaude(text,nlSys,300);
-  if(btn)btn.disabled=false;if(loading)loading.style.display='none';
-  if(!parsed){toast('Parse failed — check connection','err');return;}
-  let data;
-  try{data=JSON.parse(parsed.replace(/```json|```/g,'').trim());}catch{toast('Could not parse response','err');return;}
-  // Show result
-  if(result){
-    result.className='ai-result show';
-    result.innerHTML='<div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:8px">Parsed — review and apply</div>';
-    const rows=[
-      {k:'Title',v:data.title||text},
-      {k:'Category',v:data.category||'—'},
-      {k:'Priority',v:data.priority||'—'},
-      {k:'Due',v:(data.due_date||'—')+(data.due_time?' at '+data.due_time:'')},
-      {k:'Person',v:data.person||'—'},
-      {k:'Notes',v:data.notes||'—'},
-    ];
-    rows.forEach(({k,v})=>{
-      const row=document.createElement('div');row.className='ai-parsed-row';
-      row.innerHTML='<span class="ai-parsed-key">'+k+'</span><span class="ai-parsed-val">'+v+'</span>';
-      result.appendChild(row);
-    });
-    // Apply button
-    const applyBtn=document.createElement('button');applyBtn.className='ai-apply-btn';applyBtn.textContent='Apply to Form';
-    applyBtn.addEventListener('click',()=>{
-      if(data.title&&inp)inp.value=data.title;
-      if(data.category){const s=document.getElementById('add-tag');if(s)s.value=data.category;}
-      if(data.priority){const s=document.getElementById('add-pri');if(s)s.value=data.priority;}
-      if(data.due_date){const s=document.getElementById('add-date');if(s)s.value=data.due_date;}
-      if(data.due_time){const s=document.getElementById('add-time');if(s)s.value=data.due_time;}
-      if(data.notes){const s=document.getElementById('add-title');if(s&&!s.value.includes(data.notes))s.title=data.notes;}
-      result.className='ai-result';
-      toast('Applied to form');
-    });
-    result.appendChild(applyBtn);
+  if(!text||text.length<4){
+    toast('Type a task description first, then click Smart Parse','warn');
+    if(inp)inp.focus();return;
   }
+  const btn=document.getElementById('ai-nl-btn');
+  const loadEl=document.getElementById('ai-loading');
+  const result=document.getElementById('ai-result');
+  if(btn){btn.disabled=true;btn.textContent='Parsing...';}
+  if(loadEl)loadEl.style.display='';
+
+  const T=today();
+  const sys='You are a task parser for a business task manager. Today is '+T+'. '
+    +'The user typed a task in plain English. Extract and return ONLY valid JSON with exactly these keys: '
+    +'"title" (clean task title max 80 chars), '
+    +'"category" (exactly one of: sales/revenue/client/kam/design/ops/follow-up/control/management/daily/personal), '
+    +'"priority" (exactly one of: urgent/high/medium/low), '
+    +'"due_date" (YYYY-MM-DD format or null), '
+    +'"due_time" (HH:MM 24h format or null), '
+    +'"person" (name of person mentioned or null), '
+    +'"notes" (brief extra context max 60 chars or null). '
+    +'Return ONLY the JSON object. No markdown, no explanation, no code blocks.';
+
+  const parsed=await callClaude(text,sys,350);
+
+  if(btn){btn.disabled=false;btn.textContent='Smart Parse';}
+  if(loadEl)loadEl.style.display='none';
+
+  if(!parsed){
+    toast('AI parse failed — check console for details','err');
+    return;
+  }
+
+  let data;
+  try{
+    const clean=parsed.replace(/```json|```/g,'').trim();
+    data=JSON.parse(clean);
+  }catch(e){
+    toast('Could not read AI response','err');
+    console.error('Parse error:',e,'Response:',parsed);
+    return;
+  }
+
+  if(!result)return;
+  result.className='ai-result show';
+  result.innerHTML='<div class="ai-result-header">Smart Parse Result</div>';
+  const rows=[
+    {k:'Title',    v:data.title||text},
+    {k:'Category', v:data.category||'—'},
+    {k:'Priority', v:data.priority||'—'},
+    {k:'Due Date', v:data.due_date||(data.due_time?'Today':'—')},
+    {k:'Due Time', v:data.due_time||'—'},
+    {k:'Person',   v:data.person||'—'},
+    {k:'Notes',    v:data.notes||'—'},
+  ];
+  rows.forEach(({k,v})=>{
+    if(!v||v==='—')return;
+    const row=document.createElement('div');row.className='ai-parsed-row';
+    row.innerHTML='<span class="ai-parsed-key">'+k+'</span><span class="ai-parsed-val">'+esc(String(v))+'</span>';
+    result.appendChild(row);
+  });
+  const applyBtn=document.createElement('button');
+  applyBtn.className='ai-apply-btn';
+  applyBtn.textContent='Apply to Form';
+  applyBtn.addEventListener('click',()=>{
+    if(data.title&&inp)inp.value=data.title;
+    if(data.category){const s=document.getElementById('add-tag');if(s)s.value=data.category;}
+    if(data.priority){const s=document.getElementById('add-pri');if(s)s.value=data.priority;}
+    if(data.due_date){const s=document.getElementById('add-date');if(s)s.value=data.due_date;}
+    if(data.due_time){const s=document.getElementById('add-time');if(s)s.value=data.due_time;}
+    result.className='ai-result';
+    toast('Applied to form — review and add');
+  });
+  result.appendChild(applyBtn);
 }
+
+
 
 // Auto-generate task description
 async function aiGenerateDetails(){
   const inp=document.getElementById('add-title');
   const text=(inp?.value||'').trim();
-  if(!text||text.length<3){toast('Enter a task title first','warn');inp?.focus();return;}
+  if(!text||text.length<3){
+    toast('Enter a task title first, then click Generate Details','warn');
+    if(inp)inp.focus();return;
+  }
   const btn=document.getElementById('ai-gen-btn');
-  const loading=document.getElementById('ai-loading');
+  const loadEl=document.getElementById('ai-loading');
   const result=document.getElementById('ai-result');
-  if(btn)btn.disabled=true;if(loading)loading.style.display='';
-  const genSys='You are a task management assistant for a D2C/agency founder team. Given a vague task title, write a structured task description. Return ONLY a JSON object with: description (2-3 sentence description of what needs to be done), steps (array of 3-5 short action steps each max 50 chars), dependencies (array of 1-2 dependencies or blockers or empty array), est_hours (number: realistic hours estimate 0.5 to 8). No markdown. JSON only.';
-  const details=await callClaude('Task: "'+text+'"',genSys,400);
-  if(btn)btn.disabled=false;if(loading)loading.style.display='none';
-  if(!details){toast('Generation failed','err');return;}
+  if(btn){btn.disabled=true;btn.textContent='Generating...';}
+  if(loadEl)loadEl.style.display='';
+
+  const sys='You are a task management assistant for a D2C agency founder team in India. '
+    +'Given a vague task title, generate structured task details. '
+    +'Return ONLY valid JSON with exactly these keys: '
+    +'"description" (2-3 sentences explaining what needs to be done), '
+    +'"steps" (array of 3-5 short action steps, each max 55 chars), '
+    +'"dependencies" (array of 0-2 blockers or dependencies, or empty array), '
+    +'"est_hours" (realistic estimate as a number: 0.5, 1, 1.5, 2, 3, 4, etc). '
+    +'No markdown, no code blocks, just the JSON object.';
+
+  const details=await callClaude('Task: "'+text+'"',sys,450);
+
+  if(btn){btn.disabled=false;btn.textContent='Generate Details';}
+  if(loadEl)loadEl.style.display='none';
+
+  if(!details){
+    toast('AI generation failed — check console','err');
+    return;
+  }
+
   let data;
-  try{data=JSON.parse(details.replace(/```json|```/g,'').trim());}catch{toast('Could not parse response','err');return;}
-  if(result){
-    result.className='ai-result show';
-    result.innerHTML='<div style="font-family:var(--fm);font-size:9px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:8px">Generated Details</div>';
-    if(data.description){
-      const d=document.createElement('div');d.style.cssText='margin-bottom:8px;color:rgba(255,255,255,.7);font-size:11px;line-height:1.6';d.textContent=data.description;result.appendChild(d);
-    }
-    if(data.steps?.length){
-      const s=document.createElement('div');s.innerHTML='<div style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Steps</div>';
-      data.steps.forEach((step,i)=>{const r=document.createElement('div');r.style.cssText='font-size:10px;color:rgba(255,255,255,.6);padding:2px 0';r.textContent=(i+1)+'. '+step;s.appendChild(r);});result.appendChild(s);
-    }
-    if(data.dependencies?.length){
-      const d=document.createElement('div');d.style.cssText='margin-top:6px';d.innerHTML='<div style="font-family:var(--fm);font-size:9px;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px">Dependencies</div>';
-      data.dependencies.forEach(dep=>{const r=document.createElement('div');r.style.cssText='font-size:10px;color:var(--amber)';r.textContent='— '+dep;d.appendChild(r);});result.appendChild(d);
-    }
-    if(data.est_hours){
-      const applyBtn=document.createElement('button');applyBtn.className='ai-apply-btn';applyBtn.textContent='Apply Est. Hours ('+data.est_hours+'h)';
-      applyBtn.addEventListener('click',()=>{
-        const h=document.getElementById('add-hours');if(h)h.value=data.est_hours;
-        result.className='ai-result';toast('Est hours applied');
-      });
-      result.appendChild(applyBtn);
-    }
+  try{
+    const clean=details.replace(/```json|```/g,'').trim();
+    data=JSON.parse(clean);
+  }catch(e){
+    toast('Could not read AI response','err');
+    console.error('Gen parse error:',e,'Response:',details);
+    return;
+  }
+
+  if(!result)return;
+  result.className='ai-result show';
+  result.innerHTML='<div class="ai-result-header">Generated Details</div>';
+
+  if(data.description){
+    const d=document.createElement('div');
+    d.style.cssText='margin-bottom:10px;color:rgba(255,255,255,.8);font-size:12px;line-height:1.65;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:10px';
+    d.textContent=data.description;
+    result.appendChild(d);
+  }
+  if(data.steps?.length){
+    const sh=document.createElement('div');
+    sh.style.cssText='font-family:var(--fm);font-size:9px;letter-spacing:.1em;color:var(--grey2);text-transform:uppercase;margin-bottom:5px';
+    sh.textContent='Steps';result.appendChild(sh);
+    data.steps.forEach((step,i)=>{
+      const r=document.createElement('div');
+      r.style.cssText='font-size:11px;color:rgba(255,255,255,.65);padding:3px 0 3px 12px;border-left:2px solid rgba(200,168,75,.3);margin-bottom:4px';
+      r.textContent=(i+1)+'. '+step;result.appendChild(r);
+    });
+  }
+  if(data.dependencies?.length){
+    const dh=document.createElement('div');
+    dh.style.cssText='font-family:var(--fm);font-size:9px;letter-spacing:.1em;color:var(--grey2);text-transform:uppercase;margin:8px 0 5px';
+    dh.textContent='Dependencies';result.appendChild(dh);
+    data.dependencies.forEach(dep=>{
+      const r=document.createElement('div');
+      r.style.cssText='font-size:11px;color:var(--amber);padding:2px 0';
+      r.textContent='— '+dep;result.appendChild(r);
+    });
+  }
+  if(data.est_hours){
+    const applyBtn=document.createElement('button');
+    applyBtn.className='ai-apply-btn';
+    applyBtn.textContent='Apply '+data.est_hours+'h estimate';
+    applyBtn.addEventListener('click',()=>{
+      const h=document.getElementById('add-hours');if(h)h.value=data.est_hours;
+      toast('Est. hours applied');
+      result.className='ai-result';
+    });
+    result.appendChild(applyBtn);
   }
 }
+
+
 
 // Toggle AI Smart Suggestions panel
 function toggleAiSmart(){
