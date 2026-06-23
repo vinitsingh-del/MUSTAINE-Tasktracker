@@ -3001,30 +3001,31 @@ async function syncCalendar(){fetchCalendarEvents();}
 let G_aiSmartOpen=false;
 
 async function callClaude(prompt,systemPrompt,maxTokens){
+  // Routes through Supabase Edge Function to avoid CORS issues
+  const PROXY='https://ktropcqutvnbmekjindt.supabase.co/functions/v1/claude-proxy';
+  const ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cm9wY3F1dHZuYm1la2ppbmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTAwOTAsImV4cCI6MjA5NzQ2NjA5MH0.wE0gKMIEeZzX-XHTMcblkBZJVXKgbG5Y-KCnZ8VJ5zE';
   try{
-    const r=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
+    const r=await fetch(PROXY,{
+      method:'POST',
       headers:{
-        "Content-Type":"application/json",
-        "x-api-key":"",
-        "anthropic-version":"2023-06-01",
-        "anthropic-dangerous-direct-browser-access":"true"
+        'Content-Type':'application/json',
+        'apikey':ANON_KEY,
+        'Authorization':'Bearer '+ANON_KEY,
       },
-      body:JSON.stringify({
-        model:"claude-sonnet-4-6",
-        max_tokens:maxTokens||500,
-        system:systemPrompt||"You are a task management assistant. Be concise.",
-        messages:[{role:"user",content:prompt}]
-      })
+      body:JSON.stringify({prompt,systemPrompt,maxTokens:maxTokens||500})
     });
     if(!r.ok){
       const err=await r.json().catch(()=>({}));
-      console.error('Claude API error:',r.status,err);
+      console.error('Claude proxy error:',r.status,err);
       return null;
     }
     const d=await r.json();
-    return d?.content?.[0]?.text||null;
-  }catch(e){console.error('callClaude error:',e);return null;}
+    if(d.error){console.error('Claude proxy returned error:',d.error);return null;}
+    return d.text||null;
+  }catch(e){
+    console.error('callClaude error:',e);
+    return null;
+  }
 }
 
 // Natural language task parser
