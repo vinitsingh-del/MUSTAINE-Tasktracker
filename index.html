@@ -2129,13 +2129,18 @@ async function loadTasks(){
     if(G.df==='today'){
       // Today = tasks created today + tasks with next_action_date = today + tasks with finish_date = today
       raw=await SB.getTasks(today());
-      // Also fetch tasks with next_action_date or finish_date = today
+      // Also fetch: next_action_date=today, finish_date=today, OR created today (catches new tasks with future dates)
       try{
         const T=today();
-        const ext=await fetch(SUPA+'/rest/v1/tasks?or=(next_action_date.eq.'+T+',finish_date.eq.'+T+')&select=*',{headers:{'apikey':ANON,'Authorization':'Bearer '+SB.tok()}});
-        if(ext.ok){const extraRaw=await ext.json();const ids=new Set((raw||[]).map(r=>r.id));extraRaw.forEach(r=>{if(!ids.has(r.id))raw.push(r);});}
-      }catch{}
-    }
+        const todayStart=T+'T00:00:00';
+        const ext=await fetch(SUPA+'/rest/v1/tasks?or=(next_action_date.eq.'+T+',finish_date.eq.'+T+',created_at.gte.'+todayStart+')&select=*&order=created_at.asc',
+          {headers:{'apikey':ANON,'Authorization':'Bearer '+SB.tok()}});
+        if(ext.ok){
+          const extraRaw=await ext.json();
+          const ids=new Set((raw||[]).map(r=>r.id));
+          extraRaw.forEach(r=>{if(!ids.has(r.id))raw.push(r);});
+        }
+      }catch{}}
     else if(G.df==='week'){const d=new Date();d.setDate(d.getDate()-7);raw=await SB.getRange(d.toISOString().slice(0,10),today());}
     else{const d=new Date();d.setDate(d.getDate()-90);raw=await SB.getRange(d.toISOString().slice(0,10),today());}
     G.tasks=(raw||[]).map(norm);
@@ -2653,7 +2658,25 @@ async function addTask(){
   const task={id:uid(),title,tag:document.getElementById('add-tag').value||'personal',priority:document.getElementById('add-pri').value||'medium',task_time:document.getElementById('add-time').value||null,task_date:document.getElementById('add-date').value||today(),start_date:document.getElementById('add-start-date').value||null,finish_date:document.getElementById('add-finish-date').value||null,scheduled_hours:parseFloat(document.getElementById('add-hours')?.value)||0,next_action_date:document.getElementById('add-next-action')?.value||null,stage:'todo',done:false,created_at:new Date().toISOString(),recurrence:document.getElementById('add-recur')?.value||'none',remarks:'[]',activity:JSON.stringify([{ts:now(),text:'Task created'}]),timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null};
   const btn=document.querySelector('.add-go');if(btn){btn.disabled=true;btn.textContent='...';}
   setSyncing(true);
-  try{await SB.upsert(task);try{await SB.addNotif({task_id:task.id,title:'Task Created',body:title,type:'system'});}catch{}await loadTasks();render();inp.value='';inp.style.borderColor='';
+  try{
+    // Optimistically add to G.tasks immediately so it shows before DB round-trip
+    G.tasks.push(norm(task));
+    render();
+    await SB.upsert(task);
+    try{await SB.addNotif({task_id:task.id,title:'Task Created',body:title,type:'system'});}catch{}
+    // If task date differs from current filter, switch to 'all' so user sees it
+    const taskDate=task.task_date||today();
+    if(G.df==='today'&&taskDate!==today()){
+      G.df='all';
+      document.querySelectorAll('[data-df]').forEach(b=>b.classList.toggle('on',b.dataset.df==='all'));
+    }
+    await loadTasks();render();
+    inp.value='';inp.style.borderColor='';
+    // Scroll to the newly added task after render
+    setTimeout(()=>{
+      const newCard=document.querySelector('[data-id="'+task.id+'"]');
+      if(newCard)newCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+    },150);
   const recurVal2=document.getElementById('add-recur')?.value||'none';
   const rLabel={daily:'Daily',weekly:'Weekly',biweekly:'15-day',monthly:'Monthly'}[recurVal2];
   toast(rLabel?'Task added ('+rLabel+' recurring)':'Task added');}
