@@ -1044,8 +1044,8 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 /* ── 1200px: 2-col cards ── */
 @media(min-width:1200px){
   .sidebar{width:220px;min-width:220px}
-  /* Desktop: view clips vertically so kanban cols handle internal scroll */
-  .view{overflow-y:hidden !important}
+  /* Only the task view hides vertical scroll (kanban cols handle it) */
+  #v-tasks{overflow-y:hidden !important}
   #active-list{
     display:flex;flex-direction:row;align-items:flex-start;
     gap:10px;padding:8px 12px 12px;
@@ -1725,7 +1725,26 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
     <!-- STATS -->
     <div class="view" id="v-stats">
-      <div class="sec"><div class="sec-title">Analytics</div></div>
+      <div class="sec" style="flex-wrap:wrap;gap:8px">
+        <div class="sec-title">Analytics</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <button class="dtab on" data-sr="today" onclick="setStatsRange(this)">Today</button>
+          <button class="dtab" data-sr="week" onclick="setStatsRange(this)">7 Days</button>
+          <button class="dtab" data-sr="month" onclick="setStatsRange(this)">30 Days</button>
+          <button class="dtab" data-sr="custom" onclick="setStatsRange(this)">Custom</button>
+        </div>
+      </div>
+      <div id="stats-custom-range" style="display:none;padding:0 12px 8px;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:var(--fm);font-size:10px;color:var(--grey2)">From</span>
+          <input type="date" id="stats-from" class="a-inp" style="padding:5px 8px;font-size:11px;width:140px" onchange="renderStats()">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:var(--fm);font-size:10px;color:var(--grey2)">To</span>
+          <input type="date" id="stats-to" class="a-inp" style="padding:5px 8px;font-size:11px;width:140px" onchange="renderStats()">
+        </div>
+        <button class="dtab on" onclick="renderStats()">Apply</button>
+      </div>
       <div style="padding:0 12px 24px" id="an-wrap"></div>
     </div>
   </div>
@@ -2829,6 +2848,16 @@ function filterTimerTasks(){
 /* ── DONE RANGE STATE ── */
 let G_doneRange='today';
 let G_doneSort='date'; // 'date' | 'category'
+let G_statsRange='today'; // 'today' | 'week' | 'month' | 'custom'
+
+function setStatsRange(el){
+  document.querySelectorAll('[data-sr]').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  G_statsRange=el.dataset.sr;
+  const cr=document.getElementById('stats-custom-range');
+  if(cr)cr.style.display=G_statsRange==='custom'?'flex':'none';
+  if(G_statsRange!=='custom')renderStats();
+}
 function toggleDoneSort(){
   G_doneSort=G_doneSort==='date'?'category':'date';
   const btn=document.getElementById('done-sort-btn');
@@ -3818,9 +3847,39 @@ async function renderStats(){
   const wrap=document.getElementById('an-wrap');if(!wrap)return;
   wrap.innerHTML='<div style="text-align:center;padding:32px;font-family:var(--fm);font-size:11px;color:var(--grey2)">Loading analytics...</div>';
   const T=today();
-  let all=[];
-  try{const raw=await SB.getTasks(T);all=(raw||[]).map(norm);}
-  catch{all=G.tasks.filter(t=>(t.task_date||t.date||T)===T);}
+  let all=[], statsLabel='Today';
+  try{
+    if(G_statsRange==='week'){
+      const d=new Date();d.setDate(d.getDate()-7);
+      const from=d.toISOString().slice(0,10);
+      const raw=await SB.getRange(from,T);
+      all=(raw||[]).map(norm);
+      statsLabel='Last 7 Days';
+    } else if(G_statsRange==='month'){
+      const d=new Date();d.setDate(d.getDate()-30);
+      const from=d.toISOString().slice(0,10);
+      const raw=await SB.getRange(from,T);
+      all=(raw||[]).map(norm);
+      statsLabel='Last 30 Days';
+    } else if(G_statsRange==='custom'){
+      const from=document.getElementById('stats-from')?.value;
+      const to=document.getElementById('stats-to')?.value||T;
+      if(from){
+        const raw=await SB.getRange(from,to);
+        all=(raw||[]).map(norm);
+        statsLabel=from+' → '+to;
+      } else {
+        const raw=await SB.getTasks(T);all=(raw||[]).map(norm);
+        statsLabel='Today';
+      }
+    } else {
+      const raw=await SB.getTasks(T);all=(raw||[]).map(norm);
+      statsLabel='Today · '+T;
+    }
+  } catch{
+    all=G.tasks.filter(t=>(t.task_date||t.date||T)===T);
+    statsLabel='Today (cached)';
+  }
   wrap.innerHTML='';
 
   // ── CORE METRICS ──────────────────────────────────────────
