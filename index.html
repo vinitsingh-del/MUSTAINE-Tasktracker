@@ -484,6 +484,8 @@ button,a,[onclick]{
   overscroll-behavior-y:contain;
   scroll-behavior:smooth;
   display:none;
+  isolation:isolate;
+  contain:layout style;
 }
 .view.on{display:block}
 .view::-webkit-scrollbar{display:none}
@@ -1027,6 +1029,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .an-card{padding:14px 16px;margin-bottom:0;border-radius:12px}
 
   /* ── DONE VIEW ── */
+  #v-done{display:flex;flex-direction:column}
   .done-tab{padding:6px 16px}
   .done-stat-row{padding:8px 16px}
   #done-list-wrap{padding:0 16px 24px}
@@ -1649,20 +1652,22 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
         <button class="stab wt-stab" data-stage="working_today" onclick="setStage(this)" id="stage-wt-btn">Working Today <span id="wt-count" style="font-weight:700"></span></button>
       </div>
       <div class="sec" id="act-hdr" style="display:none"><div class="sec-title" id="act-title">Active</div></div>
-      <div class="card-list" id="active-list" data-cardlist="active"></div>
-      <div id="done-sec">
-        <div class="sec" id="done-hdr" style="display:none">
-          <div class="sec-title">Completed</div>
-          <button class="sec-btn" onclick="toggleDoneVis()">Hide</button>
+      <div id="v-tasks-scroll">
+        <div class="card-list" id="active-list" data-cardlist="active"></div>
+        <div id="done-sec">
+          <div class="sec" id="done-hdr" style="display:none">
+            <div class="sec-title">Completed</div>
+            <button class="sec-btn" onclick="toggleDoneVis()">Hide</button>
+          </div>
+          <div class="card-list" id="done-list"></div>
+          <button class="show-done-btn" id="show-done-btn" onclick="toggleDoneVis()"></button>
         </div>
-        <div class="card-list" id="done-list"></div>
-        <button class="show-done-btn" id="show-done-btn" onclick="toggleDoneVis()"></button>
+        <div id="blocked-sec">
+          <div class="sec" id="blocked-hdr" style="display:none"><div class="sec-title">Blocked</div></div>
+          <div class="card-list" id="blocked-list"></div>
+        </div>
+        <div style="height:40px"></div>
       </div>
-      <div id="blocked-sec">
-        <div class="sec" id="blocked-hdr" style="display:none"><div class="sec-title">Blocked</div></div>
-        <div class="card-list" id="blocked-list"></div>
-      </div>
-      <div style="height:80px"></div>
     </div>
 
     <!-- DONE -->
