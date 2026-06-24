@@ -1919,7 +1919,7 @@ function aMode(m){
   aM=m;
   document.getElementById('a-tab-in').classList.toggle('on',m==='in');
   document.getElementById('a-tab-up').classList.toggle('on',m==='up');
-  document.getElementById('af-name').style.display=m==='up'?'':'none';
+  document.getElementById('af-name').style.display=m==='up'?'block':'none';
   document.getElementById('a-btn').textContent=m==='up'?'Create & Sign In':'Sign In';
   document.getElementById('a-title-text').textContent=m==='up'?'Create your account':'Welcome back';
   document.getElementById('a-sub-text').textContent=m==='up'?'Join your Troopod workspace':'Sign in to your workspace';
@@ -1990,7 +1990,15 @@ async function doAuth(){
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){aMsg('Enter a valid email address',1);return;}
   if(pass.length<6){aMsg('Password must be at least 6 characters',1);return;}
   const phone=(document.getElementById('a-phone')?.value||'').trim();
-  if(aM==='up'&&name.length<1){aMsg('Enter your name to continue',1);return;}
+  if(aM==='up'&&name.length<1){
+    // Show the name field if hidden and focus it
+    const nf=document.getElementById('af-name');
+    if(nf)nf.style.display='block';
+    const ni=document.getElementById('a-name');
+    if(ni){ni.focus();ni.classList.add('invalid');}
+    aMsg('Enter your name above to continue',1);
+    return;
+  }
 
   const btn=document.getElementById('a-btn');
   if(btn){btn.disabled=true;btn.textContent='Please wait...';}
