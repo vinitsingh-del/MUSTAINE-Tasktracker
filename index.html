@@ -487,7 +487,7 @@ button,a,[onclick]{
   isolation:isolate;
   contain:layout style;
 }
-.view.on{display:block}
+.view.on{display:flex;flex-direction:column}
 .view::-webkit-scrollbar{display:none}
 
 /* DAY STRIP */
@@ -1050,10 +1050,13 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .sidebar{width:220px;min-width:220px}
 
   /* ── TASKS VIEW: kanban layout ── */
-  #v-tasks{
-    overflow:hidden !important;
+  #v-tasks.on{
+    overflow:hidden;
     display:flex !important;
-    flex-direction:column !important;
+    flex-direction:column;
+  }
+  #v-tasks:not(.on){
+    display:none !important;
   }
   #v-tasks > .day-strip,
   #v-tasks > .add-box,
