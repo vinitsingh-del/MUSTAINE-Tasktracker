@@ -1264,12 +1264,24 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
           </div>
 
           <div id="af-name">
-            <div class="a-lbl">Full Name <span class="a-lbl-req">*</span></div>
-            <div class="a-inp-wrap">
-              <input class="a-inp" id="a-name" type="text"
-                placeholder="Your name"
-                autocomplete="name" oninput="validateName(this)">
-              <span class="a-inp-check" id="chk-name">&#10003;</span>
+            <div class="a-field" style="margin-bottom:14px">
+              <div class="a-lbl">Full Name <span class="a-lbl-req">*</span></div>
+              <div class="a-inp-wrap">
+                <input class="a-inp" id="a-name" type="text"
+                  placeholder="Vinit Singh"
+                  autocomplete="name" oninput="validateName(this)">
+                <span class="a-inp-check" id="chk-name">&#10003;</span>
+              </div>
+            </div>
+            <div class="a-field" style="margin-bottom:0">
+              <div class="a-lbl">Phone <span style="color:rgba(255,255,255,.25);font-size:8px;letter-spacing:.08em;text-transform:uppercase">optional</span></div>
+              <div class="a-inp-wrap">
+                <input class="a-inp" id="a-phone" type="tel"
+                  placeholder="+91 98765 43210"
+                  autocomplete="tel" inputmode="tel"
+                  oninput="validatePhone(this)">
+                <span class="a-inp-check" id="chk-phone" style="opacity:0">&#10003;</span>
+              </div>
             </div>
           </div>
 
@@ -1855,11 +1867,13 @@ const SB=(()=>{
   }
   const row=t=>({id:t.id,user_id:uid2(),title:t.title,tag:t.tag||'personal',priority:t.priority||'medium',stage:t.stage||'todo',done:!!t.done,task_date:t.task_date||today(),task_time:t.task_time||null,remarks:JSON.stringify(Array.isArray(t.remarks)?t.remarks:[]),activity:JSON.stringify(Array.isArray(t.activity)?t.activity:[]),timer_started_at:t.timer_started_at||null,timer_stopped_at:t.timer_stopped_at||null,timer_total_seconds:t.timer_total_seconds||0,recurrence:t.recurrence||'none',start_date:t.start_date||null,finish_date:t.finish_date||null,next_action_date:t.next_action_date||null,scheduled_hours:parseFloat(t.scheduled_hours)||0,sub_stage:t.sub_stage||null,hours_worked:parseFloat(t.hours_worked)||0,done_at:t.done_at||null,working_today:!!t.working_today,snooze_until:t.snooze_until||null,updated_by_name:t.updated_by_name||null,...(t.created_at?{created_at:t.created_at}:{})});
   async function signIn(e,p){const d=await api('POST','/auth/v1/token',{email:e,password:p},{grant_type:'password'});if(d?.access_token)save(d);return d;}
-  async function signUp(e,p,n){
+  async function signUp(e,p,n,phone){
+    const meta={};
+    if(n)meta.full_name=n;
+    if(phone)meta.phone=phone;
     const body={email:e,password:p};
-    if(n)body.options={data:{full_name:n}};
+    if(Object.keys(meta).length)body.options={data:meta};
     const d=await api('POST','/auth/v1/signup',body);
-    // Save session if auto-confirmed
     if(d?.access_token)save(d);
     else if(d?.session?.access_token)save(d.session);
     return d;
@@ -1926,8 +1940,15 @@ function validateEmail(inp){
   const chk=document.getElementById('chk-email');if(chk){chk.textContent='✓';chk.style.color='var(--green)';chk.className='a-inp-check'+(ok?' show':'');}
   const hint=document.getElementById('hint-email');if(hint){if(v&&!ok){hint.textContent='Enter a valid email address';hint.className='a-field-hint show err';}else hint.className='a-field-hint';}
 }
+function validatePhone(inp){
+  const v=inp.value.trim();
+  const ok=v.length===0||v.replace(/[\s\-\+\(\)]/g,'').length>=7;
+  inp.className='a-inp'+(v.length===0?'':ok?' valid':' invalid');
+  const chk=document.getElementById('chk-phone');
+  if(chk)chk.style.opacity=(ok&&v.length>0)?'1':'0';
+}
 function validateName(inp){
-  const v=inp.value.trim();const ok=v.length>=2;
+  const v=inp.value.trim();const ok=v.length>=1;
   inp.className='a-inp'+(ok?' valid':v?' invalid':'');
   const chk=document.getElementById('chk-name');if(chk)chk.className='a-inp-check'+(ok?' show':'');
   const hint=document.getElementById('hint-name');if(hint){hint.textContent=ok?'':'Min 2 characters';hint.className='a-field-hint'+(v&&!ok?' show err':' ');}
@@ -1968,7 +1989,8 @@ async function doAuth(){
   // Client-side validation
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){aMsg('Enter a valid email address',1);return;}
   if(pass.length<6){aMsg('Password must be at least 6 characters',1);return;}
-  if(aM==='up'&&name.length<2){aMsg('Enter your full name (min 2 characters)',1);return;}
+  const phone=(document.getElementById('a-phone')?.value||'').trim();
+  if(aM==='up'&&name.length<1){aMsg('Enter your name to continue',1);return;}
 
   const btn=document.getElementById('a-btn');
   if(btn){btn.disabled=true;btn.textContent='Please wait...';}
@@ -1979,7 +2001,7 @@ async function doAuth(){
       // Step 1: Call signup API
       let signupResult;
       try{
-        signupResult=await SB.signUp(email,pass,name);
+        signupResult=await SB.signUp(email,pass,name,phone);
       }catch(signupErr){
         const msg=(signupErr.message||'').toLowerCase();
         if(msg.includes('already registered')||msg.includes('already been registered')||msg.includes('user already registered')){
