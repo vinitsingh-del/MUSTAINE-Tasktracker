@@ -1171,134 +1171,55 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 @media(min-width:1200px){
   .sidebar{width:220px;min-width:220px}
 
-  /* ── TASKS VIEW: kanban layout ── */
+  /* Tasks view */
   #v-tasks.on{
     overflow:hidden;
     display:flex !important;
     flex-direction:column;
   }
-  #v-tasks:not(.on){
-    display:none !important;
-  }
-  #v-tasks > .day-strip,
-  #v-tasks > .add-box,
-  #v-tasks > .toolbar,
-  #v-tasks > .filters,
-  #v-tasks > .stage-strip,
-  #v-tasks > .od-banner,
-  #v-tasks > .timer-active-strip,
-  #v-tasks > .sec,
-  #v-tasks > .ai-smart-section,
-  #v-tasks > .ai-result{
-    flex:none;
-  }
+  #v-tasks:not(.on){display:none !important}
 
-  /* Scrollable area: kanban + done/blocked stacked */
+  /* Scrollable task content */
   #v-tasks-scroll{
-    flex:1;
-    min-height:0;
-    overflow-y:auto;
-    overflow-x:hidden;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior-y:contain;
-    display:flex;
-    flex-direction:column;
-    gap:0;
-  }
-
-  /* Kanban row */
-  #active-list{
-    display:flex;
-    flex-direction:row;
-    align-items:flex-start;
-    gap:10px;
-    padding:8px 12px 8px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    flex:none;
-    min-height:200px;
-    scrollbar-width:thin;
-    scrollbar-color:rgba(255,255,255,.15) transparent;
-  }
-  #active-list::-webkit-scrollbar{height:5px}
-  #active-list::-webkit-scrollbar-track{background:transparent}
-  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
-
-  /* Kanban columns */
-  .kb-col{
-    flex:0 0 290px;min-width:270px;max-width:310px;
-    height:auto;
-    max-height:min(calc(100vh - 280px), 700px);
-    display:flex;flex-direction:column;gap:0;
-    background:rgba(255,255,255,.025);
-    border:1px solid rgba(255,255,255,.07);
-    border-radius:11px;overflow:hidden;
-  }
-  .kb-col-hdr{
-    padding:8px 10px 7px;
-    background:rgba(18,18,22,.9);
-    border-bottom:1px solid rgba(255,255,255,.07);
-    display:flex;align-items:center;justify-content:space-between;
-    flex-shrink:0;
-  }
-  .kb-col-title{
-    display:flex;align-items:center;gap:6px;
-    font-family:var(--fh);font-size:11px;font-weight:800;
-    letter-spacing:.14em;text-transform:uppercase;
-  }
-  .kb-col-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-  .kb-col-count{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.06em;}
-  .kb-col-body{
-    padding:6px;
-    display:block;
     flex:1;min-height:0;
     overflow-y:auto;overflow-x:hidden;
-    overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
-    scroll-behavior:smooth;
+    overscroll-behavior-y:contain;
   }
-  .kb-col-body .card{
-    display:block;
-    width:100%;
-    height:auto;
-    margin-bottom:5px;
-  }
-  .kb-col-body .card:last-child{margin-bottom:0}
-  .kb-col-body::-webkit-scrollbar{width:3px}
-  .kb-col-body::-webkit-scrollbar-track{background:transparent}
-  .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-  .kb-col .card{
-    animation:none;
-    border-radius:8px;
-    backdrop-filter:blur(6px);
-    -webkit-backdrop-filter:blur(6px);
-    display:block;
-    height:auto;
-    width:100%;
-  }
-  .kb-col .card-inner{padding:7px 7px 7px 10px}
-  .kb-col .card-title{font-size:11.5px;margin-bottom:3px;-webkit-line-clamp:2}
-  .kb-empty{padding:24px 12px;text-align:center;font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.08em;text-transform:uppercase}
 
-  /* Done + Blocked: flat 2-col grid BELOW kanban */
-  #done-sec,#blocked-sec{
-    flex:none;
-    width:100%;
-    padding:0 12px;
-    box-sizing:border-box;
-  }
-  #done-sec .card-list,#blocked-sec .card-list{
+  /* Active list: 2-col grid, cohort headers span full width */
+  #active-list{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:8px;
-    padding:0 0 8px;
+    padding:8px 16px 8px;
+    align-items:start;
   }
-  #done-sec .card-list .date-grp,
-  #blocked-sec .card-list .date-grp{grid-column:1/-1}
+  #active-list > .date-grp{
+    grid-column:1/-1;
+    padding:8px 0 2px;
+    margin-top:4px;
+  }
+  #active-list > .date-grp:first-child{margin-top:0}
 
-  /* Flat card-list for today view (no kanban) */
-  .card-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 10px}
-  .card-list > .sec,.date-grp,.show-done-btn{grid-column:1/-1}
+  /* Card grid on desktop */
+  .card-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 10px}
+  .card-list > .sec,.date-grp,.show-done-btn,#done-sec,#blocked-sec{grid-column:1/-1}
+
+  /* Date group / category header inside active-list */
+  #active-list > .date-grp{
+    grid-column:1/-1;
+    padding:10px 16px 4px;
+    font-family:var(--fh);font-size:10px;font-weight:800;
+    letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(255,255,255,.35);
+  }
+
+  /* Done + blocked sections */
+  #done-sec,#blocked-sec{padding:0 16px}
+  #done-sec .card-list,#blocked-sec .card-list{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 0 8px;
+  }
 }
 
 @media(min-width:1440px){
