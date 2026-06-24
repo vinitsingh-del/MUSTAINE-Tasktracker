@@ -1667,25 +1667,50 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
     <!-- DONE -->
     <div class="view" id="v-done">
-      <div class="sec">
-        <div class="sec-title">Completed Tasks</div>
-        <button class="sec-btn" onclick="exportDonePDF()" style="color:var(--red)">PDF Report</button>
+
+      <!-- ── DONE HEADER ── -->
+      <div class="done-screen-hdr">
+        <div class="done-screen-title">
+          <div class="done-screen-wordmark">COMPLETED</div>
+          <div class="done-screen-sub" id="done-screen-label">Today's closed tasks</div>
+        </div>
+        <div class="done-screen-actions">
+          <button onclick="toggleDoneSort()" id="done-sort-btn" class="done-action-btn">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+            <span id="done-sort-label">By Date</span>
+          </button>
+          <button onclick="exportDonePDF()" class="done-action-btn done-action-gold">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12"><path d="M8 2v9M5 8l3 3 3-3M2 14h12"/></svg>
+            PDF
+          </button>
+        </div>
       </div>
-      <div class="done-tab">
-        <button class="dtab on" data-dr="today" onclick="setDoneRange(this)">Done Today</button>
-        <button class="dtab" data-dr="24h" onclick="setDoneRange(this)">Closed 24h</button>
-        <button class="dtab" data-dr="week" onclick="setDoneRange(this)">7 Days</button>
-        <button class="dtab" data-dr="month" onclick="setDoneRange(this)">30 Days</button>
-        <button class="dtab" data-dr="custom" onclick="setDoneRange(this)">Custom Range</button>
-        <button class="dtab" data-dr="activity" onclick="setDoneRange(this)">Activity Feed</button>
+
+      <!-- ── RANGE FILTER STRIP ── -->
+      <div class="done-range-strip">
+        <button class="done-range-btn on" data-dr="today" onclick="setDoneRange(this)">Today</button>
+        <button class="done-range-btn" data-dr="24h" onclick="setDoneRange(this)">24 Hours</button>
+        <button class="done-range-btn" data-dr="week" onclick="setDoneRange(this)">7 Days</button>
+        <button class="done-range-btn" data-dr="month" onclick="setDoneRange(this)">30 Days</button>
+        <button class="done-range-btn" data-dr="custom" onclick="setDoneRange(this)">Custom</button>
+        <button class="done-range-btn" data-dr="activity" onclick="setDoneRange(this)">Activity</button>
       </div>
-      <div class="dr-range" id="done-custom-range" style="display:none">
-        <label>From</label><input type="date" id="done-from">
-        <label>To</label><input type="date" id="done-to">
-        <button class="dtab on" onclick="renderDoneView()">Apply</button>
+
+      <!-- ── CUSTOM DATE PICKER ── -->
+      <div id="done-custom-range" style="display:none;padding:6px 16px;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.1em;text-transform:uppercase">From</span>
+        <input type="date" id="done-from" class="done-date-inp">
+        <span style="font-family:var(--fm);font-size:9px;color:var(--grey2);letter-spacing:.1em;text-transform:uppercase">To</span>
+        <input type="date" id="done-to" class="done-date-inp">
+        <button onclick="renderDoneView()" class="done-range-btn on" style="flex-shrink:0">Apply</button>
       </div>
-      <div class="done-stat-row" id="done-stats-row"></div>
-      <div style="padding:0 12px 24px" id="done-list-wrap"></div>
+
+      <!-- ── METRICS BAR ── -->
+      <div class="done-metrics-bar" id="done-stats-row"></div>
+
+      <!-- ── TASK LIST ── -->
+      <div class="done-list-area" id="done-list-wrap"></div>
+
     </div>
 
     <!-- RECURRING TASKS -->
@@ -2862,15 +2887,12 @@ async function renderDoneView(){
       const catTasks=catGrps[cat];
       const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
       const hrs=catTasks.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0),0);
-      const hdr=document.createElement('div');hdr.className='sec';
-      hdr.innerHTML='<div class="sec-title" style="display:flex;align-items:center;gap:7px">'
-        +'<span style="width:7px;height:7px;border-radius:50%;background:'+tm.c+';display:inline-block;flex-shrink:0"></span>'
-        +'<span style="color:'+tm.c+'">'+tm.l+'</span>'
-        +'<span style="font-size:10px;color:var(--grey2);font-weight:400">'+catTasks.length+' task'+(catTasks.length>1?'s':'')+'</span>'
-        +'</div>'
-        +'<div style="font-family:var(--fm);font-size:10px;color:var(--gold)">'+hrs.toFixed(1)+'h</div>';
+      const hdr=document.createElement('div');hdr.className='done-cat-grp';
+      hdr.innerHTML='<div class="done-cat-dot" style="background:'+tm.c+'"></div>'
+        +'<div class="done-cat-name" style="color:'+tm.c+'">'+tm.l+'</div>'
+        +'<div class="done-cat-meta">'+catTasks.length+' task'+(catTasks.length>1?'s':'')+' · '+hrs.toFixed(1)+'h</div>';
       wrap.appendChild(hdr);
-      const list=document.createElement('div');list.className='card-list';
+      const list=document.createElement('div');list.className='done-cards';
       catTasks.sort((a,b)=>b.done_at?.localeCompare(a.done_at||'')||0).forEach(t=>list.appendChild(mkCard(t)));
       wrap.appendChild(list);
     });
@@ -2878,12 +2900,11 @@ async function renderDoneView(){
     // ── GROUP BY DATE (default) ──
     const grps={};tasks.forEach(t=>{const d=t.done_at?t.done_at.slice(0,10):(t.task_date||T);if(!grps[d])grps[d]=[];grps[d].push(t);});
     Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
-      const hdr=document.createElement('div');hdr.className='sec';
+      const hdr=document.createElement('div');hdr.className='done-date-grp';
       const hrs=grps[date].reduce((s,t)=>s+(parseFloat(t.hours_worked)||0),0);
-      hdr.innerHTML='<div class="sec-title">'+date+(date===T?' — Today':'')+'</div>'
-        +'<div style="font-family:var(--fm);font-size:10px;color:var(--gold)">'+hrs.toFixed(1)+'h</div>';
+      hdr.innerHTML='<span>'+(date===T?'Today':date)+'</span><span class="done-date-grp-hrs">'+hrs.toFixed(1)+'h</span>';
       wrap.appendChild(hdr);
-      const list=document.createElement('div');list.className='card-list';
+      const list=document.createElement('div');list.className='done-cards';
       grps[date].forEach(t=>list.appendChild(mkCard(t)));
       wrap.appendChild(list);
     });
@@ -3117,16 +3138,17 @@ function setStatsRange(el){
 function toggleDoneSort(){
   G_doneSort=G_doneSort==='date'?'category':'date';
   const btn=document.getElementById('done-sort-btn');
+  const lbl=document.getElementById('done-sort-label');
+  if(lbl)lbl.textContent=G_doneSort==='category'?'By Category':'By Date';
   if(btn){
-    btn.textContent='Sort: '+(G_doneSort==='category'?'Category':'Date');
-    btn.style.color=G_doneSort==='category'?'var(--gold)':'var(--grey2)';
-    btn.style.borderColor=G_doneSort==='category'?'rgba(200,168,75,.4)':'rgba(255,255,255,.1)';
+    btn.style.color=G_doneSort==='category'?'var(--gold)':'rgba(255,255,255,.5)';
+    btn.style.borderColor=G_doneSort==='category'?'rgba(200,168,75,.3)':'rgba(255,255,255,.1)';
   }
   renderDoneView();
 }
 
 function setDoneRange(el){
-  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  document.querySelectorAll('.done-range-btn,.dtab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
   G_doneRange=el.dataset.dr;
   const cr=document.getElementById('done-custom-range');if(cr)cr.style.display=G_doneRange==='custom'?'flex':'none';
   if(G_doneRange!=='custom')renderDoneView();
