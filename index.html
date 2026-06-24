@@ -2827,69 +2827,161 @@ async function renderDoneView(){
 function exportStatsPDF(){
   const wrap=document.getElementById('an-wrap');
   if(!wrap){toast('No stats loaded yet','warn');return;}
-  const statsLabel=document.querySelector('[data-sr].on')?.dataset.sr||'today';
+
+  const srEl=document.querySelector('[data-sr].on');
+  const rangeKey=srEl?.dataset.sr||'today';
+  const labelMap={today:'Today',week:'Last 7 Days',month:'Last 30 Days',custom:'Custom Range'};
+  const rangeLabel=labelMap[rangeKey]||(document.querySelector('[data-sr].on')?.textContent||'Today');
   const T=today();
-  const labelMap={today:'Today — '+T,week:'Last 7 Days',month:'Last 30 Days',custom:'Custom Range'};
-  const rangeLabel=labelMap[statsLabel]||T;
+  const fromEl=document.getElementById('stats-from');
+  const toEl=document.getElementById('stats-to');
+  const customLabel=rangeKey==='custom'&&fromEl?.value?(fromEl.value+' to '+(toEl?.value||T)):null;
+  const finalLabel=customLabel||rangeLabel;
 
-  // Clone the stats DOM
+  // Serialize the live stats DOM
   const clone=wrap.cloneNode(true);
+  // Remove interactive listeners by replacing buttons with spans
+  clone.querySelectorAll('button').forEach(b=>{
+    const s=document.createElement('span');s.innerHTML=b.innerHTML;s.style.cssText=b.style.cssText;b.replaceWith(s);
+  });
+  const statsHTML=clone.innerHTML;
 
-  // Build a full self-contained PDF-ready HTML page
+  // Build the CSS variables inline so all var(--X) resolve
+  const cssVars=`
+    --red:#e63329;--gold:#c8a84b;--green:#22c55e;--amber:#f59e0b;
+    --white:#f2f2f2;--grey:#999;--grey2:#666;
+    --bg:#000;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.06);
+    --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.1);--b3:rgba(255,255,255,.18);
+    --fh:'Barlow Condensed',sans-serif;--fm:'JetBrains Mono',monospace;--fb:'Inter',sans-serif;
+  `;
+
+  // Get computed styles from app to extract current font
+  const appFontLink='https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap';
+
   const html=`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>MUSTAINE Stats — ${rangeLabel}</title>
+<title>MUSTAINE Stats Report — ${finalLabel}</title>
+<link href="${appFontLink}" rel="stylesheet">
 <style>
+  :root{${cssVars}}
   *{box-sizing:border-box;margin:0;padding:0}
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-  body{background:#000;color:#f2f2f2;font-family:'Inter',sans-serif;padding:32px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  h1{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;letter-spacing:.08em;color:#e63329;margin-bottom:4px}
-  .sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.14em;text-transform:uppercase;margin-bottom:28px}
-  /* Mirror the app's stat card styles */
-  .an-card{background:rgba(20,20,24,.9);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  html,body{
+    background:#000;color:#f2f2f2;
+    font-family:'Inter',sans-serif;font-size:13px;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  body{padding:28px 32px}
+
+  /* HEADER */
+  .pdf-header{margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:16px}
+  .pdf-logo{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;letter-spacing:.08em;color:#e63329;margin-bottom:2px}
+  .pdf-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase}
+
+  /* Card containers */
+  .an-card{
+    background:rgba(20,20,26,.95);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:10px;padding:16px 18px;margin-bottom:12px;
+    break-inside:avoid;
+  }
   .an-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .an-card-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55)}
-  .an-card-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.3)}
-  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-  .stat-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:14px;text-align:center}
-  .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;line-height:1}
-  .stat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}
-  .stat-note{font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin-top:4px}
-  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .bar-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;width:90px;flex-shrink:0;color:rgba(255,255,255,.7)}
-  .bar-track{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
-  .bar-fill{height:100%;border-radius:4px}
-  .bar-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);width:120px;text-align:right;flex-shrink:0}
-  .progress-bar{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin:6px 0}
+  .an-card-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+  .an-card-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.08em}
+
+  /* Two column grid */
+  .an-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  @media print{.an-grid{grid-template-columns:1fr 1fr}}
+
+  /* Stat cells */
+  .stat-2x2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:14px 10px;text-align:center;cursor:default}
+  .stat-num{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;line-height:1}
+  .stat-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:3px}
+  .stat-sub{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+
+  /* Progress bar */
+  .progress-wrap{margin:8px 0 4px}
+  .progress-bar{height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
   .progress-fill{height:100%;border-radius:3px}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .insight{font-size:11px;color:rgba(255,255,255,.55);line-height:1.6;margin-top:8px;padding:10px;background:rgba(255,255,255,.03);border-radius:6px;border-left:3px solid rgba(255,255,255,.12)}
-  .insight b{color:rgba(255,255,255,.9)}
-  .insight span[style]{color:inherit!important}
-  .issue-item{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px}
-  .eff-grade{font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:900;line-height:1;text-align:center}
-  @media print{body{padding:16px}@page{size:A4;margin:0}}
+  .progress-label{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.4);margin-top:3px}
+
+  /* Bar rows (category) */
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .bar-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;width:88px;flex-shrink:0;color:rgba(255,255,255,.7)}
+  .bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px}
+  .bar-count{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.4);text-align:right;flex-shrink:0;min-width:110px}
+
+  /* Time & hours cells */
+  .hours-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+  .hours-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 8px;text-align:center}
+  .hours-val{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:#c8a84b}
+  .hours-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:2px}
+  .hours-note{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px}
+
+  /* History bars */
+  .hist-bars{display:flex;align-items:flex-end;gap:6px;height:80px;padding:0 4px}
+  .hist-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .hist-bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;cursor:default}
+  .hist-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:rgba(255,255,255,.3);text-align:center}
+
+  /* Issues */
+  .issue-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .issue-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .issue-text{font-size:11px;color:rgba(255,255,255,.6);flex:1}
+  .issue-task{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+
+  /* Insight text */
+  .insight-text{font-size:11px;color:rgba(255,255,255,.45);line-height:1.6;margin-top:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px;border-left:2px solid rgba(255,255,255,.1)}
+  .insight-text b{color:rgba(255,255,255,.8)}
+
+  /* Efficiency grade */
+  .eff-grade{font-family:'Barlow Condensed',sans-serif;font-weight:900;line-height:1;text-align:center}
+  .eff-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:10px}
+  .eff-bar-label{width:80px;color:rgba(255,255,255,.45);font-family:'JetBrains Mono',monospace;font-size:9px}
+
+  /* Overrides for inline styles using CSS variables */
+  [style*="var(--red)"]{color:#e63329!important}
+  [style*="var(--gold)"]{color:#c8a84b!important}
+  [style*="var(--green)"]{color:#22c55e!important}
+  [style*="var(--amber)"]{color:#f59e0b!important}
+  [style*="var(--grey)"]{color:#999!important}
+  [style*="background:var(--red)"]{background:#e63329!important}
+  [style*="background:var(--gold)"]{background:#c8a84b!important}
+  [style*="background:var(--green)"]{background:#22c55e!important}
+
+  /* Print */
+  @media print{
+    body{padding:16px 20px}
+    .an-card{break-inside:avoid;page-break-inside:avoid}
+    .an-grid{break-inside:avoid}
+  }
+  @page{size:A4 landscape;margin:10mm}
 </style>
 </head>
 <body>
-<h1>MUSTAINE</h1>
-<div class="sub">Analytics Report &middot; ${rangeLabel} &middot; Generated ${new Date().toLocaleString('en-IN')}</div>
-${clone.innerHTML}
+<div class="pdf-header">
+  <div class="pdf-logo">MUSTAINE</div>
+  <div class="pdf-meta">Analytics Report &middot; ${finalLabel} &middot; Generated ${new Date().toLocaleString('en-IN')}</div>
+</div>
+${statsHTML}
 </body>
 </html>`;
 
-  const win=window.open('','_blank','width=1200,height=900');
+  const win=window.open('','_blank','width=1400,height=900');
   if(!win){toast('Allow popups to export PDF','warn');return;}
+  win.document.open();
   win.document.write(html);
   win.document.close();
-  win.onload=()=>{
-    setTimeout(()=>{
-      win.print();
-    },800);
-  };
+  // Wait for fonts then print
+  win.addEventListener('load',()=>{
+    setTimeout(()=>win.print(),1200);
+  });
 }
+
 
 function exportDonePDF(){
   const T=today();
