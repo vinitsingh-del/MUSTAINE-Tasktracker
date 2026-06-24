@@ -484,8 +484,6 @@ button,a,[onclick]{
   overscroll-behavior-y:contain;
   scroll-behavior:smooth;
   display:none;
-  isolation:isolate;
-  contain:layout style;
 }
 .view.on{display:flex !important;flex-direction:column}
 .view::-webkit-scrollbar{display:none}
@@ -1129,9 +1127,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .kb-col-count{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.06em;}
   .kb-col-body{
     padding:6px;
-    display:flex;flex-direction:column;
-    align-items:stretch;
-    gap:5px;
+    display:block;
     flex:1;min-height:0;
     overflow-y:auto;overflow-x:hidden;
     overscroll-behavior-y:contain;
@@ -1139,22 +1135,23 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     scroll-behavior:smooth;
   }
   .kb-col-body .card{
-    flex-shrink:0;
+    display:block;
     width:100%;
-    height:auto !important;
-    min-height:0;
-    align-self:auto;
+    height:auto;
+    margin-bottom:5px;
   }
+  .kb-col-body .card:last-child{margin-bottom:0}
   .kb-col-body::-webkit-scrollbar{width:3px}
   .kb-col-body::-webkit-scrollbar-track{background:transparent}
   .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
   .kb-col .card{
-    animation:none !important;
+    animation:none;
     border-radius:8px;
     backdrop-filter:blur(6px);
     -webkit-backdrop-filter:blur(6px);
-    height:auto !important;
-    flex-shrink:0 !important;
+    display:block;
+    height:auto;
+    width:100%;
   }
   .kb-col .card-inner{padding:7px 7px 7px 10px}
   .kb-col .card-title{font-size:11.5px;margin-bottom:3px;-webkit-line-clamp:2}
