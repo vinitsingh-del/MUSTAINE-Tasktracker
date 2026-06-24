@@ -1045,26 +1045,59 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 /* ── 1200px: 2-col cards ── */
 @media(min-width:1200px){
   .sidebar{width:220px;min-width:220px}
-  /* Tasks: let #active-list handle its own scroll, outer view just needs height */
-  /* v-tasks: clip outer, let kanban handle scroll internally */
-  #v-tasks{overflow:hidden !important;display:flex;flex-direction:column}
-  
+
+  /* ── TASKS VIEW: kanban layout ── */
+  #v-tasks{
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+  #v-tasks > .day-strip,
+  #v-tasks > .add-box,
+  #v-tasks > .toolbar,
+  #v-tasks > .filters,
+  #v-tasks > .stage-strip,
+  #v-tasks > .od-banner,
+  #v-tasks > .timer-active-strip,
+  #v-tasks > .sec,
+  #v-tasks > .ai-smart-section,
+  #v-tasks > .ai-result{
+    flex:none;
+  }
+
+  /* Scrollable area: kanban + done/blocked stacked */
+  #v-tasks-scroll{
+    flex:1;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Kanban row */
   #active-list{
-    display:flex;flex-direction:row;align-items:flex-start;
-    gap:10px;padding:8px 12px 8px;
+    display:flex;
+    flex-direction:row;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 12px 8px;
     overflow-x:auto;
     overflow-y:hidden;
-    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;
-    flex:1;
+    flex:none;
+    min-height:420px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.15) transparent;
   }
   #active-list::-webkit-scrollbar{height:5px}
   #active-list::-webkit-scrollbar-track{background:transparent}
   #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
 
-  /* Each cohort column */
+  /* Kanban columns */
   .kb-col{
     flex:0 0 290px;min-width:270px;max-width:310px;
-    height:100%;
+    height:auto;
+    max-height:calc(100vh - 320px);
     display:flex;flex-direction:column;gap:0;
     background:rgba(255,255,255,.025);
     border:1px solid rgba(255,255,255,.07);
@@ -1083,16 +1116,11 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     letter-spacing:.14em;text-transform:uppercase;
   }
   .kb-col-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-  .kb-col-count{
-    font-family:var(--fm);font-size:9px;
-    color:rgba(255,255,255,.35);letter-spacing:.06em;
-  }
+  .kb-col-count{font-family:var(--fm);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.06em;}
   .kb-col-body{
     padding:6px;display:flex;flex-direction:column;gap:5px;
-    flex:1;
-    min-height:0;
-    overflow-y:auto;
-    overflow-x:hidden;
+    flex:1;min-height:0;
+    overflow-y:auto;overflow-x:hidden;
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
     scroll-behavior:smooth;
@@ -1100,53 +1128,32 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .kb-col-body::-webkit-scrollbar{width:3px}
   .kb-col-body::-webkit-scrollbar-track{background:transparent}
   .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-
-  /* Cards inside kanban columns — no animation, compact */
   .kb-col .card{animation:none;border-radius:8px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   .kb-col .card-inner{padding:7px 7px 7px 10px}
   .kb-col .card-title{font-size:11.5px;margin-bottom:3px;-webkit-line-clamp:2}
+  .kb-empty{padding:24px 12px;text-align:center;font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.08em;text-transform:uppercase}
 
-  /* Flat list for today/done/blocked — still 2col grid */
-  .card-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 10px}
-  .card-list > .sec,.date-grp,.show-done-btn,#done-sec,#blocked-sec{grid-column:1/-1}
-
-  /* Empty kanban state */
-  .kb-empty{
-    padding:24px 12px;text-align:center;
-    font-family:var(--fm);font-size:10px;
-    color:rgba(255,255,255,.2);letter-spacing:.08em;text-transform:uppercase;
-  }
-
-  /* Done + Blocked sections sit BELOW kanban as normal block sections */
+  /* Done + Blocked: flat 2-col grid BELOW kanban */
   #done-sec,#blocked-sec{
-    flex:none !important;
+    flex:none;
     width:100%;
-    overflow:visible;
     padding:0 12px;
+    box-sizing:border-box;
   }
   #done-sec .card-list,#blocked-sec .card-list{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr;
+    grid-template-columns:1fr 1fr;
     gap:8px;
-    padding:0 0 10px;
+    padding:0 0 8px;
   }
+  #done-sec .card-list .date-grp,
+  #blocked-sec .card-list .date-grp{grid-column:1/-1}
 
-  /* Tasks view: kanban + done stacked vertically, outer scrolls */
-  #v-tasks{
-    overflow-y:auto !important;
-    -webkit-overflow-scrolling:touch;
-  }
-  #active-list{
-    flex:none !important;
-    height:auto !important;
-    min-height:calc(100vh - 300px);
-  }
-  .kb-col{
-    height:calc(100vh - 300px) !important;
-  }
+  /* Flat card-list for today view (no kanban) */
+  .card-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 10px}
+  .card-list > .sec,.date-grp,.show-done-btn{grid-column:1/-1}
 }
 
-/* ── 1440px: wider sidebar + wider kb columns ── */
 @media(min-width:1440px){
   .sidebar{width:240px;min-width:240px}
   .card-list{gap:10px;padding:0 20px 12px}
