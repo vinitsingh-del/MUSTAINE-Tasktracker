@@ -1725,13 +1725,14 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
     <!-- STATS -->
     <div class="view" id="v-stats">
-      <div class="sec" style="flex-wrap:wrap;gap:8px">
+      <div class="sec" style="flex-wrap:wrap;gap:8px;align-items:center">
         <div class="sec-title">Analytics</div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1">
           <button class="dtab on" data-sr="today" onclick="setStatsRange(this)">Today</button>
           <button class="dtab" data-sr="week" onclick="setStatsRange(this)">7 Days</button>
           <button class="dtab" data-sr="month" onclick="setStatsRange(this)">30 Days</button>
           <button class="dtab" data-sr="custom" onclick="setStatsRange(this)">Custom</button>
+          <button onclick="exportStatsPDF()" style="margin-left:auto;font-family:var(--fm);font-size:10px;letter-spacing:.08em;color:var(--gold);background:none;border:none;cursor:pointer;text-transform:uppercase;padding:4px 0">&#8659; PDF Report</button>
         </div>
       </div>
       <div id="stats-custom-range" style="display:none;padding:0 12px 8px;gap:8px;align-items:center;flex-wrap:wrap">
@@ -2823,8 +2824,76 @@ async function renderDoneView(){
 }
 
 /* ── PDF EXPORT (stats + done tasks) ── */
+function exportStatsPDF(){
+  const wrap=document.getElementById('an-wrap');
+  if(!wrap){toast('No stats loaded yet','warn');return;}
+  const statsLabel=document.querySelector('[data-sr].on')?.dataset.sr||'today';
+  const T=today();
+  const labelMap={today:'Today — '+T,week:'Last 7 Days',month:'Last 30 Days',custom:'Custom Range'};
+  const rangeLabel=labelMap[statsLabel]||T;
+
+  // Clone the stats DOM
+  const clone=wrap.cloneNode(true);
+
+  // Build a full self-contained PDF-ready HTML page
+  const html=`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MUSTAINE Stats — ${rangeLabel}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+  body{background:#000;color:#f2f2f2;font-family:'Inter',sans-serif;padding:32px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h1{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;letter-spacing:.08em;color:#e63329;margin-bottom:4px}
+  .sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.14em;text-transform:uppercase;margin-bottom:28px}
+  /* Mirror the app's stat card styles */
+  .an-card{background:rgba(20,20,24,.9);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .an-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .an-card-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .an-card-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.3)}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .stat-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:14px;text-align:center}
+  .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;line-height:1}
+  .stat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}
+  .stat-note{font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin-top:4px}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .bar-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;width:90px;flex-shrink:0;color:rgba(255,255,255,.7)}
+  .bar-track{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px}
+  .bar-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);width:120px;text-align:right;flex-shrink:0}
+  .progress-bar{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin:6px 0}
+  .progress-fill{height:100%;border-radius:3px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .insight{font-size:11px;color:rgba(255,255,255,.55);line-height:1.6;margin-top:8px;padding:10px;background:rgba(255,255,255,.03);border-radius:6px;border-left:3px solid rgba(255,255,255,.12)}
+  .insight b{color:rgba(255,255,255,.9)}
+  .insight span[style]{color:inherit!important}
+  .issue-item{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px}
+  .eff-grade{font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:900;line-height:1;text-align:center}
+  @media print{body{padding:16px}@page{size:A4;margin:0}}
+</style>
+</head>
+<body>
+<h1>MUSTAINE</h1>
+<div class="sub">Analytics Report &middot; ${rangeLabel} &middot; Generated ${new Date().toLocaleString('en-IN')}</div>
+${clone.innerHTML}
+</body>
+</html>`;
+
+  const win=window.open('','_blank','width=1200,height=900');
+  if(!win){toast('Allow popups to export PDF','warn');return;}
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>{
+    setTimeout(()=>{
+      win.print();
+    },800);
+  };
+}
+
 function exportDonePDF(){
   const T=today();
+  const rangeLabel={'today':'Today','24h':'Last 24h','week':'Last 7 Days','month':'Last 30 Days','custom':'Custom Range','activity':'Activity Feed'}[G_doneRange]||'Today';
   const doneTasks=G.tasks.filter(t=>t.stage==='done'||t.stage==='closed');
   const totalH=doneTasks.reduce((s,t)=>s+(parseFloat(t.hours_worked)||0),0);
   const timerH=doneTasks.reduce((s,t)=>s+tEl(t)/3600,0);
