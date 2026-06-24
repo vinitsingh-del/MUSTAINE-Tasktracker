@@ -1264,22 +1264,25 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
           </div>
 
           <div id="af-name" style="display:none">
-            <div class="a-field" style="margin-bottom:14px">
+            <div class="a-field" style="margin-bottom:12px">
               <div class="a-lbl">Full Name <span class="a-lbl-req">*</span></div>
               <div class="a-inp-wrap">
                 <input class="a-inp" id="a-name" type="text"
-                  placeholder="Vinit Singh"
-                  autocomplete="name" oninput="validateName(this)">
+                  placeholder="Your full name"
+                  autocomplete="name"
+                  oninput="validateName(this)"
+                  onkeydown="if(event.key==='Enter')document.getElementById('a-phone')?.focus()">
                 <span class="a-inp-check" id="chk-name">&#10003;</span>
               </div>
             </div>
-            <div class="a-field" style="margin-bottom:0">
-              <div class="a-lbl">Phone <span style="color:rgba(255,255,255,.25);font-size:8px;letter-spacing:.08em;text-transform:uppercase">optional</span></div>
+            <div class="a-field" style="margin-bottom:12px">
+              <div class="a-lbl">Phone <span style="color:rgba(255,255,255,.22);font-size:8px;letter-spacing:.08em">OPTIONAL</span></div>
               <div class="a-inp-wrap">
                 <input class="a-inp" id="a-phone" type="tel"
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 9876543210"
                   autocomplete="tel" inputmode="tel"
-                  oninput="validatePhone(this)">
+                  oninput="validatePhone(this)"
+                  onkeydown="if(event.key==='Enter')document.getElementById('a-email')?.focus()">
                 <span class="a-inp-check" id="chk-phone" style="opacity:0">&#10003;</span>
               </div>
             </div>
@@ -1919,7 +1922,8 @@ function aMode(m){
   aM=m;
   document.getElementById('a-tab-in').classList.toggle('on',m==='in');
   document.getElementById('a-tab-up').classList.toggle('on',m==='up');
-  document.getElementById('af-name').style.display=m==='up'?'block':'none';
+  const afnEl=document.getElementById('af-name');
+  if(afnEl){afnEl.style.cssText=m==='up'?'display:block':'display:none';}
   document.getElementById('a-btn').textContent=m==='up'?'Create & Sign In':'Sign In';
   document.getElementById('a-title-text').textContent=m==='up'?'Create your account':'Welcome back';
   document.getElementById('a-sub-text').textContent=m==='up'?'Join your Troopod workspace':'Sign in to your workspace';
@@ -2099,7 +2103,16 @@ function showVerifyScreen(email){
 async function doMagic(){const e=document.getElementById('a-email').value.trim();if(!e){aMsg('Enter email first',1);return;}try{await SB.magic(e);aMsg('Magic link sent',0);}catch(e){aMsg(e.message,1);}}
 async function doLogout(){await SB.signOut();G.tasks=[];G.notifs=[];showAuth();toast('Signed out');}
 
-function showAuth(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='flex';document.getElementById('app').style.display='none';}
+function showAuth(){
+  document.getElementById('ls').style.display='none';
+  document.getElementById('as').style.display='flex';
+  document.getElementById('app').style.display='none';
+  // Reset form to sign-in state
+  aMode('in');
+  // Also explicitly hide af-name as a safety net
+  const afn=document.getElementById('af-name');
+  if(afn)afn.style.display='none';
+}
 function showApp(){document.getElementById('ls').style.display='none';document.getElementById('as').style.display='none';document.getElementById('app').style.display='flex';}
 
 /* ── BOOT ── */
