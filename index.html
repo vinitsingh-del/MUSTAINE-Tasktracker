@@ -1116,6 +1116,34 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     font-family:var(--fm);font-size:10px;
     color:rgba(255,255,255,.2);letter-spacing:.08em;text-transform:uppercase;
   }
+
+  /* Done + Blocked sections sit BELOW kanban as normal block sections */
+  #done-sec,#blocked-sec{
+    flex:none !important;
+    width:100%;
+    overflow:visible;
+    padding:0 12px;
+  }
+  #done-sec .card-list,#blocked-sec .card-list{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+    padding:0 0 10px;
+  }
+
+  /* Tasks view: kanban + done stacked vertically, outer scrolls */
+  #v-tasks{
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+  #active-list{
+    flex:none !important;
+    height:auto !important;
+    min-height:calc(100vh - 300px);
+  }
+  .kb-col{
+    height:calc(100vh - 300px) !important;
+  }
 }
 
 /* ── 1440px: wider sidebar + wider kb columns ── */
@@ -2735,7 +2763,14 @@ async function renderDoneView(){
   let from=T,to=T;
   if(G_doneRange==='week'){const d=new Date();d.setDate(d.getDate()-7);from=d.toISOString().slice(0,10);}
   else if(G_doneRange==='month'){const d=new Date();d.setDate(d.getDate()-30);from=d.toISOString().slice(0,10);}
-  else if(G_doneRange==='24h'){const d=new Date();d.setDate(d.getDate()-1);from=d.toISOString().slice(0,10);}
+  else if(G_doneRange==='24h'){
+    // True 24-hour window — filter by done_at timestamp, not just date
+    const cutoff=new Date(Date.now()-24*60*60*1000);
+    // Fetch last 2 days to catch edge cases
+    const d=new Date();d.setDate(d.getDate()-1);
+    from=d.toISOString().slice(0,10);
+    G_24hCutoff=cutoff; // store for task filtering below
+  }
   else if(G_doneRange==='custom'){
     from=document.getElementById('done-from')?.value||T;
     to=document.getElementById('done-to')?.value||T;
@@ -3040,6 +3075,7 @@ function filterTimerTasks(){
 
 /* ── DONE RANGE STATE ── */
 let G_doneRange='today';
+let G_24hCutoff=null;
 let G_doneSort='date'; // 'date' | 'category'
 let G_statsRange='today'; // 'today' | 'week' | 'month' | 'custom'
 
