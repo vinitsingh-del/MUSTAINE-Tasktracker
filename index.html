@@ -1168,14 +1168,14 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 }
 
 /* ── 1200px: 2-col cards ── */
-@media(min-width:1200px){
+@media(min-width:1100px){
   .sidebar{width:220px;min-width:220px}
 
-  /* Tasks view */
+  /* Tasks view: clips outer, kanban handles scroll */
   #v-tasks.on{overflow:hidden;display:flex !important;flex-direction:column}
   #v-tasks:not(.on){display:none !important}
 
-  /* Scrollable task content */
+  /* Scroll wrapper */
   #v-tasks-scroll{
     flex:1;min-height:0;
     overflow-y:auto;overflow-x:hidden;
@@ -1183,16 +1183,96 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     overscroll-behavior-y:contain;
   }
 
-  /* Active list: block so cohort sections stack */
-  #active-list{display:block;padding:0}
+  /* Active list: horizontal flex row of columns */
+  #active-list{
+    display:flex !important;
+    flex-direction:row;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 14px 14px;
+    overflow-x:auto;
+    overflow-y:visible;
+    min-height:200px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.15) transparent;
+  }
+  #active-list::-webkit-scrollbar{height:5px}
+  #active-list::-webkit-scrollbar-track{background:transparent}
+  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
 
-  /* Done + blocked */
+  /* Each kanban column */
+  .kb-col{
+    flex:0 0 300px;
+    min-width:260px;
+    max-width:320px;
+    display:flex;
+    flex-direction:column;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:10px;
+    overflow:hidden;
+  }
+
+  /* Column header */
+  .kb-col-hdr{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 12px 8px;
+    background:rgba(16,16,20,.7);
+    border-bottom:1px solid rgba(255,255,255,.07);
+    flex-shrink:0;
+  }
+  .kb-col-hdr-left{display:flex;align-items:center;gap:7px}
+  .kb-col-dot{
+    width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    display:inline-block;
+  }
+  .kb-col-name{
+    font-family:var(--fh);font-size:12px;font-weight:900;
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  .kb-col-count{
+    font-family:var(--fm);font-size:10px;
+    color:rgba(255,255,255,.45);
+    letter-spacing:.04em;
+  }
+
+  /* Column body: cards stacked, display:block to prevent stretch */
+  .kb-col-body{
+    display:block;
+    padding:8px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    max-height:calc(100vh - 320px);
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .kb-col-body::-webkit-scrollbar{width:3px}
+  .kb-col-body::-webkit-scrollbar-track{background:transparent}
+  .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+
+  /* Cards inside kanban column */
+  .kb-col-body .card{
+    display:block;
+    width:100%;
+    height:auto;
+    margin-bottom:7px;
+    animation:none;
+    border-radius:8px;
+  }
+  .kb-col-body .card:last-child{margin-bottom:0}
+
+  /* Done + blocked sections — 2col grid below kanban */
   #done-sec,#blocked-sec{padding:0 4px}
   #done-sec .card-list,#blocked-sec .card-list{
     display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px;
   }
   #done-sec .card-list .date-grp,
   #blocked-sec .card-list .date-grp{grid-column:1/-1}
+
+  /* Cohort sections (mobile path not used on desktop) */
+  .cohort-hdr{display:none}
 }
 
 @media(min-width:1440px){
@@ -2594,29 +2674,57 @@ function render(){
         return CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b);
       });
 
-      // ── CATEGORY COHORT: section header + cards below (mobile & desktop) ──
-      catKeys.forEach(cat=>{
-        const tasks=cohorts[cat];if(!tasks.length)return;
-        const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
-        const odCount=tasks.filter(t=>isOD(t)).length;
+      // ── CATEGORY COHORT RENDER ──
+      const isDesktop=window.innerWidth>=1100;
+      if(isDesktop){
+        // DESKTOP: horizontal kanban columns
+        catKeys.forEach(cat=>{
+          const tasks=cohorts[cat];if(!tasks.length)return;
+          const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
+          const odCount=tasks.filter(t=>isOD(t)).length;
 
-        // Category section header — full width
-        const catHdr=document.createElement('div');
-        catHdr.className='cohort-hdr';
-        catHdr.innerHTML=
-          '<span class="cohort-dot" style="background:'+tm.c+'"></span>'
-          +'<span class="cohort-name" style="color:'+tm.c+'">'+tm.l+'</span>'
-          +'<span class="cohort-meta">'+tasks.length+' task'+(tasks.length>1?'s':'')
-          +(odCount?' · <span style="color:var(--red)">'+odCount+' OD</span>':'')
-          +'</span>';
-        al.appendChild(catHdr);
+          const col=document.createElement('div');
+          col.className='kb-col';
 
-        // Card grid for this category
-        const grid=document.createElement('div');
-        grid.className='cohort-grid';
-        tasks.forEach(t=>grid.appendChild(mkCard(t)));
-        al.appendChild(grid);
-      });
+          // Column header: ● SALES  5 · 2 OD
+          const hdr=document.createElement('div');
+          hdr.className='kb-col-hdr';
+          hdr.innerHTML=
+            '<div class="kb-col-hdr-left">'
+            +'<span class="kb-col-dot" style="background:'+tm.c+'"></span>'
+            +'<span class="kb-col-name" style="color:'+tm.c+'">'+tm.l+'</span>'
+            +'</div>'
+            +'<div class="kb-col-count">'
+            +tasks.length
+            +(odCount?' · <span style="color:var(--red);font-weight:700">'+odCount+' OD</span>':'')
+            +'</div>';
+          col.appendChild(hdr);
+
+          // Cards stacked vertically inside column
+          const body=document.createElement('div');
+          body.className='kb-col-body';
+          tasks.forEach(t=>body.appendChild(mkCard(t)));
+          col.appendChild(body);
+          al.appendChild(col);
+        });
+      } else {
+        // MOBILE: stacked sections
+        catKeys.forEach(cat=>{
+          const tasks=cohorts[cat];if(!tasks.length)return;
+          const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
+          const odCount=tasks.filter(t=>isOD(t)).length;
+          const hdr=document.createElement('div');
+          hdr.className='cohort-hdr';
+          hdr.innerHTML=
+            '<span class="cohort-dot" style="background:'+tm.c+'"></span>'
+            +'<span class="cohort-name" style="color:'+tm.c+'">'+tm.l+'</span>'
+            +'<span class="cohort-meta">'+tasks.length
+            +(odCount?' · <span style="color:var(--red)">'+odCount+' OD</span>':'')
+            +'</span>';
+          al.appendChild(hdr);
+          tasks.forEach(t=>al.appendChild(mkCard(t)));
+        });
+      }
     } else {
       sorted.forEach(t=>al.appendChild(mkCard(t)));
     }
