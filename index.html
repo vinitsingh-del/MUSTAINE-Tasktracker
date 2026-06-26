@@ -2378,13 +2378,21 @@ async function autoStopStaleTimes(){
 
 async function rolloverDailyTasks(){
   const T=today();
-  const dayNum=new Date().getDay(); // 0=Sun,6=Sat
-  // Sunday is a holiday — skip creating NEW tasks but still show existing recurring tasks
-  // We still run rollover on Sunday if there are tasks already marked done
+  const now8=new Date();
   const rollKey='rolled_'+T+'_'+(SB.uid()||'');
-  if(localStorage.getItem(rollKey))return;
-  // Only run after 8 AM
-  if(new Date().getHours()<8){console.log('Before 8AM — rollover deferred');return;}
+  // If already rolled today AND it was after 8AM, skip
+  // But if rolled BEFORE 8AM, re-run after 8AM
+  const alreadyRolledAt=parseInt(localStorage.getItem(rollKey)||'0');
+  const rolledHour=alreadyRolledAt?new Date(alreadyRolledAt).getHours():-1;
+  const currentHour=now8.getHours();
+  if(alreadyRolledAt&&rolledHour>=8)return; // already ran post-8AM today
+  if(currentHour<8){
+    console.log('Before 8AM — rollover deferred, will retry');
+    // Schedule retry after 8AM
+    const msTo8=((8-currentHour)*3600-(now8.getMinutes()*60+now8.getSeconds()))*1000;
+    setTimeout(rolloverDailyTasks,Math.max(msTo8,60000));
+    return;
+  }
 
   try{
     // Look back 90 days for any recurring tasks that are done but need reopening today
@@ -2403,35 +2411,51 @@ async function rolloverDailyTasks(){
     // Fetch permanently deleted recurring titles to skip them
     const deletedTitles=await SB.getDeletedRecurring().catch(()=>new Set());
 
+    // Helper: is this recurring task due today based on recurrence type?
+    function isDueToday(t){
+      const lastDate=t.task_date||t.date||T;
+      const lastD=new Date(lastDate+'T00:00:00');
+      const todayD=new Date(T+'T00:00:00');
+      const diffDays=Math.round((todayD-lastD)/(86400000));
+      if(diffDays<=0)return false; // same day or future
+      switch(t.recurrence){
+        case 'daily':   return true; // always due if done
+        case 'weekly':  return diffDays>=7;
+        case 'biweekly':return diffDays>=14;
+        case 'monthly': return diffDays>=28;
+        default:        return diffDays>=1;
+      }
+    }
+
     let created=0;
     for(const t of doneDailies){
       if(todayTitles.has(t.title.toLowerCase()))continue;
-      // Skip if this recurring task was permanently deleted by the user
-      if(deletedTitles.has(t.title.toLowerCase())){
-        console.log('Skipping deleted recurring task:',t.title);continue;
-      }
-      const nxtDay=nextWorkDay(T); // next working day from TODAY
+      if(deletedTitles.has(t.title.toLowerCase())){console.log('Skipping deleted:',t.title);continue;}
+      // Check if this recurring task is actually due today
+      if(!isDueToday(t))continue;
+      const nxtDay=nextWorkDay(T);
+      const recLabel={daily:'daily',weekly:'weekly',biweekly:'15 days',monthly:'monthly'}[t.recurrence]||t.recurrence;
       const newTask={
         id:uid(),title:t.title,tag:t.tag,priority:t.priority,
-        task_time:'10:00',// reset to 10 AM
+        task_time:'09:00',
         task_date:T,
         next_action_date:nxtDay,
         start_date:T,finish_date:null,
         stage:'todo',done:false,
-        recurrence:'daily',
+        recurrence:t.recurrence, // preserve original recurrence type
         scheduled_hours:t.scheduled_hours||0,
         remarks:'[]',
-        activity:JSON.stringify([{ts:now(),text:'Auto-reopened (daily recurring) at 10 AM'}]),
+        activity:JSON.stringify([{ts:now(),text:'Auto-reopened ('+recLabel+') at 8 AM'}]),
         timer_total_seconds:0,timer_started_at:null,timer_stopped_at:null,
         created_at:new Date().toISOString(),
       };
       try{await SB.upsert(newTask);created++;}catch(e){console.warn('Rollover error:',e);}
     }
-    localStorage.setItem(rollKey,'1');
-    if(created>0){toast(created+' daily task'+(created>1?'s':'')+' reopened for today');await loadTasks();render();}
+    localStorage.setItem(rollKey,Date.now().toString());
+    if(created>0){toast(created+' recurring task'+(created>1?'s':'')+' reopened for today');await loadTasks();render();}
   }catch(e){
     console.warn('Rollover (non-fatal):',e);
-    localStorage.setItem(rollKey,'1');
+    localStorage.setItem(rollKey,Date.now().toString());
   }
 }
 
@@ -2466,6 +2490,8 @@ async function boot(){
   setTimeout(()=>{if(getCalToken())fetchCalendarEvents();},2000);
   setInterval(tick,30000);
   setInterval(async()=>{if(!document.hidden){await loadTasks();render();}},90000);
+  // Check rollover every 5 min (catches the 8AM boundary if app was open before 8)
+  setInterval(rolloverDailyTasks,5*60*1000);
   document.addEventListener('visibilitychange',async()=>{if(!document.hidden){await loadTasks();render();}});
 }
 
