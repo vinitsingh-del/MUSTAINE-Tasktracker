@@ -1254,40 +1254,36 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .kb-col-body::-webkit-scrollbar-track{background:transparent}
   .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 
-  /* Cards inside kanban column */
+  /* Cards inside kanban — solid bg, no backdrop-filter (GPU layer issue) */
   .kb-col-body .card{
-    display:block;
-    width:100%;
-    height:auto;
-    min-height:0;
+    display:block !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:unset !important;
     margin-bottom:7px;
-    animation:none;
-    border-radius:8px;
-    overflow:visible !important;
-    backdrop-filter:none;
-    -webkit-backdrop-filter:none;
-    background:rgba(22,22,28,0.9) !important;
+    animation:none !important;
+    border-radius:8px !important;
+    overflow:hidden !important;
+    /* Kill backdrop-filter — it causes GPU compositor clipping */
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    /* Solid dark background instead of glass */
+    background:rgba(24,24,30,0.96) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+    box-shadow:none !important;
+    /* Ensure stacking context is flat */
+    transform:none !important;
+    will-change:auto !important;
+    isolation:auto !important;
   }
   .kb-col-body .card:last-child{margin-bottom:0}
-  .kb-col-body .card .card-inner{
-    display:flex;
-    align-items:flex-start;
-    gap:7px;
-    padding:9px 8px 9px 11px;
-    width:100%;
+  .kb-col-body .card *{
+    /* Ensure all children render inside the card */
+    visibility:visible !important;
+    opacity:1;
   }
-  .kb-col-body .card .card-body{
-    flex:1;min-width:0;overflow:hidden;
-  }
-  .kb-col-body .card .card-title{
-    font-size:12px;font-weight:600;
-    color:#f0f0f0;line-height:1.35;
-    margin-bottom:4px;
-    display:block;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .kb-col-body .card.done-card{opacity:.6}
+  .kb-col-body .card.done-card *{opacity:1}
 
   /* Done + blocked sections — 2col grid below kanban */
   #done-sec,#blocked-sec{padding:0 4px}
