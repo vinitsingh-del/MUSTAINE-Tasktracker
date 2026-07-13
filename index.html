@@ -1171,55 +1171,79 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 @media(min-width:1100px){
   .sidebar{width:220px;min-width:220px}
 
-  #v-tasks.on{overflow:hidden;display:flex !important;flex-direction:column}
+  /* v-tasks: full height flex column — header fixed, kanban fills rest */
+  #v-tasks.on{
+    display:flex !important;
+    flex-direction:column;
+    overflow:hidden;
+    height:100%;
+  }
   #v-tasks:not(.on){display:none !important}
 
+  /* Everything ABOVE the kanban (day-strip, add-box, toolbar, etc) stays flex:none */
+  #v-tasks > .viewer-banner,
+  #v-tasks > .day-strip,
+  #v-tasks > .add-box,
+  #v-tasks > .toolbar,
+  #v-tasks > .filters,
+  #v-tasks > .stage-strip,
+  #v-tasks > .od-banner,
+  #v-tasks > .timer-active-strip,
+  #v-tasks > .ai-smart-section,
+  #v-tasks > .ai-result { flex:none }
+
+  /* v-tasks-scroll: takes remaining height, clips everything */
   #v-tasks-scroll{
-    flex:1;min-height:0;
-    overflow-y:auto;overflow-x:hidden;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior-y:contain;
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
   }
 
-  /* ── KANBAN LAYOUT ── */
+  /* ── KANBAN ACTIVE LIST: horizontal scroll viewport ── */
   #active-list{
     display:flex !important;
     flex-direction:row;
-    align-items:flex-start;
+    align-items:stretch;        /* columns fill the height */
     gap:10px;
-    padding:8px 14px 16px;
+    padding:8px 14px 0;
     overflow-x:auto;
-    overflow-y:visible;
+    overflow-y:hidden;          /* no vertical scroll on the row */
+    flex:1;                     /* fills v-tasks-scroll height */
+    min-height:0;
     scrollbar-width:thin;
-    scrollbar-color:rgba(255,255,255,.15) transparent;
+    scrollbar-color:rgba(255,255,255,.2) transparent;
   }
-  #active-list::-webkit-scrollbar{height:5px}
-  #active-list::-webkit-scrollbar-track{background:transparent}
-  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+  #active-list::-webkit-scrollbar{height:6px}
+  #active-list::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:3px}
+  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
+  #active-list::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.3)}
 
-  /* Kanban column */
+  /* ── KANBAN COLUMN: fills #active-list height ── */
   .kb-col{
     flex:0 0 290px;
     min-width:260px;
     max-width:310px;
+    height:100%;               /* fills #active-list stretch height */
     display:flex;
     flex-direction:column;
     border:1px solid rgba(255,255,255,.08);
     border-radius:10px;
     overflow:hidden;
-    background:rgba(255,255,255,.02);
+    background:rgba(255,255,255,.025);
   }
 
-  /* Column header */
+  /* Column header: fixed at top */
   .kb-col-hdr{
     display:flex;align-items:center;justify-content:space-between;
-    padding:9px 12px 8px;
-    background:rgba(12,12,16,.85);
+    padding:10px 12px 9px;
+    background:rgba(10,10,14,.9);
     border-bottom:1px solid rgba(255,255,255,.07);
     flex-shrink:0;
   }
   .kb-col-hdr-left{display:flex;align-items:center;gap:7px}
-  .kb-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .kb-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
   .kb-col-name{
     font-family:var(--fh);font-size:11px;font-weight:900;
     letter-spacing:.14em;text-transform:uppercase;
@@ -1229,35 +1253,41 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     color:rgba(255,255,255,.4);letter-spacing:.04em;
   }
 
-  /* Column body — display:block so cards are natural height */
+  /* Column body: scrolls vertically, fills remaining column height */
   .kb-col-body{
+    flex:1;
+    min-height:0;
     display:block;
     padding:7px;
     overflow-y:auto;
     overflow-x:hidden;
-    max-height:min(calc(100vh - 300px), 800px);
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
     scroll-behavior:smooth;
   }
   .kb-col-body::-webkit-scrollbar{width:3px}
   .kb-col-body::-webkit-scrollbar-track{background:transparent}
-  .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+  .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+  .kb-col-body::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
 
-  /* Cards in kanban — solid bg set via JS, no backdrop-filter */
+  /* Cards inside kanban: natural block height */
   .kb-col-body .card{
-    margin-bottom:7px;
     display:block !important;
     height:auto !important;
+    width:100%;
+    margin-bottom:7px;
     animation:none !important;
     border-radius:8px !important;
   }
   .kb-col-body .card:last-child{margin-bottom:0}
 
-  /* Done + blocked sections below kanban */
-  #done-sec,#blocked-sec{padding:0 4px}
+  /* Done + blocked sections appear below scroll area (in v-tasks-scroll) */
+  #done-sec,#blocked-sec{
+    flex:none;
+    padding:0 14px;
+  }
   #done-sec .card-list,#blocked-sec .card-list{
-    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px;
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0;
   }
   #done-sec .card-list .date-grp,
   #blocked-sec .card-list .date-grp{grid-column:1/-1}
