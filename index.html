@@ -1181,42 +1181,80 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     overscroll-behavior-y:contain;
   }
 
-  /* Active list: block container, sections stack vertically */
-  #active-list{display:block;padding:0}
+  /* ── KANBAN LAYOUT ── */
+  #active-list{
+    display:flex !important;
+    flex-direction:row;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 14px 16px;
+    overflow-x:auto;
+    overflow-y:visible;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.15) transparent;
+  }
+  #active-list::-webkit-scrollbar{height:5px}
+  #active-list::-webkit-scrollbar-track{background:transparent}
+  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
 
-  /* Category section header */
-  .cat-sec-hdr{
-    display:flex;align-items:center;
-    padding:14px 16px 7px;
-    margin-top:2px;
+  /* Kanban column */
+  .kb-col{
+    flex:0 0 290px;
+    min-width:260px;
+    max-width:310px;
+    display:flex;
+    flex-direction:column;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;
+    overflow:hidden;
+    background:rgba(255,255,255,.02);
   }
-  .cat-sec-hdr:first-child{margin-top:0}
-  .cat-sec-hdr-left{display:flex;align-items:center;gap:8px}
-  .cat-sec-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
-  .cat-sec-name{
-    font-family:var(--fh);font-size:13px;font-weight:900;
-    letter-spacing:.16em;text-transform:uppercase;
+
+  /* Column header */
+  .kb-col-hdr{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px 8px;
+    background:rgba(12,12,16,.85);
+    border-bottom:1px solid rgba(255,255,255,.07);
+    flex-shrink:0;
   }
-  .cat-sec-count{
-    font-family:var(--fm);font-size:10px;
+  .kb-col-hdr-left{display:flex;align-items:center;gap:7px}
+  .kb-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .kb-col-name{
+    font-family:var(--fh);font-size:11px;font-weight:900;
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  .kb-col-count{
+    font-family:var(--fm);font-size:9px;
     color:rgba(255,255,255,.4);letter-spacing:.04em;
-    margin-left:4px;
   }
 
-  /* Card grid: 2 columns on desktop */
-  .cat-sec-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    padding:0 16px 8px;
-    align-items:start;
+  /* Column body — display:block so cards are natural height */
+  .kb-col-body{
+    display:block;
+    padding:7px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    max-height:min(calc(100vh - 300px), 800px);
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    scroll-behavior:smooth;
   }
-  .cat-sec-grid .card{
-    height:auto;
-    align-self:start;
-  }
+  .kb-col-body::-webkit-scrollbar{width:3px}
+  .kb-col-body::-webkit-scrollbar-track{background:transparent}
+  .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 
-  /* Done + blocked */
+  /* Cards in kanban — solid bg set via JS, no backdrop-filter */
+  .kb-col-body .card{
+    margin-bottom:7px;
+    display:block !important;
+    height:auto !important;
+    animation:none !important;
+    border-radius:8px !important;
+  }
+  .kb-col-body .card:last-child{margin-bottom:0}
+
+  /* Done + blocked sections below kanban */
   #done-sec,#blocked-sec{padding:0 4px}
   #done-sec .card-list,#blocked-sec .card-list{
     display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px;
@@ -2651,31 +2689,56 @@ function render(){
       });
 
       // ── CATEGORY COHORT RENDER ──
-      // ── SECTION VIEW: category header + 2-col grid (desktop & mobile) ──
-      catKeys.forEach(cat=>{
-        const tasks=cohorts[cat];if(!tasks.length)return;
-        const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
-        const odCount=tasks.filter(t=>isOD(t)).length;
-
-        // Full-width category section header
-        const hdr=document.createElement('div');
-        hdr.className='cat-sec-hdr';
-        hdr.innerHTML=
-          '<div class="cat-sec-hdr-left">'
-          +'<span class="cat-sec-dot" style="background:'+tm.c+'"></span>'
-          +'<span class="cat-sec-name" style="color:'+tm.c+'">'+tm.l+'</span>'
-          +'<span class="cat-sec-count">'+tasks.length+' task'+(tasks.length>1?'s':'')
-          +(odCount?' <span style="color:var(--red)">· '+odCount+' OD</span>':'')
-          +'</span>'
-          +'</div>';
-        al.appendChild(hdr);
-
-        // Card grid below header
-        const grid=document.createElement('div');
-        grid.className='cat-sec-grid';
-        tasks.forEach(t=>grid.appendChild(mkCard(t)));
-        al.appendChild(grid);
-      });
+      const isDesktop=window.innerWidth>=1100;
+      if(isDesktop){
+        // ── DESKTOP: KANBAN columns ──
+        catKeys.forEach(cat=>{
+          const tasks=cohorts[cat];if(!tasks.length)return;
+          const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
+          const odCount=tasks.filter(t=>isOD(t)).length;
+          // Column wrapper
+          const col=document.createElement('div');col.className='kb-col';
+          // Header
+          const hdr=document.createElement('div');hdr.className='kb-col-hdr';
+          hdr.innerHTML=
+            '<div class="kb-col-hdr-left">'
+            +'<span class="kb-col-dot" style="background:'+tm.c+'"></span>'
+            +'<span class="kb-col-name" style="color:'+tm.c+'">'+tm.l+'</span>'
+            +'</div>'
+            +'<div class="kb-col-count">'+tasks.length
+            +(odCount?' · <span style="color:var(--red)">'+odCount+' OD</span>':'')
+            +'</div>';
+          col.appendChild(hdr);
+          // Body — cards appended directly, no extra wrapper
+          const body=document.createElement('div');body.className='kb-col-body';
+          tasks.forEach(t=>{
+            const card=mkCard(t);
+            // Strip backdrop-filter inline so GPU layer issue doesn't occur
+            card.style.backdropFilter='none';
+            card.style.webkitBackdropFilter='none';
+            card.style.background='rgba(22,22,28,0.95)';
+            body.appendChild(card);
+          });
+          col.appendChild(body);
+          al.appendChild(col);
+        });
+      } else {
+        // ── MOBILE: stacked sections ──
+        catKeys.forEach(cat=>{
+          const tasks=cohorts[cat];if(!tasks.length)return;
+          const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
+          const odCount=tasks.filter(t=>isOD(t)).length;
+          const hdr=document.createElement('div');hdr.className='cohort-hdr';
+          hdr.innerHTML=
+            '<span class="cohort-dot" style="background:'+tm.c+'"></span>'
+            +'<span class="cohort-name" style="color:'+tm.c+'">'+tm.l+'</span>'
+            +'<span class="cohort-meta">'+tasks.length
+            +(odCount?' · <span style="color:var(--red)">'+odCount+' OD</span>':'')
+            +'</span>';
+          al.appendChild(hdr);
+          tasks.forEach(t=>al.appendChild(mkCard(t)));
+        });
+      }
     } else {
       sorted.forEach(t=>al.appendChild(mkCard(t)));
     }
