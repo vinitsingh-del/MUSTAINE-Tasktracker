@@ -1198,20 +1198,23 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     min-height:0;
     display:flex;
     flex-direction:column;
-    overflow:hidden;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+    scroll-behavior:smooth;
   }
 
   /* ── KANBAN ACTIVE LIST: horizontal scroll viewport ── */
   #active-list{
     display:flex !important;
     flex-direction:row;
-    align-items:stretch;        /* columns fill the height */
-    gap:10px;
-    padding:8px 14px 0;
+    align-items:flex-start;
+    gap:8px;
+    padding:6px 12px 12px;
     overflow-x:auto;
-    overflow-y:hidden;          /* no vertical scroll on the row */
-    flex:1;                     /* fills v-tasks-scroll height */
-    min-height:0;
+    overflow-y:visible;
+    flex:none;
     scrollbar-width:thin;
     scrollbar-color:rgba(255,255,255,.2) transparent;
   }
@@ -1222,10 +1225,9 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
   /* ── KANBAN COLUMN: fills #active-list height ── */
   .kb-col{
-    flex:0 0 290px;
-    min-width:260px;
-    max-width:310px;
-    height:100%;               /* fills #active-list stretch height */
+    flex:0 0 232px;
+    min-width:200px;
+    max-width:250px;
     display:flex;
     flex-direction:column;
     border:1px solid rgba(255,255,255,.08);
@@ -1237,7 +1239,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   /* Column header: fixed at top */
   .kb-col-hdr{
     display:flex;align-items:center;justify-content:space-between;
-    padding:10px 12px 9px;
+    padding:7px 10px 6px;
     background:rgba(10,10,14,.9);
     border-bottom:1px solid rgba(255,255,255,.07);
     flex-shrink:0;
@@ -1245,22 +1247,21 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
   .kb-col-hdr-left{display:flex;align-items:center;gap:7px}
   .kb-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
   .kb-col-name{
-    font-family:var(--fh);font-size:11px;font-weight:900;
+    font-family:var(--fh);font-size:10px;font-weight:900;
     letter-spacing:.14em;text-transform:uppercase;
   }
   .kb-col-count{
-    font-family:var(--fm);font-size:9px;
+    font-family:var(--fm);font-size:8px;
     color:rgba(255,255,255,.4);letter-spacing:.04em;
   }
 
   /* Column body: scrolls vertically, fills remaining column height */
   .kb-col-body{
-    flex:1;
-    min-height:0;
     display:block;
-    padding:7px;
+    padding:5px;
     overflow-y:auto;
     overflow-x:hidden;
+    max-height:calc(100vh - 360px);
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
     scroll-behavior:smooth;
@@ -1275,7 +1276,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     display:block !important;
     height:auto !important;
     width:100%;
-    margin-bottom:7px;
+    margin-bottom:5px;
     animation:none !important;
     border-radius:8px !important;
   }
