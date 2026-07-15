@@ -1169,126 +1169,150 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
 /* ── 1200px: 2-col cards ── */
 @media(min-width:1100px){
-  .sidebar{width:220px;min-width:220px}
+  .sidebar{width:200px;min-width:200px}
 
-  /* v-tasks: full height flex column — header fixed, kanban fills rest */
-  #v-tasks.on{
-    display:flex !important;
-    flex-direction:column;
-    overflow:hidden;
-    height:100%;
-  }
+  #v-tasks.on{overflow:hidden;display:flex !important;flex-direction:column}
   #v-tasks:not(.on){display:none !important}
 
-  /* Everything ABOVE the kanban (day-strip, add-box, toolbar, etc) stays flex:none */
-  #v-tasks > .viewer-banner,
-  #v-tasks > .day-strip,
-  #v-tasks > .add-box,
-  #v-tasks > .toolbar,
-  #v-tasks > .filters,
-  #v-tasks > .stage-strip,
-  #v-tasks > .od-banner,
-  #v-tasks > .timer-active-strip,
-  #v-tasks > .ai-smart-section,
-  #v-tasks > .ai-result { flex:none }
-
-  /* v-tasks-scroll: takes remaining height, clips everything */
   #v-tasks-scroll{
-    flex:1;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    overflow-y:auto;
-    overflow-x:hidden;
+    flex:1;min-height:0;
+    overflow-y:auto;overflow-x:hidden;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior-y:contain;
-    scroll-behavior:smooth;
   }
 
-  /* ── KANBAN ACTIVE LIST: horizontal scroll viewport ── */
+  /* ── PROGRAMME BOARD LAYOUT ── */
   #active-list{
     display:flex !important;
     flex-direction:row;
     align-items:flex-start;
     gap:8px;
-    padding:6px 12px 12px;
+    padding:8px 12px 16px;
     overflow-x:auto;
     overflow-y:visible;
     flex:none;
     scrollbar-width:thin;
     scrollbar-color:rgba(255,255,255,.2) transparent;
   }
-  #active-list::-webkit-scrollbar{height:6px}
-  #active-list::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:3px}
-  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
-  #active-list::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.3)}
+  #active-list::-webkit-scrollbar{height:5px}
+  #active-list::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
+  #active-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
 
-  /* ── KANBAN COLUMN: fills #active-list height ── */
+  /* ── KANBAN COLUMN ── */
   .kb-col{
-    flex:0 0 232px;
-    min-width:200px;
-    max-width:250px;
+    flex:0 0 200px;
+    min-width:180px;
+    max-width:220px;
     display:flex;
     flex-direction:column;
     border:1px solid rgba(255,255,255,.08);
-    border-radius:10px;
+    border-radius:8px;
     overflow:hidden;
-    background:rgba(255,255,255,.025);
+    background:rgba(10,10,14,.7);
   }
 
-  /* Column header: fixed at top */
+  /* ── COLUMN HEADER ── */
   .kb-col-hdr{
     display:flex;align-items:center;justify-content:space-between;
-    padding:7px 10px 6px;
-    background:rgba(10,10,14,.9);
-    border-bottom:1px solid rgba(255,255,255,.07);
+    padding:7px 9px 6px;
+    background:rgba(8,8,12,.9);
+    border-bottom:1px solid rgba(255,255,255,.08);
     flex-shrink:0;
+    gap:6px;
   }
-  .kb-col-hdr-left{display:flex;align-items:center;gap:7px}
-  .kb-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+  .kb-col-hdr-left{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+  .kb-col-accent{
+    width:3px;height:20px;border-radius:2px;flex-shrink:0;
+  }
   .kb-col-name{
-    font-family:var(--fh);font-size:10px;font-weight:900;
-    letter-spacing:.14em;text-transform:uppercase;
+    font-family:var(--fh);font-size:11px;font-weight:900;
+    letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(255,255,255,.9);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .kb-col-count{
-    font-family:var(--fm);font-size:8px;
-    color:rgba(255,255,255,.4);letter-spacing:.04em;
+  .kb-col-badges{display:flex;gap:4px;align-items:center;flex-shrink:0}
+  .kb-badge{
+    font-family:var(--fm);font-size:9px;font-weight:700;
+    padding:1px 6px;border-radius:10px;letter-spacing:.04em;
+    white-space:nowrap;
   }
+  .kb-badge-total{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+  .kb-badge-od{background:rgba(230,51,41,.2);color:#ff6b6b;border:1px solid rgba(230,51,41,.3)}
 
-  /* Column body: scrolls vertically, fills remaining column height */
+  /* ── COLUMN BODY ── */
   .kb-col-body{
-    display:block;
-    padding:5px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    padding:6px;
     overflow-y:auto;
     overflow-x:hidden;
     max-height:calc(100vh - 360px);
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
-    scroll-behavior:smooth;
   }
   .kb-col-body::-webkit-scrollbar{width:3px}
   .kb-col-body::-webkit-scrollbar-track{background:transparent}
   .kb-col-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
-  .kb-col-body::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
 
-  /* Cards inside kanban: natural block height */
-  .kb-col-body .card{
-    display:block !important;
-    height:auto !important;
-    width:100%;
+  /* ── PROGRAMME BOARD TILE ── */
+  .kb-tile{
+    background:rgba(20,20,26,.95);
+    border:1px solid rgba(255,255,255,.08);
+    border-left:3px solid rgba(255,255,255,.2);
+    border-radius:5px;
+    padding:7px 8px 6px;
+    cursor:pointer;
+    transition:background .12s,border-color .12s,transform .08s;
+    position:relative;
+    flex-shrink:0;
+  }
+  .kb-tile:hover{
+    background:rgba(30,30,38,.98);
+    border-color:rgba(255,255,255,.15);
+    transform:translateY(-1px);
+  }
+  .kb-tile:active{transform:scale(.98)}
+  .kb-tile-od{
+    border-color:rgba(230,51,41,.4);
+    background:rgba(230,51,41,.06);
+  }
+  .kb-tile-done{opacity:.5}
+  .kb-tile-done:hover{opacity:.75}
+
+  .kb-tile-title{
+    font-family:var(--fb);font-size:11px;font-weight:500;
+    color:rgba(255,255,255,.88);line-height:1.35;
     margin-bottom:5px;
-    animation:none !important;
-    border-radius:8px !important;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;
+    word-break:break-word;
   }
-  .kb-col-body .card:last-child{margin-bottom:0}
+  .kb-tile-done .kb-tile-title{color:rgba(255,255,255,.45)}
 
-  /* Done + blocked sections appear below scroll area (in v-tasks-scroll) */
-  #done-sec,#blocked-sec{
-    flex:none;
-    padding:0 14px;
+  .kb-tile-meta{
+    display:flex;align-items:center;gap:5px;flex-wrap:wrap;
   }
+  .kb-tile-date{
+    font-family:var(--fm);font-size:8px;letter-spacing:.04em;
+    color:rgba(255,255,255,.4);background:rgba(255,255,255,.06);
+    padding:1px 5px;border-radius:3px;
+  }
+  .kb-tile-date-od{color:#ff9090;background:rgba(230,51,41,.15)}
+  .kb-tile-timer{
+    font-family:var(--fm);font-size:8px;letter-spacing:.04em;
+    color:rgba(34,197,94,.8);
+  }
+  .kb-tile-stage{
+    font-family:var(--fm);font-size:8px;letter-spacing:.04em;
+    color:rgba(255,255,255,.35);
+    text-transform:capitalize;
+  }
+
+  /* Done + blocked below kanban */
+  #done-sec,#blocked-sec{padding:0 4px}
   #done-sec .card-list,#blocked-sec .card-list{
-    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 0;
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 12px;
   }
   #done-sec .card-list .date-grp,
   #blocked-sec .card-list .date-grp{grid-column:1/-1}
@@ -2722,33 +2746,53 @@ function render(){
       // ── CATEGORY COHORT RENDER ──
       const isDesktop=window.innerWidth>=1100;
       if(isDesktop){
-        // ── DESKTOP: KANBAN columns ──
+        // ── DESKTOP: PROGRAMME BOARD KANBAN ──
+        const priCols={urgent:'#e63329',high:'#f59e0b',medium:'#c8a84b',low:'#555'};
         catKeys.forEach(cat=>{
           const tasks=cohorts[cat];if(!tasks.length)return;
-          const tm=TAG[cat]||{l:cat,c:'var(--grey)'};
+          const tm=TAG[cat]||{l:cat,c:'#888'};
           const odCount=tasks.filter(t=>isOD(t)).length;
-          // Column wrapper
+          const doneCount=tasks.filter(t=>t.stage==='done'||t.stage==='closed').length;
+          const activeCount=tasks.length-doneCount;
+
+          // ── COLUMN ──
           const col=document.createElement('div');col.className='kb-col';
-          // Header
+
+          // ── COLUMN HEADER ──
           const hdr=document.createElement('div');hdr.className='kb-col-hdr';
+          // Left: coloured bar + name
           hdr.innerHTML=
             '<div class="kb-col-hdr-left">'
-            +'<span class="kb-col-dot" style="background:'+tm.c+'"></span>'
-            +'<span class="kb-col-name" style="color:'+tm.c+'">'+tm.l+'</span>'
+            +'<div class="kb-col-accent" style="background:'+tm.c+'"></div>'
+            +'<span class="kb-col-name">'+tm.l+'</span>'
             +'</div>'
-            +'<div class="kb-col-count">'+tasks.length
-            +(odCount?' · <span style="color:var(--red)">'+odCount+' OD</span>':'')
+            +'<div class="kb-col-badges">'
+            +'<span class="kb-badge kb-badge-total">'+tasks.length+'</span>'
+            +(odCount?'<span class="kb-badge kb-badge-od">'+odCount+' OD</span>':'')
             +'</div>';
           col.appendChild(hdr);
-          // Body — cards appended directly, no extra wrapper
+
+          // ── COLUMN BODY: compact programme tiles ──
           const body=document.createElement('div');body.className='kb-col-body';
           tasks.forEach(t=>{
-            const card=mkCard(t);
-            // Strip backdrop-filter inline so GPU layer issue doesn't occur
-            card.style.backdropFilter='none';
-            card.style.webkitBackdropFilter='none';
-            card.style.background='rgba(22,22,28,0.95)';
-            body.appendChild(card);
+            const od=isOD(t);
+            const isDone=t.stage==='done'||t.stage==='closed';
+            const pc=priCols[t.priority]||priCols.low;
+            const tile=document.createElement('div');
+            tile.className='kb-tile'+(od?' kb-tile-od':'')+(isDone?' kb-tile-done':'');
+            tile.style.borderLeftColor=pc;
+            // Timer display
+            const timerSecs=tEl(t);
+            const timerStr=timerSecs>0?(Math.floor(timerSecs/3600)+'h '+(Math.floor((timerSecs%3600)/60))+'m'):'';
+            tile.innerHTML=
+              '<div class="kb-tile-title">'+(isDone?'<s>':'')+esc(t.title)+(isDone?'</s>':'')+'</div>'
+              +'<div class="kb-tile-meta">'
+              +(t.task_date?'<span class="kb-tile-date'+(od?' kb-tile-date-od':'')+'">'+t.task_date.slice(5)+'</span>':'')
+              +(timerStr?'<span class="kb-tile-timer">⏱ '+timerStr+'</span>':'')
+              +(t.stage&&t.stage!=='todo'?'<span class="kb-tile-stage">'+t.stage.replace('-',' ')+'</span>':'')
+              +'</div>';
+            tile.addEventListener('click',()=>openDrawer(t.id));
+            body.appendChild(tile);
           });
           col.appendChild(body);
           al.appendChild(col);
