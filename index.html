@@ -1207,8 +1207,10 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     flex-direction:column;
     border:1px solid rgba(255,255,255,.08);
     border-radius:8px;
-    overflow:hidden;
+    overflow:visible;
     background:rgba(10,10,14,.7);
+    /* clip border-radius without triggering stacking context */
+    -webkit-mask-image:-webkit-radial-gradient(white,black);
   }
 
   /* ── COLUMN HEADER ── */
@@ -1217,6 +1219,7 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     padding:7px 9px 6px;
     background:rgba(8,8,12,.9);
     border-bottom:1px solid rgba(255,255,255,.08);
+    border-radius:8px 8px 0 0;
     flex-shrink:0;
     gap:6px;
   }
@@ -1246,10 +1249,11 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     gap:4px;
     padding:6px;
     overflow-y:auto;
-    overflow-x:hidden;
+    overflow-x:visible;
     max-height:calc(100vh - 360px);
     overscroll-behavior-y:contain;
     -webkit-overflow-scrolling:touch;
+    border-radius:0 0 8px 8px;
   }
   .kb-col-body::-webkit-scrollbar{width:3px}
   .kb-col-body::-webkit-scrollbar-track{background:transparent}
@@ -1257,22 +1261,21 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
   /* ── PROGRAMME BOARD TILE ── */
   .kb-tile{
-    background:rgba(20,20,26,.95);
-    border:1px solid rgba(255,255,255,.08);
-    border-left:3px solid rgba(255,255,255,.2);
+    background:rgba(20,20,26,1);
+    border:1px solid rgba(255,255,255,.1);
+    border-left:3px solid rgba(255,255,255,.25);
     border-radius:5px;
-    padding:7px 8px 6px;
+    padding:8px 8px 7px;
     cursor:pointer;
-    transition:background .12s,border-color .12s,transform .08s;
-    position:relative;
+    transition:background .12s,border-color .12s;
     flex-shrink:0;
+    /* No transforms — avoid GPU layer issues */
   }
   .kb-tile:hover{
-    background:rgba(30,30,38,.98);
-    border-color:rgba(255,255,255,.15);
-    transform:translateY(-1px);
+    background:rgba(32,32,40,1);
+    border-color:rgba(255,255,255,.18);
   }
-  .kb-tile:active{transform:scale(.98)}
+  .kb-tile:active{opacity:.85}
   .kb-tile-od{
     border-color:rgba(230,51,41,.4);
     background:rgba(230,51,41,.06);
@@ -1282,13 +1285,15 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
   .kb-tile-title{
     font-family:var(--fb);font-size:11px;font-weight:500;
-    color:rgba(255,255,255,.88);line-height:1.35;
+    color:#e8e8e8;line-height:1.35;
     margin-bottom:5px;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
     overflow:hidden;
     word-break:break-word;
+    visibility:visible !important;
+    opacity:1 !important;
   }
-  .kb-tile-done .kb-tile-title{color:rgba(255,255,255,.45)}
+  .kb-tile-done .kb-tile-title{color:rgba(255,255,255,.4);text-decoration:line-through}
 
   .kb-tile-meta{
     display:flex;align-items:center;gap:5px;flex-wrap:wrap;
